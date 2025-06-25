@@ -11,7 +11,7 @@ interface Order {
   trackingNumber?: string;
 }
 
-const OrderManagement: React.FC = () => {
+const EnhancedOrderManagement: React.FC = () => {
   const [orders] = useState<Order[]>([
     {
       id: 'ORD-001',
@@ -79,6 +79,17 @@ const OrderManagement: React.FC = () => {
     }
   };
 
+  const handleStatusClick = (status: string) => {
+    console.log(`Navigating to ${status} orders page`);
+    // In a real app, you would navigate to the specific status page
+    // navigate(`/orders/${status}`);
+  };
+
+  const handleCreateOrder = () => {
+    console.log('Navigating to create order page');
+    // In a real app: navigate('/create-order');
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-8">
       <div className="flex items-center justify-between mb-6">
@@ -86,49 +97,67 @@ const OrderManagement: React.FC = () => {
           <Truck className="h-6 w-6 text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-900">Order Management</h2>
         </div>
-        <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+        <button 
+          onClick={handleCreateOrder}
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+        >
           <Plus className="h-4 w-4" />
           <span>Create New Order</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-yellow-50 rounded-lg p-4">
+        <button
+          onClick={() => handleStatusClick('ordered')}
+          className="bg-yellow-50 hover:bg-yellow-100 rounded-lg p-4 transition-colors cursor-pointer group"
+        >
           <div className="flex items-center space-x-3">
-            <Clock className="h-8 w-8 text-yellow-600" />
-            <div>
+            <Clock className="h-8 w-8 text-yellow-600 group-hover:scale-110 transition-transform" />
+            <div className="text-left">
               <p className="text-2xl font-bold text-yellow-900">1</p>
               <p className="text-sm text-yellow-700">Orders Placed</p>
             </div>
           </div>
-        </div>
-        <div className="bg-blue-50 rounded-lg p-4">
+        </button>
+        
+        <button
+          onClick={() => handleStatusClick('received')}
+          className="bg-blue-50 hover:bg-blue-100 rounded-lg p-4 transition-colors cursor-pointer group"
+        >
           <div className="flex items-center space-x-3">
-            <Package className="h-8 w-8 text-blue-600" />
-            <div>
+            <Package className="h-8 w-8 text-blue-600 group-hover:scale-110 transition-transform" />
+            <div className="text-left">
               <p className="text-2xl font-bold text-blue-900">1</p>
               <p className="text-sm text-blue-700">At Vault</p>
             </div>
           </div>
-        </div>
-        <div className="bg-purple-50 rounded-lg p-4">
+        </button>
+        
+        <button
+          onClick={() => handleStatusClick('shipped')}
+          className="bg-purple-50 hover:bg-purple-100 rounded-lg p-4 transition-colors cursor-pointer group"
+        >
           <div className="flex items-center space-x-3">
-            <Plane className="h-8 w-8 text-purple-600" />
-            <div>
+            <Plane className="h-8 w-8 text-purple-600 group-hover:scale-110 transition-transform" />
+            <div className="text-left">
               <p className="text-2xl font-bold text-purple-900">1</p>
               <p className="text-sm text-purple-700">In Transit</p>
             </div>
           </div>
-        </div>
-        <div className="bg-green-50 rounded-lg p-4">
+        </button>
+        
+        <button
+          onClick={() => handleStatusClick('delivered')}
+          className="bg-green-50 hover:bg-green-100 rounded-lg p-4 transition-colors cursor-pointer group"
+        >
           <div className="flex items-center space-x-3">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-            <div>
+            <CheckCircle className="h-8 w-8 text-green-600 group-hover:scale-110 transition-transform" />
+            <div className="text-left">
               <p className="text-2xl font-bold text-green-900">1</p>
               <p className="text-sm text-green-700">Delivered</p>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -174,4 +203,4 @@ const OrderManagement: React.FC = () => {
   );
 };
 
-export default OrderManagement;
+export default EnhancedOrderManagement;

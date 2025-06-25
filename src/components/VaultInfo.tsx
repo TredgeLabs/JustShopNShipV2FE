@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Copy, MapPin, User, Package, CheckCircle } from 'lucide-react';
 
-const VaultInfo: React.FC = () => {
+const EnhancedVaultInfo: React.FC = () => {
   const [copied, setCopied] = useState<string | null>(null);
 
   const vaultAddress = {
@@ -14,6 +14,20 @@ const VaultInfo: React.FC = () => {
     vaultId: "JSS-UD-2024-001"
   };
 
+  const copyFullAddress = () => {
+    const fullAddress = `${vaultAddress.name}
+Vault ID: ${vaultAddress.vaultId}
+${vaultAddress.street}
+${vaultAddress.address}
+${vaultAddress.city}
+${vaultAddress.country}
+Phone: ${vaultAddress.phone}`;
+
+    navigator.clipboard.writeText(fullAddress);
+    setCopied('full');
+    setTimeout(() => setCopied(null), 3000);
+  };
+
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopied(field);
@@ -22,9 +36,18 @@ const VaultInfo: React.FC = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8">
-      <div className="flex items-center space-x-3 mb-6">
-        <Package className="h-6 w-6 text-blue-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Your Vault Address</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <Package className="h-6 w-6 text-blue-600" />
+          <h2 className="text-2xl font-bold text-gray-900">Your Vault Address</h2>
+        </div>
+        <button
+          onClick={copyFullAddress}
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105"
+        >
+          {copied === 'full' ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          <span className="font-medium">{copied === 'full' ? 'Copied!' : 'Copy Full Address'}</span>
+        </button>
       </div>
 
       <div className="bg-blue-50 rounded-lg p-6 mb-6">
@@ -90,4 +113,4 @@ const VaultInfo: React.FC = () => {
   );
 };
 
-export default VaultInfo;
+export default EnhancedVaultInfo;
