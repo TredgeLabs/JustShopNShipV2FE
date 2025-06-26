@@ -52,6 +52,17 @@ export interface AuthResponse {
   expiresIn: number;
 }
 
+// Password change interface
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+// Forgot password interface
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
 // User preferences interface
 export interface UserPreferences {
   currency: string;
@@ -123,6 +134,32 @@ class UserService {
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
+    }
+  }
+
+  /**
+   * Forgot password
+   */
+  async forgotPassword(data: ForgotPasswordRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await apiClient.post<void>(ENDPOINTS.AUTH.FORGOT_PASSWORD, data);
+      return response;
+    } catch (error) {
+      console.error('Error during forgot password:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Change password
+   */
+  async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await apiClient.post<void>(ENDPOINTS.AUTH.RESET_PASSWORD, data);
+      return response;
+    } catch (error) {
+      console.error('Error during password change:', error);
+      throw error;
     }
   }
 
