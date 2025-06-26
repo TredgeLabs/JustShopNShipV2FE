@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Package, Menu, X, User, ShoppingCart } from 'lucide-react';
+import { Package, Menu, X, LogOut, ShoppingCart } from 'lucide-react';
 
-const Navigation: React.FC = () => {
+const EnhancedNavigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = () => {
+    console.log('User logging out...');
+    // In a real app, you would:
+    // 1. Call logout API
+    // 2. Clear localStorage/sessionStorage
+    // 3. Redirect to login page
+    // userService.logout();
+    // navigate('/login');
+  };
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -41,9 +51,12 @@ const Navigation: React.FC = () => {
               Dashboard
             </Link>
             <div className="flex items-center space-x-4">
-              <button className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
-                <User className="h-4 w-4" />
-                <span>Sign In</span>
+              <button 
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
               </button>
               <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                 <ShoppingCart className="h-4 w-4" />
@@ -90,8 +103,14 @@ const Navigation: React.FC = () => {
                 Dashboard
               </Link>
               <div className="pt-4 pb-3 border-t border-gray-200">
-                <button className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors">
-                  Sign In
+                <button 
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 transition-colors"
+                >
+                  Sign Out
                 </button>
                 <button className="block w-full text-left px-3 py-2 mt-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                   Create Order
@@ -105,4 +124,4 @@ const Navigation: React.FC = () => {
   );
 };
 
-export default Navigation;
+export default EnhancedNavigation;

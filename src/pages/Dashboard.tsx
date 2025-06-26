@@ -1,7 +1,7 @@
 import React from 'react';
 import Welcome from '../components/Welcome';
-import EnhancedVaultInfo from '../components/VaultInfo';
-import EnhancedOrderManagement from '../components/OrderManagement';
+import EnhancedVaultInfo from '../components/EnhancedVaultInfo';
+import EnhancedOrderManagement from '../components/EnhancedOrderManagement';
 import DashboardSidebar from '../components/DashboardSidebar';
 
 const Dashboard: React.FC = () => {
