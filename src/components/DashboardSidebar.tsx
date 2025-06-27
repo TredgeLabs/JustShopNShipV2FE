@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Package, 
   ShoppingCart, 
@@ -23,6 +24,7 @@ interface SidebarProps {
 
 const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const accountShortcuts = [
     {
@@ -31,7 +33,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       description: "View your vault address",
       color: "text-blue-600 hover:text-blue-700",
       bgColor: "hover:bg-blue-50",
-      href: "/vault"
+      href: "/my-vault"
     },
     {
       icon: ShoppingCart,
@@ -39,7 +41,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       description: "Start a new order",
       color: "text-green-600 hover:text-green-700",
       bgColor: "hover:bg-green-50",
-      href: "/create-order"
+      href: "/inventory"
     },
     {
       icon: Truck,
@@ -47,7 +49,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       description: "Orders within India",
       color: "text-orange-600 hover:text-orange-700",
       bgColor: "hover:bg-orange-50",
-      href: "/orders/domestic"
+      href: "/domestic-orders"
     },
     {
       icon: Plane,
@@ -55,7 +57,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       description: "Orders being shipped internationally",
       color: "text-purple-600 hover:text-purple-700",
       bgColor: "hover:bg-purple-50",
-      href: "/orders/international"
+      href: "/international-orders"
     },
     {
       icon: ShoppingBag,
@@ -119,7 +121,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   ];
 
   const handleShortcutClick = (href: string) => {
-    console.log(`Navigating to: ${href}`);
+    navigate(href);
     // Close mobile menu after navigation
     setIsMobileMenuOpen(false);
   };

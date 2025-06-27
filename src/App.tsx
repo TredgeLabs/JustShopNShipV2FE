@@ -7,7 +7,6 @@ import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import ChangePassword from './pages/ChangePassword';
 import Profile from './pages/Profile';
-import EnhancedNavigation from './components/EnhancedNavigation';
 import MyVault from './pages/MyVault';
 import DomesticOrders from './pages/DomesticOrders';
 import InternationalOrders from './pages/InternationalOrders';
@@ -16,6 +15,11 @@ import FAQ from './pages/FAQ';
 import ShippingCalculatorPage from './pages/ShippingCalculatorPage';
 import Blog from './pages/Blog';
 import Guide from './pages/Guide';
+import Inventory from './pages/Inventory';
+import InventoryItemDetails from './pages/InventoryItemDetails';
+import AddAddress from './pages/AddAddress';
+import ContactSupport from './pages/ContactSupport';
+import EnhancedNavigation from './components/EnhancedNavigation';
 
 function App() {
   return (
@@ -28,14 +32,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/my-vault" element={<MyVault />} />
-          <Route path="/domestic-orders" element={<DomesticOrders />} />
-          <Route path="/international-orders" element={<InternationalOrders />} />
-          <Route path="/prohibited-items" element={<ProhibitedItems />} />
-          <Route path="/faqs" element={<FAQ />} />
-          <Route path="/shipping-calculator" element={<ShippingCalculatorPage />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/guide" element={<Guide />} />
+          <Route path="/add-address" element={<AddAddress />} />
           
           {/* Routes with navigation */}
           <Route path="/*" element={
@@ -44,6 +41,17 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/my-vault" element={<MyVault />} />
+                <Route path="/domestic-orders" element={<DomesticOrders />} />
+                <Route path="/international-orders" element={<InternationalOrders />} />
+                <Route path="/prohibited-items" element={<ProhibitedItems />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/shipping-calculator" element={<ShippingCalculatorPage />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/guide" element={<Guide />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/inventory/:itemId" element={<InventoryItemDetails />} />
+                <Route path="/contact-support" element={<ContactSupport />} />
               </Routes>
             </>
           } />
