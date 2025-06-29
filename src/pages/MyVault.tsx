@@ -30,6 +30,9 @@ interface VaultItem {
   storageCost: number;
   isReturnable: boolean;
   isSelected: boolean;
+  color: string;
+  size: string;
+  quantity: number;
 }
 
 const MyVault: React.FC = () => {
@@ -63,7 +66,10 @@ const MyVault: React.FC = () => {
           validityDays: 75,
           storageCost: 0,
           isReturnable: true,
-          isSelected: false
+          isSelected: false,
+          color: 'Royal Blue',
+          size: 'Free Size',
+          quantity: 1
         },
         {
           id: 'VI-002',
@@ -79,7 +85,10 @@ const MyVault: React.FC = () => {
           validityDays: 70,
           storageCost: 0,
           isReturnable: false,
-          isSelected: true
+          isSelected: true,
+          color: 'Natural',
+          size: 'Standard',
+          quantity: 1
         },
         {
           id: 'VI-003',
@@ -96,7 +105,10 @@ const MyVault: React.FC = () => {
           validityDays: 85,
           storageCost: 0,
           isReturnable: true,
-          isSelected: false
+          isSelected: false,
+          color: 'Silver',
+          size: 'Adjustable',
+          quantity: 1
         },
         {
           id: 'VI-004',
@@ -112,7 +124,10 @@ const MyVault: React.FC = () => {
           validityDays: -5,
           storageCost: 25,
           isReturnable: false,
-          isSelected: false
+          isSelected: false,
+          color: 'Mixed',
+          size: '500g Pack',
+          quantity: 1
         }
       ];
       
@@ -170,9 +185,24 @@ const MyVault: React.FC = () => {
 
   const handleShipItems = () => {
     const selectedItems = vaultItems.filter(item => item.isSelected);
-    console.log('Initiating shipping for items:', selectedItems);
-    // TODO: Implement shipping process
-    alert('Shipping process initiated! You will be redirected to the shipping form.');
+    
+    if (selectedItems.length === 0) {
+      alert('Please select at least one item to ship');
+      return;
+    }
+
+    // Prepare shipment data for confirmation page
+    const shipmentData = {
+      items: selectedItems,
+      destination: 'United States', // This would come from user's profile
+      shippingService: 'Standard International'
+    };
+
+    // Store shipment data for confirmation page
+    localStorage.setItem('shipmentData', JSON.stringify(shipmentData));
+    
+    // Navigate to shipment confirmation page
+    window.location.href = '/shipment-confirmation';
   };
 
   const handleReturnItem = (itemId: string) => {

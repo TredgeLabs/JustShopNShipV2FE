@@ -18,6 +18,11 @@ const EnhancedNavigation: React.FC = () => {
     // navigate('/login');
   };
 
+  const handleCreateOrder = () => {
+    // Navigate to create order page
+    window.location.href = '/create-order';
+  };
+
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,7 +63,10 @@ const EnhancedNavigation: React.FC = () => {
                 <LogOut className="h-4 w-4" />
                 <span>Sign Out</span>
               </button>
-              <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={handleCreateOrder}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 <ShoppingCart className="h-4 w-4" />
                 <span>Create Order</span>
               </button>
@@ -112,7 +120,13 @@ const EnhancedNavigation: React.FC = () => {
                 >
                   Sign Out
                 </button>
-                <button className="block w-full text-left px-3 py-2 mt-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button 
+                  onClick={() => {
+                    handleCreateOrder();
+                    setIsMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 mt-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
                   Create Order
                 </button>
               </div>

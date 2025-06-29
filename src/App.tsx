@@ -19,13 +19,24 @@ import Inventory from './pages/Inventory';
 import InventoryItemDetails from './pages/InventoryItemDetails';
 import AddAddress from './pages/AddAddress';
 import ContactSupport from './pages/ContactSupport';
+import CreateOrder from './pages/CreateOrder';
+import OrderConfirmation from './pages/OrderConfirmation';
+import Payment from './pages/Payment';
+import PaymentResult from './pages/PaymentResult';
+import ShipmentConfirmation from './pages/ShipmentConfirmation';
 import EnhancedNavigation from './components/EnhancedNavigation';
+
+// Admin Routes
+import AdminRoutes from './admin/routes/AdminRoutes';
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
         <Routes>
+          {/* Admin Routes - Completely isolated */}
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          
           {/* Public routes without navigation */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -33,6 +44,13 @@ function App() {
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/add-address" element={<AddAddress />} />
+          
+          {/* Order creation and payment flow */}
+          <Route path="/create-order" element={<CreateOrder />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/payment-result" element={<PaymentResult />} />
+          <Route path="/shipment-confirmation" element={<ShipmentConfirmation />} />
           
           {/* Routes with navigation */}
           <Route path="/*" element={

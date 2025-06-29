@@ -41,7 +41,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       description: "Start a new order",
       color: "text-green-600 hover:text-green-700",
       bgColor: "hover:bg-green-50",
-      href: "/inventory"
+      href: "/create-order"
     },
     {
       icon: Truck,
