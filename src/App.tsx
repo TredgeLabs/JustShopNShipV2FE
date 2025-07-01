@@ -21,6 +21,7 @@ import AddAddress from './pages/AddAddress';
 import ContactSupport from './pages/ContactSupport';
 import CreateOrder from './pages/CreateOrder';
 import OrderConfirmation from './pages/OrderConfirmation';
+import OrderCorrection from './pages/OrderCorrection';
 import Payment from './pages/Payment';
 import PaymentResult from './pages/PaymentResult';
 import ShipmentConfirmation from './pages/ShipmentConfirmation';
@@ -48,6 +49,7 @@ function App() {
           {/* Order creation and payment flow */}
           <Route path="/create-order" element={<CreateOrder />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/order-correction/:orderId" element={<OrderCorrection />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/payment-result" element={<PaymentResult />} />
           <Route path="/shipment-confirmation" element={<ShipmentConfirmation />} />
