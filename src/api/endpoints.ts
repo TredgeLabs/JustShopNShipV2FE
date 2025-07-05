@@ -2,8 +2,8 @@
 export const ENDPOINTS = {
   // Authentication
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
+    LOGIN: 'users/login',
+    REGISTER: 'users/register',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
     FORGOT_PASSWORD: '/auth/forgot-password',

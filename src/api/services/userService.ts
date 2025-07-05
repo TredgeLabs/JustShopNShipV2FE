@@ -32,7 +32,8 @@ export interface VaultInfo {
 
 // Authentication interfaces
 export interface LoginRequest {
-  email: string;
+  email?: string;
+  login?: string;
   password: string;
 }
 
@@ -105,7 +106,16 @@ class UserService {
    */
   async register(userData: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
     try {
-      const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.REGISTER, userData);
+      const requestBody = {
+        email: userData.email,
+        password: userData.password,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        country: userData.country,
+        phone_number: userData.phone,
+        phone_country_code: '+91'
+      };
+      const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.REGISTER, requestBody);
       
       // Store tokens in localStorage
       if (response.success && response.data) {

@@ -1,6 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_REACT_APP_API_BASE_URL || 'https://api.justshopandship.com',
+  BASE_URL: import.meta.env.VITE_REACT_APP_API_BASE_URL || 'http://localhost:4000/api/v1/',
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
 };
