@@ -16,6 +16,7 @@ export const ENDPOINTS = {
     UPDATE_PROFILE: '/user/profile',
     VAULT_INFO: '/user/vault',
     PREFERENCES: '/user/preferences',
+    CHANGE_PASSWORD: 'users/change-password',
   },
 
   // Orders

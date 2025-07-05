@@ -74,7 +74,7 @@ const ChangePassword: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -82,18 +82,12 @@ const ChangePassword: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Mock API call - replace with actual service call
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API delay
-      
-      // In production, use:
-      // const response = await userService.changePassword({
-      //   currentPassword: formData.currentPassword,
-      //   newPassword: formData.newPassword
-      // });
-      
-      setSuccess(true);
-      
-      // Redirect to profile after 3 seconds
+      // Call the real API for changing password
+      var response = await userService.changePassword({
+        old_password: formData.currentPassword,
+        new_password: formData.newPassword
+      });
+      setSuccess(response.success);
       setTimeout(() => {
         navigate('/profile');
       }, 3000);
@@ -127,7 +121,7 @@ const ChangePassword: React.FC = () => {
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            
+
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Password Changed Successfully!</h2>
             <p className="text-gray-600 mb-6">
               Your password has been updated successfully. You will be redirected to your profile shortly.
@@ -192,9 +186,8 @@ const ChangePassword: React.FC = () => {
                   required
                   value={formData.currentPassword}
                   onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                    errors.currentPassword ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${errors.currentPassword ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Enter current password"
                 />
                 <button
@@ -230,9 +223,8 @@ const ChangePassword: React.FC = () => {
                   required
                   value={formData.newPassword}
                   onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                    errors.newPassword ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${errors.newPassword ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Enter new password"
                 />
                 <button
@@ -273,9 +265,8 @@ const ChangePassword: React.FC = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                    errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Confirm new password"
                 />
                 <button

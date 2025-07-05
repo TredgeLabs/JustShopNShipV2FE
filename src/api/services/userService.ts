@@ -55,8 +55,8 @@ export interface AuthResponse {
 
 // Password change interface
 export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
+  old_password: string;
+  new_password: string;
 }
 
 // Forgot password interface
@@ -165,7 +165,7 @@ class UserService {
    */
   async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<void>> {
     try {
-      const response = await apiClient.post<void>(ENDPOINTS.AUTH.RESET_PASSWORD, data);
+      const response = await apiClient.put<void>(ENDPOINTS.USER.CHANGE_PASSWORD, data);
       return response;
     } catch (error) {
       console.error('Error during password change:', error);
