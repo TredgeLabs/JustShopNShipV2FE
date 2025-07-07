@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Plane, 
   Package, 
@@ -40,6 +41,7 @@ interface InternationalOrder {
 }
 
 const InternationalOrders: React.FC = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<InternationalOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
@@ -237,6 +239,10 @@ const InternationalOrders: React.FC = () => {
     });
   };
 
+  const handleViewDetails = (orderId: string) => {
+    navigate(`/international-order/${orderId}`);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -382,6 +388,14 @@ const InternationalOrders: React.FC = () => {
                     )}
                     
                     <button
+                      onClick={() => handleViewDetails(order.id)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span>Details</span>
+                    </button>
+                    
+                    <button
                       onClick={() => toggleOrderExpansion(order.id)}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
@@ -439,6 +453,15 @@ const InternationalOrders: React.FC = () => {
                             </div>
                             
                             <div className="mt-3">
+                              <div className="flex space-x-2 mb-2">
+                                <button
+                                  onClick={() => handleViewDetails(order.id)}
+                                  className="flex items-center space-x-1 text-xs text-green-600 hover:text-green-800"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                  <span>Details</span>
+                                </button>
+                              </div>
                               <a
                                 href={item.orderDetailsLink}
                                 className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800"

@@ -25,6 +25,8 @@ import OrderCorrection from './pages/OrderCorrection';
 import Payment from './pages/Payment';
 import PaymentResult from './pages/PaymentResult';
 import ShipmentConfirmation from './pages/ShipmentConfirmation';
+import LocalOrderDetailsPage from './pages/LocalOrderDetailsPage';
+import InternationalOrderDetailsPage from './pages/InternationalOrderDetailsPage';
 import EnhancedNavigation from './components/EnhancedNavigation';
 
 // Footer Pages
@@ -64,6 +66,8 @@ function App() {
           <Route path="/payment" element={<Payment />} />
           <Route path="/payment-result" element={<PaymentResult />} />
           <Route path="/shipment-confirmation" element={<ShipmentConfirmation />} />
+          <Route path="/local-order/:orderId" element={<LocalOrderDetailsPage />} />
+          <Route path="/international-order/:orderId" element={<InternationalOrderDetailsPage />} />
           
           {/* Footer Pages */}
           <Route path="/personal-shopping" element={<PersonalShopping />} />

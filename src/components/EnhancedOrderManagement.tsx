@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Package, Truck, Plane, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface Order {
@@ -12,6 +13,7 @@ interface Order {
 }
 
 const EnhancedOrderManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [orders] = useState<Order[]>([
     {
       id: 'ORD-001',
@@ -81,13 +83,25 @@ const EnhancedOrderManagement: React.FC = () => {
 
   const handleStatusClick = (status: string) => {
     console.log(`Navigating to ${status} orders page`);
-    // In a real app, you would navigate to the specific status page
-    // navigate(`/orders/${status}`);
+    if (status === 'ordered' || status === 'received') {
+      navigate('/domestic-orders');
+    } else if (status === 'shipped' || status === 'delivered') {
+      navigate('/international-orders');
+    }
   };
 
   const handleCreateOrder = () => {
     console.log('Navigating to create order page');
-    // In a real app: navigate('/create-order');
+    navigate('/create-order');
+  };
+
+  const handleViewOrderDetails = (orderId: string, status: string) => {
+    // Determine if it's a local or international order based on status
+    if (status === 'ordered' || status === 'received') {
+      navigate(`/local-order/${orderId}`);
+    } else if (status === 'shipped' || status === 'delivered') {
+      navigate(`/international-order/${orderId}`);
+    }
   };
 
   return (
@@ -192,7 +206,9 @@ const EnhancedOrderManagement: React.FC = () => {
                   </div>
                 )}
                 <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                  View Details →
+                  <span onClick={() => handleViewOrderDetails(order.id, order.status)} className="cursor-pointer">
+                    View Details →
+                  </span>
                 </button>
               </div>
             </div>

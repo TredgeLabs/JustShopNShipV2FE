@@ -204,8 +204,8 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       </button>
 
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-80 lg:bg-white lg:border-r lg:border-gray-200 lg:pt-20 lg:pb-4 lg:overflow-y-auto ${className}`}>
-        <div className="flex-1 px-4 py-6">
+      <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-80 lg:bg-white lg:border-r lg:border-gray-200 lg:pt-20 lg:pb-4 lg:h-screen ${className}`}>
+        <div className="flex-1 px-4 py-6 overflow-y-auto scrollbar-thin scrollbar-thumb-transparent hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
           <SidebarContent />
         </div>
       </div>
@@ -220,7 +220,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
           />
           
           {/* Sidebar */}
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white h-full">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -230,7 +230,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
               </button>
             </div>
             
-            <div className="flex-1 h-0 pt-20 pb-4 overflow-y-auto">
+            <div className="flex-1 h-0 pt-20 pb-4 overflow-y-auto scrollbar-thin scrollbar-thumb-transparent hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
               <div className="px-4 py-6">
                 <SidebarContent />
               </div>

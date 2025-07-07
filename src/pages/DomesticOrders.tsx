@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, 
   Package, 
@@ -38,6 +39,7 @@ interface DomesticOrder {
 }
 
 const DomesticOrders: React.FC = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<DomesticOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
@@ -240,8 +242,11 @@ const DomesticOrders: React.FC = () => {
 
   const handleCorrectOrder = (orderId: string) => {
     console.log('Requesting order correction for:', orderId);
-    // TODO: Implement order correction request
-    alert(`Order correction request initiated for order ${orderId}`);
+    navigate(`/order-correction/${orderId}`);
+  };
+
+  const handleViewDetails = (orderId: string) => {
+    navigate(`/local-order/${orderId}`);
   };
 
   const formatDate = (dateString: string) => {
@@ -384,6 +389,14 @@ const DomesticOrders: React.FC = () => {
                       <Edit3 className="h-4 w-4" />
                       <span>Correct Your Order</span>
                     </button>
+                    
+                    <button
+                      onClick={() => handleViewDetails(order.id)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span>View Details</span>
+                    </button>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -413,6 +426,13 @@ const DomesticOrders: React.FC = () => {
                             </p>
                             
                             <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleViewDetails(order.id)}
+                                className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800"
+                              >
+                                <Eye className="h-3 w-3" />
+                                <span>Details</span>
+                              </button>
                               <a
                                 href={item.inventoryLink}
                                 className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800"

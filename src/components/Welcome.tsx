@@ -1,7 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, ShoppingCart, Package, Star } from 'lucide-react';
 
 const Welcome: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleCreateOrder = () => {
+    navigate('/create-order');
+  };
+
+  const handleViewProfile = () => {
+    navigate('/profile');
+  };
+
   return (
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-8 mb-8">
       <div className="flex items-center justify-between">
@@ -32,11 +43,11 @@ const Welcome: React.FC = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mt-6">
-        <button className="flex items-center justify-center space-x-2 px-6 py-3 bg-white text-blue-600 hover:bg-blue-50 font-semibold rounded-lg transition-colors">
+        <button onClick={handleCreateOrder} className="flex items-center justify-center space-x-2 px-6 py-3 bg-white text-blue-600 hover:bg-blue-50 font-semibold rounded-lg transition-colors">
           <ShoppingCart className="h-5 w-5" />
           <span>Create New Order</span>
         </button>
-        <button className="flex items-center justify-center space-x-2 px-6 py-3 bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold rounded-lg transition-colors">
+        <button onClick={handleViewProfile} className="flex items-center justify-center space-x-2 px-6 py-3 bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold rounded-lg transition-colors">
           <User className="h-5 w-5" />
           <span>View Profile</span>
         </button>
