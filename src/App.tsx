@@ -27,6 +27,17 @@ import PaymentResult from './pages/PaymentResult';
 import ShipmentConfirmation from './pages/ShipmentConfirmation';
 import EnhancedNavigation from './components/EnhancedNavigation';
 
+// Footer Pages
+import PersonalShopping from './pages/PersonalShopping';
+import PackageConsolidation from './pages/PackageConsolidation';
+import InternationalShipping from './pages/InternationalShipping';
+import ExpressDelivery from './pages/ExpressDelivery';
+import CustomsHandling from './pages/CustomsHandling';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import CookiePolicy from './pages/CookiePolicy';
+import Pricing from './pages/Pricing';
+
 // Admin Routes
 import AdminRoutes from './admin/routes/AdminRoutes';
 
@@ -53,6 +64,17 @@ function App() {
           <Route path="/payment" element={<Payment />} />
           <Route path="/payment-result" element={<PaymentResult />} />
           <Route path="/shipment-confirmation" element={<ShipmentConfirmation />} />
+          
+          {/* Footer Pages */}
+          <Route path="/personal-shopping" element={<PersonalShopping />} />
+          <Route path="/package-consolidation" element={<PackageConsolidation />} />
+          <Route path="/international-shipping" element={<InternationalShipping />} />
+          <Route path="/express-delivery" element={<ExpressDelivery />} />
+          <Route path="/customs-handling" element={<CustomsHandling />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/pricing" element={<Pricing />} />
           
           {/* Routes with navigation */}
           <Route path="/*" element={
