@@ -14,6 +14,13 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  React.useEffect(() => {
+    // If already authenticated, redirect to dashboard
+    if (userService.isAuthenticated()) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({

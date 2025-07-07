@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Package, Menu, X, LogOut, ShoppingCart } from 'lucide-react';
+import { userService } from '../api/services/userService';
 
 const EnhancedNavigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const isLoggedIn = userService.isAuthenticated();
 
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
-    console.log('User logging out...');
-    // In a real app, you would:
-    // 1. Call logout API
-    // 2. Clear localStorage/sessionStorage
-    // 3. Redirect to login page
-    // userService.logout();
-    // navigate('/login');
+    if (isLoggedIn) {
+      userService.logout();
+      navigate('/login');
+    }
   };
 
   const handleCreateOrder = () => {
@@ -37,33 +37,41 @@ const EnhancedNavigation: React.FC = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               to="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/') 
-                  ? 'text-blue-600 bg-blue-50' 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')
+                  ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-              }`}
+                }`}
             >
               Home
             </Link>
             <Link
               to="/dashboard"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/dashboard') 
-                  ? 'text-blue-600 bg-blue-50' 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
+                  ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-              }`}
+                }`}
             >
               Dashboard
             </Link>
             <div className="flex items-center space-x-4">
-              <button 
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
-              </button>
-              <button 
+              {isLoggedIn ? (
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign In</span>
+                </Link>
+              )}
+              <button
                 onClick={handleCreateOrder}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -90,37 +98,45 @@ const EnhancedNavigation: React.FC = () => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               <Link
                 to="/"
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive('/') 
-                    ? 'text-blue-600 bg-blue-50' 
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/')
+                    ? 'text-blue-600 bg-blue-50'
                     : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
+                  }`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
               <Link
                 to="/dashboard"
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive('/dashboard') 
-                    ? 'text-blue-600 bg-blue-50' 
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/dashboard')
+                    ? 'text-blue-600 bg-blue-50'
                     : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
+                  }`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Dashboard
               </Link>
               <div className="pt-4 pb-3 border-t border-gray-200">
-                <button 
-                  onClick={() => {
-                    handleLogout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 transition-colors"
-                >
-                  Sign Out
-                </button>
-                <button 
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                )}
+                <button
                   onClick={() => {
                     handleCreateOrder();
                     setIsMenuOpen(false);

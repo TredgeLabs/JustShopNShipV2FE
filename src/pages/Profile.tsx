@@ -214,18 +214,23 @@ const Profile: React.FC = () => {
       setIsSaving(true);
       setError('');
 
-      // Mock API call - replace with actual service call
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
-
-      // In production, use:
-      // const response = await userService.updateProfile(editData);
-      // setProfile(response.data);
+      // Call the real API to update profile
+      const payload = {
+        first_name: editData.firstName,
+        last_name: editData.lastName,
+        country: editData.country,
+        // Optionally add middle_name if you support it in the UI
+      };
+      await userService.updateProfile(payload);
 
       // Update local profile data
       if (profile) {
         setProfile({
           ...profile,
-          ...editData
+          firstName: editData.firstName,
+          lastName: editData.lastName,
+          country: editData.country,
+          phone: editData.phone,
         });
       }
 

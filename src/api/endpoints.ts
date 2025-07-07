@@ -13,7 +13,7 @@ export const ENDPOINTS = {
   // User Management
   USER: {
     PROFILE: 'users/profile',
-    UPDATE_PROFILE: '/user/profile',
+    UPDATE_PROFILE: 'users/profile',
     VAULT_INFO: '/user/vault',
     PREFERENCES: '/user/preferences',
     CHANGE_PASSWORD: 'users/change-password',
