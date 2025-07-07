@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Package, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Edit3, 
-  Save, 
-  X, 
-  LogOut, 
-  Lock, 
-  AlertCircle, 
-  CheckCircle, 
+import {
+  Package,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Edit3,
+  Save,
+  X,
+  LogOut,
+  Lock,
+  AlertCircle,
+  CheckCircle,
   Loader2,
   ArrowLeft,
   Plus,
@@ -105,33 +105,30 @@ const Profile: React.FC = () => {
   const loadProfile = async () => {
     try {
       setIsLoading(true);
-      
-      // Mock profile data - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-      
-      const mockProfile: UserProfile = {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 (555) 123-4567',
-        country: 'US',
-        membershipTier: 'Gold',
-        isVerified: true,
-        createdAt: '2024-01-15T00:00:00Z'
-      };
-      
-      // In production, use:
-      // const response = await userService.getProfile();
-      // setProfile(response.data);
-      
-      setProfile(mockProfile);
-      setEditData({
-        firstName: mockProfile.firstName,
-        lastName: mockProfile.lastName,
-        phone: mockProfile.phone,
-        country: mockProfile.country
-      });
+      const apiUser = await userService.getProfile();
+      const user = apiUser && (apiUser as any).user ? (apiUser as any).user : apiUser;
+      if (user) {
+        const mappedProfile: UserProfile = {
+          id: String(user.id),
+          firstName: user.first_name || '',
+          lastName: user.last_name || '',
+          email: user.email || '',
+          phone: user.phone_number || '',
+          country: user.country || '',
+          membershipTier: 'basic', // or map from user if available
+          isVerified: true, // or map from user if available
+          createdAt: user.createdAt || user.created_at || user.updatedAt || '',
+        };
+        setProfile(mappedProfile);
+        setEditData({
+          firstName: mappedProfile.firstName,
+          lastName: mappedProfile.lastName,
+          phone: mappedProfile.phone,
+          country: mappedProfile.country
+        });
+      } else {
+        setError('Failed to load profile. Please try again.');
+      }
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError(err.message);
@@ -176,11 +173,11 @@ const Profile: React.FC = () => {
           isDefault: false
         }
       ];
-      
+
       // In production, use:
       // const response = await userService.getAddresses();
       // setAddresses(response.data);
-      
+
       setAddresses(mockAddresses);
     } catch (err) {
       console.error('Failed to load addresses:', err);
@@ -216,14 +213,14 @@ const Profile: React.FC = () => {
     try {
       setIsSaving(true);
       setError('');
-      
+
       // Mock API call - replace with actual service call
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
-      
+
       // In production, use:
       // const response = await userService.updateProfile(editData);
       // setProfile(response.data);
-      
+
       // Update local profile data
       if (profile) {
         setProfile({
@@ -231,10 +228,10 @@ const Profile: React.FC = () => {
           ...editData
         });
       }
-      
+
       setSuccess('Profile updated successfully!');
       setIsEditing(false);
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -252,12 +249,12 @@ const Profile: React.FC = () => {
     try {
       // Mock API call - replace with actual service call
       // await userService.setDefaultAddress(addressId);
-      
+
       setAddresses(prev => prev.map(addr => ({
         ...addr,
         isDefault: addr.id === addressId
       })));
-      
+
       setSuccess('Default address updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
