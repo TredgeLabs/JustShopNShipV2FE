@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Package, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 const Footer: React.FC = () => {
@@ -27,11 +28,11 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">How It Works</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Pricing</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Shipping Calculator</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Track Your Order</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
+              <li><Link to="/guide" className="text-gray-300 hover:text-white transition-colors">How It Works</Link></li>
+              <li><Link to="/pricing" className="text-gray-300 hover:text-white transition-colors">Pricing</Link></li>
+              <li><Link to="/shipping-calculator" className="text-gray-300 hover:text-white transition-colors">Shipping Calculator</Link></li>
+              <li><Link to="/international-orders" className="text-gray-300 hover:text-white transition-colors">Track Your Order</Link></li>
+              <li><Link to="/faq" className="text-gray-300 hover:text-white transition-colors">FAQ</Link></li>
             </ul>
           </div>
 
@@ -39,11 +40,11 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Services</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Personal Shopping</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Package Consolidation</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">International Shipping</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Express Delivery</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Customs Handling</a></li>
+              <li><Link to="/personal-shopping" className="text-gray-300 hover:text-white transition-colors">Personal Shopping</Link></li>
+              <li><Link to="/package-consolidation" className="text-gray-300 hover:text-white transition-colors">Package Consolidation</Link></li>
+              <li><Link to="/international-shipping" className="text-gray-300 hover:text-white transition-colors">International Shipping</Link></li>
+              <li><Link to="/express-delivery" className="text-gray-300 hover:text-white transition-colors">Express Delivery</Link></li>
+              <li><Link to="/customs-handling" className="text-gray-300 hover:text-white transition-colors">Customs Handling</Link></li>
             </ul>
           </div>
 
@@ -86,9 +87,9 @@ const Footer: React.FC = () => {
             © 2024 JustShopAndShip. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
-            <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
-            <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
+            <Link to="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</Link>
+            <Link to="/cookie-policy" className="text-gray-400 hover:text-white text-sm transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </div>
