@@ -61,7 +61,20 @@ export interface ChangePasswordRequest {
 
 // Forgot password interface
 export interface ForgotPasswordRequest {
-  email: string;
+  phone_country_code: string;
+  phone_number: string;
+}
+
+// OTP verification interface
+export interface VerifyForgotPasswordOtpRequest {
+  phone_country_code: string;
+  phone_number: string;
+  otp_code: string;
+}
+
+export interface VerifyForgotPasswordOtpResponse {
+  message: string;
+  resetToken: string;
 }
 
 // User preferences interface
@@ -77,6 +90,17 @@ export interface UserPreferences {
     defaultCountry: string;
     preferredCarrier: string;
   };
+}
+
+// Update forgot password interface
+export interface UpdateForgotPasswordRequest {
+  token: string;
+  new_password: string;
+}
+
+export interface UpdateForgotPasswordResponse {
+  success: boolean;
+  message: string;
 }
 
 class UserService {
@@ -161,6 +185,26 @@ class UserService {
   }
 
   /**
+   * Verify forgot password OTP
+   */
+  async verifyForgotPasswordOtp(
+    data: VerifyForgotPasswordOtpRequest
+  ): Promise<VerifyForgotPasswordOtpResponse> {
+    try {
+      // The API expects a POST request with the OTP data
+      const response = await apiClient.post<VerifyForgotPasswordOtpResponse>(
+        ENDPOINTS.AUTH.VERIFY_FORGOT_PASSWORD_OTP,
+        data
+      );
+      // Some backends wrap response in .data, some don't
+      return (response as any).data || response;
+    } catch (error) {
+      console.error('Error verifying forgot password OTP:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Change password
    */
   async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<void>> {
@@ -240,6 +284,24 @@ class UserService {
       return response;
     } catch (error) {
       console.error('Error updating user preferences:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update password using reset token
+   */
+  async updateForgotPassword(
+    data: UpdateForgotPasswordRequest
+  ): Promise<UpdateForgotPasswordResponse> {
+    try {
+      const response = await apiClient.post<UpdateForgotPasswordResponse>(
+        ENDPOINTS.USER.UPDATE_PASSWORD,
+        data
+      );
+      return (response as any).data || response;
+    } catch (error) {
+      console.error('Error updating password:', error);
       throw error;
     }
   }

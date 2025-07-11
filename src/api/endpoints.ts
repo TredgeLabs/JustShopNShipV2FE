@@ -6,8 +6,9 @@ export const ENDPOINTS = {
     REGISTER: 'users/register',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
-    FORGOT_PASSWORD: '/auth/forgot-password',
+    FORGOT_PASSWORD: 'users/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
+    VERIFY_FORGOT_PASSWORD_OTP: 'users/verify-forgot-password-otp',
   },
 
   // User Management
@@ -17,6 +18,7 @@ export const ENDPOINTS = {
     VAULT_INFO: '/user/vault',
     PREFERENCES: '/user/preferences',
     CHANGE_PASSWORD: 'users/change-password',
+    UPDATE_PASSWORD: 'users/update-password',
   },
 
   // Orders
