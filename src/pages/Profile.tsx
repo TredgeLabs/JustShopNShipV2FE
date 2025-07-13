@@ -231,14 +231,8 @@ const Profile: React.FC = () => {
 
   const handleSetDefaultAddress = async (addressId: string) => {
     try {
-      // Mock API call - replace with actual service call
-      // await userService.setDefaultAddress(addressId);
-
-      setAddresses(prev => prev.map(addr => ({
-        ...addr,
-        isDefault: addr.id === addressId
-      })));
-
+      await userService.setDefaultAddress(addressId, { is_default: true });
+      await loadAddresses();
       setSuccess('Default address updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {

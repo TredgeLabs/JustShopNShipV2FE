@@ -1,3 +1,11 @@
+// Update Address request/response types
+export interface UpdateAddressRequest {
+  is_default: boolean;
+}
+
+export interface UpdateAddressResponse {
+  success: boolean;
+}
 // Add Address request/response types
 export interface AddAddressRequest {
   title: string;
@@ -152,6 +160,40 @@ export interface UpdateForgotPasswordResponse {
 }
 
 class UserService {
+  /**
+   * Update an address (e.g., set as default)
+   */
+  async updateAddress(addressId: string, data: UpdateAddressRequest): Promise<UpdateAddressResponse> {
+    try {
+      const response = await apiClient.put<UpdateAddressResponse>(`${ENDPOINTS.USER.ADDRESSES}/${addressId}`, data);
+      const resp = (response as any).data || response;
+      if (!resp.success) {
+        throw new Error('Failed to update address');
+      }
+      return resp;
+    } catch (error) {
+      console.error('Error updating address:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an address (e.g., set as default)
+   */
+  async setDefaultAddress(addressId: string, data: UpdateAddressRequest): Promise<UpdateAddressResponse> {
+    try {
+      const response = await apiClient.put<UpdateAddressResponse>(`${ENDPOINTS.USER.SET_DEFAULT_ADDRESSES}/${addressId}`, data);
+      const resp = (response as any).data || response;
+      if (!resp.success) {
+        throw new Error('Failed to update address');
+      }
+      return resp;
+    } catch (error) {
+      console.error('Error updating address:', error);
+      throw error;
+    }
+  }
+
   /**
    * Add a new address for the user
    */
