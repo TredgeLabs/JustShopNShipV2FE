@@ -142,43 +142,22 @@ const Profile: React.FC = () => {
 
   const loadAddresses = async () => {
     try {
-      // Mock addresses data - replace with actual API call
-      const mockAddresses: Address[] = [
-        {
-          id: '1',
-          title: 'Home',
-          firstName: 'John',
-          lastName: 'Doe',
-          line1: '123 Main Street',
-          line2: 'Apt 4B',
-          city: 'New York',
-          state: 'NY',
-          zipCode: '10001',
-          country: 'US',
-          phone: '+1 (555) 123-4567',
-          isDefault: true
-        },
-        {
-          id: '2',
-          title: 'Office',
-          firstName: 'John',
-          lastName: 'Doe',
-          line1: '456 Business Ave',
-          line2: 'Suite 200',
-          city: 'New York',
-          state: 'NY',
-          zipCode: '10002',
-          country: 'US',
-          phone: '+1 (555) 987-6543',
-          isDefault: false
-        }
-      ];
-
-      // In production, use:
-      // const response = await userService.getAddresses();
-      // setAddresses(response.data);
-
-      setAddresses(mockAddresses);
+      const apiAddresses = await userService.getAddresses();
+      const mappedAddresses: Address[] = apiAddresses.map(addr => ({
+        id: String(addr.id),
+        title: addr.title,
+        firstName: addr.recipient_first_name,
+        lastName: addr.recipient_last_name,
+        line1: addr.line1,
+        line2: addr.line2,
+        city: addr.city,
+        state: addr.state,
+        zipCode: addr.zip_code,
+        country: addr.country,
+        phone: `${addr.phone_country_code} ${addr.phone_number}`,
+        isDefault: addr.is_default,
+      }));
+      setAddresses(mappedAddresses);
     } catch (err) {
       console.error('Failed to load addresses:', err);
     }

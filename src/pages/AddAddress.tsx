@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  MapPin, 
-  User, 
-  Phone, 
-  Save, 
-  Loader2, 
-  AlertCircle, 
-  CheckCircle 
+import { userService } from '../api/services/userService';
+import {
+  ArrowLeft,
+  MapPin,
+  User,
+  Phone,
+  Save,
+  Loader2,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 
 interface AddressFormData {
@@ -92,7 +93,7 @@ const AddAddress: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     // Update country code when country changes
     if (name === 'country') {
       const selectedCountry = countries.find(c => c.code === value);
@@ -119,7 +120,7 @@ const AddAddress: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -127,15 +128,24 @@ const AddAddress: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Mock API call - replace with actual service call
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API delay
-      
-      // In production, use:
-      // const response = await userService.addAddress(formData);
-      
+      // Prepare payload for API
+      const payload = {
+        title: formData.title,
+        recipient_first_name: formData.firstName,
+        recipient_middle_name: '',
+        recipient_last_name: formData.lastName,
+        line1: formData.line1,
+        line2: formData.line2,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        zip_code: formData.zipCode,
+        phone_country_code: formData.countryCode,
+        phone_number: formData.phone,
+        is_default: false,
+      };
+      await userService.addAddress(payload);
       setSuccess(true);
-      
-      // Redirect to profile after 2 seconds
       setTimeout(() => {
         navigate('/profile');
       }, 2000);
@@ -154,7 +164,7 @@ const AddAddress: React.FC = () => {
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            
+
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Address Added Successfully!</h2>
             <p className="text-gray-600 mb-6">
               Your new address has been saved to your profile. You will be redirected shortly.
@@ -184,7 +194,7 @@ const AddAddress: React.FC = () => {
             <ArrowLeft className="h-5 w-5" />
             <span>Back to Profile</span>
           </button>
-          
+
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Address</h1>
             <p className="text-gray-600">Add a new shipping address to your profile</p>
@@ -238,9 +248,8 @@ const AddAddress: React.FC = () => {
                     required
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.firstName ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.firstName ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     placeholder="First name"
                   />
                 </div>
@@ -260,9 +269,8 @@ const AddAddress: React.FC = () => {
                   required
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.lastName ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.lastName ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Last name"
                 />
                 {errors.lastName && (
@@ -287,9 +295,8 @@ const AddAddress: React.FC = () => {
                   required
                   value={formData.line1}
                   onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.line1 ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.line1 ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Street address, P.O. box, company name"
                 />
               </div>
@@ -326,9 +333,8 @@ const AddAddress: React.FC = () => {
                   required
                   value={formData.city}
                   onChange={handleInputChange}
-                  className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.city ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="City"
                 />
                 {errors.city && (
@@ -347,9 +353,8 @@ const AddAddress: React.FC = () => {
                   required
                   value={formData.state}
                   onChange={handleInputChange}
-                  className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.state ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.state ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="State/Province"
                 />
                 {errors.state && (
@@ -368,9 +373,8 @@ const AddAddress: React.FC = () => {
                   required
                   value={formData.zipCode}
                   onChange={handleInputChange}
-                  className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.zipCode ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.zipCode ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="ZIP/Postal Code"
                 />
                 {errors.zipCode && (
@@ -428,9 +432,8 @@ const AddAddress: React.FC = () => {
                     required
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-3 border border-l-0 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.phone ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    className={`block w-full pl-10 pr-3 py-3 border border-l-0 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.phone ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     placeholder="Phone number"
                   />
                 </div>
