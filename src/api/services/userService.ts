@@ -44,6 +44,7 @@ export interface RegisterRequest {
   lastName: string;
   country: string;
   phone?: string;
+  selectedCountry?: string;
 }
 
 export interface AuthResponse {
@@ -137,7 +138,7 @@ class UserService {
         last_name: userData.lastName,
         country: userData.country,
         phone_number: userData.phone,
-        phone_country_code: '+91'
+        phone_country_code: userData.selectedCountry
       };
       const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.REGISTER, requestBody);
       
