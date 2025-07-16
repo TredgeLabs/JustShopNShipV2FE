@@ -14,6 +14,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
+import { inventoryService } from '../api/services/inventoryService';
 
 interface Product {
   id: string;
@@ -50,37 +51,24 @@ const CreateOrder: React.FC = () => {
   // Mock inventory data - replace with actual API call
   useEffect(() => {
     const loadInventoryItems = async () => {
-      // Simulate API call
-      const mockItems: InventoryItem[] = [
-        {
-          id: '1',
-          name: 'Traditional Silk Saree',
-          images: ['https://images.pexels.com/photos/8148579/pexels-photo-8148579.jpeg?auto=compress&cs=tinysrgb&w=300'],
-          price: 3500,
-          sizes: ['Free Size'],
-          colors: ['Royal Blue', 'Emerald Green'],
-          inStock: true
-        },
-        {
-          id: '2',
-          name: 'Ayurvedic Skincare Set',
-          images: ['https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=300'],
-          price: 2100,
-          sizes: ['Standard'],
-          colors: ['Natural'],
-          inStock: true
-        },
-        {
-          id: '3',
-          name: 'Silver Jewelry Set',
-          images: ['https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=300'],
-          price: 8500,
-          sizes: ['Adjustable'],
-          colors: ['Silver'],
-          inStock: true
+      try {
+        const response = await inventoryService.getInventoryList();
+        if (response.success && response.items) {
+          // Map API items to local InventoryItem type
+          const items: InventoryItem[] = response.items.map((item: any) => ({
+            id: item.id.toString(),
+            name: item.name,
+            images: item.image_urls.map((url: string) => url.startsWith('http') ? url : `http://localhost:4000${url}`),
+            price: parseFloat(item.offer_price || item.price),
+            sizes: item.size ? [item.size] : ['Standard'],
+            colors: item.color ? [item.color] : ['Default'],
+            inStock: item.is_active && item.quantity > 0
+          }));
+          setInventoryItems(items);
         }
-      ];
-      setInventoryItems(mockItems);
+      } catch (err) {
+        setError(`Failed to load inventory items. ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
     };
 
     loadInventoryItems();

@@ -15,6 +15,7 @@ import {
   Heart,
   Share2
 } from 'lucide-react';
+import { inventoryService } from '../api/services/inventoryService';
 
 interface InventoryItem {
   id: string;
@@ -61,53 +62,41 @@ const InventoryItemDetails: React.FC = () => {
   useEffect(() => {
     const loadItemDetails = async () => {
       if (!itemId) return;
-      
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock item data - in production, fetch based on itemId
-      const mockItem: InventoryItem = {
-        id: itemId,
-        name: 'Traditional Silk Saree - Royal Blue',
-        images: [
-          'https://images.pexels.com/photos/8148579/pexels-photo-8148579.jpeg?auto=compress&cs=tinysrgb&w=600',
-          'https://images.pexels.com/photos/8148580/pexels-photo-8148580.jpeg?auto=compress&cs=tinysrgb&w=600',
-          'https://images.pexels.com/photos/8148581/pexels-photo-8148581.jpeg?auto=compress&cs=tinysrgb&w=600',
-          'https://images.pexels.com/photos/8148582/pexels-photo-8148582.jpeg?auto=compress&cs=tinysrgb&w=600'
-        ],
-        price: 3500,
-        originalPrice: 4200,
-        size: ['Free Size'],
-        colors: ['Royal Blue', 'Emerald Green', 'Deep Red', 'Golden Yellow'],
-        brand: 'Craftsvilla',
-        category: 'clothing',
-        description: 'Exquisite handwoven silk saree with traditional motifs',
-        detailedDescription: `This stunning silk saree is a masterpiece of traditional Indian craftsmanship. Handwoven by skilled artisans, it features intricate motifs that tell stories of our rich cultural heritage. The lustrous silk fabric drapes beautifully and is perfect for special occasions, weddings, and festivals.
-
-The saree comes with a matching blouse piece and is designed to make you feel elegant and confident. Each piece is unique due to the handwoven nature, making it a truly special addition to your wardrobe.`,
-        material: '100% Pure Silk',
-        weight: '0.8 kg',
-        rating: 4.8,
-        reviewCount: 124,
-        inStock: true,
-        stockCount: 15,
-        features: [
-          'Handwoven by skilled artisans',
-          'Traditional motifs and designs',
-          'Includes matching blouse piece',
-          'Dry clean only',
-          'Perfect for special occasions',
-          'Authentic Indian craftsmanship'
-        ]
-      };
-      
-      setItem(mockItem);
-      setSelectedSize(mockItem.size[0]);
-      setSelectedColor(mockItem.colors[0]);
+      try {
+        const response = await inventoryService.getInventoryItemDetails(itemId);
+        if (response.success && response.item) {
+          const apiItem = response.item;
+          const mappedItem: InventoryItem = {
+            id: apiItem.id.toString(),
+            name: apiItem.name,
+            images: apiItem.image_urls.map((url: string) => url.startsWith('http') ? url : `http://localhost:4000${url}`),
+            price: parseFloat(apiItem.offer_price || apiItem.price),
+            originalPrice: apiItem.price ? parseFloat(apiItem.price) : undefined,
+            size: apiItem.size ? [apiItem.size] : ['Standard'],
+            colors: apiItem.color ? [apiItem.color] : ['Default'],
+            brand: apiItem.brand || '',
+            category: apiItem.category || '',
+            description: apiItem.description || '',
+            detailedDescription: apiItem.description || '',
+            material: apiItem.material || '',
+            weight: apiItem.weight_gm ? `${apiItem.weight_gm} gm` : '',
+            ingredients: [],
+            rating: 4.5,
+            reviewCount: 10,
+            inStock: apiItem.is_active && apiItem.quantity > 0,
+            stockCount: apiItem.quantity || 0,
+            features: []
+          };
+          setItem(mappedItem);
+          setSelectedSize(mappedItem.size[0]);
+          setSelectedColor(mappedItem.colors[0]);
+        }
+      } catch (err) {
+        setItem(null);
+      }
       setIsLoading(false);
     };
-
     loadItemDetails();
   }, [itemId]);
 

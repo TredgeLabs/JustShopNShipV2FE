@@ -53,4 +53,8 @@ export const ENDPOINTS = {
     EXCHANGE_RATES: '/misc/exchange-rates',
     NOTIFICATIONS: '/misc/notifications',
   },
+
+  INVENTORY: {
+    GET_INVENTORY: '/api/v1/inventory',
+  },
 } as const;

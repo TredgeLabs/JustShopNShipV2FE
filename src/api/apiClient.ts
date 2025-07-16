@@ -128,7 +128,7 @@ class ApiClient {
         );
       }
 
-      return responseData;
+     return { success: true, data: responseData };
     } catch (error) {
       if (error instanceof ApiClientError) {
         throw error;

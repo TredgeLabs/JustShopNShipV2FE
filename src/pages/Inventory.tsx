@@ -14,6 +14,7 @@ import {
   Grid,
   List
 } from 'lucide-react';
+import { inventoryService } from '../api/services/inventoryService';
 
 interface InventoryItem {
   id: string;
@@ -64,128 +65,37 @@ const Inventory: React.FC = () => {
     { value: 'newest', label: 'Newest First' }
   ];
 
-  // Mock data - replace with actual API call
+  // Load inventory from API
   useEffect(() => {
     const loadInventory = async () => {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockItems: InventoryItem[] = [
-        {
-          id: '1',
-          name: 'Traditional Silk Saree - Royal Blue',
-          images: [
-            'https://images.pexels.com/photos/8148579/pexels-photo-8148579.jpeg?auto=compress&cs=tinysrgb&w=400',
-            'https://images.pexels.com/photos/8148580/pexels-photo-8148580.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          price: 3500,
-          originalPrice: 4200,
-          size: ['Free Size'],
-          colors: ['Royal Blue', 'Emerald Green', 'Deep Red'],
-          brand: 'Craftsvilla',
-          category: 'clothing',
-          description: 'Exquisite handwoven silk saree with traditional motifs',
-          rating: 4.8,
-          reviewCount: 124,
-          inStock: true,
-          stockCount: 15
-        },
-        {
-          id: '2',
-          name: 'Ayurvedic Skincare Gift Set',
-          images: [
-            'https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          price: 2100,
-          size: ['Standard'],
-          colors: ['Natural'],
-          brand: 'Himalaya',
-          category: 'beauty',
-          description: 'Complete skincare routine with natural ingredients',
-          rating: 4.6,
-          reviewCount: 89,
-          inStock: true,
-          stockCount: 32
-        },
-        {
-          id: '3',
-          name: 'Handcrafted Silver Jewelry Set',
-          images: [
-            'https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=400',
-            'https://images.pexels.com/photos/1454172/pexels-photo-1454172.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          price: 8500,
-          originalPrice: 9500,
-          size: ['Adjustable'],
-          colors: ['Silver'],
-          brand: 'Tanishq',
-          category: 'jewelry',
-          description: 'Elegant silver jewelry set with traditional designs',
-          rating: 4.9,
-          reviewCount: 67,
-          inStock: true,
-          stockCount: 8
-        },
-        {
-          id: '4',
-          name: 'Organic Spice Collection',
-          images: [
-            'https://images.pexels.com/photos/4198015/pexels-photo-4198015.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          price: 1200,
-          size: ['500g Pack'],
-          colors: ['Mixed'],
-          brand: 'Organic India',
-          category: 'spices',
-          description: 'Premium organic spices sourced directly from farms',
-          rating: 4.7,
-          reviewCount: 156,
-          inStock: true,
-          stockCount: 45
-        },
-        {
-          id: '5',
-          name: 'Bluetooth Wireless Earbuds',
-          images: [
-            'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          price: 2800,
-          originalPrice: 3200,
-          size: ['One Size'],
-          colors: ['Black', 'White', 'Blue'],
-          brand: 'boAt',
-          category: 'electronics',
-          description: 'High-quality wireless earbuds with noise cancellation',
-          rating: 4.4,
-          reviewCount: 203,
-          inStock: true,
-          stockCount: 28
-        },
-        {
-          id: '6',
-          name: 'Brass Home Decor Set',
-          images: [
-            'https://images.pexels.com/photos/4465125/pexels-photo-4465125.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          price: 1800,
-          size: ['Medium'],
-          colors: ['Brass Gold'],
-          brand: 'Artisan Crafts',
-          category: 'home-decor',
-          description: 'Beautiful brass decorative items for your home',
-          rating: 4.5,
-          reviewCount: 78,
-          inStock: false,
-          stockCount: 0
+      try {
+        const response = await inventoryService.getInventoryList();
+        if (response.success && response.items) {
+          const items: InventoryItem[] = response.items.map((item: any) => ({
+            id: item.id.toString(),
+            name: item.name,
+            images: item.image_urls.map((url: string) => url.startsWith('http') ? url : `http://localhost:4000${url}`),
+            price: parseFloat(item.offer_price || item.price),
+            originalPrice: item.price ? parseFloat(item.price) : undefined,
+            size: item.size ? [item.size] : ['Standard'],
+            colors: item.color ? [item.color] : ['Default'],
+            brand: item.brand || '',
+            category: item.category || '',
+            description: item.description || '',
+            rating: item.rating || 4.5,
+            reviewCount: item.reviewCount || 10,
+            inStock: item.is_active && item.quantity > 0,
+            stockCount: item.quantity || 0
+          }));
+          setItems(items);
+          setFilteredItems(items);
         }
-      ];
-      
-      setItems(mockItems);
-      setFilteredItems(mockItems);
+      } catch (err) {
+        // Optionally set error state and show error UI
+      }
       setIsLoading(false);
     };
-
     loadInventory();
   }, []);
 
