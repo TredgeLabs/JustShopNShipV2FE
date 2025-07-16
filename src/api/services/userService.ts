@@ -1,3 +1,58 @@
+// Update Address request/response types
+export interface UpdateAddressRequest {
+  is_default: boolean;
+}
+
+export interface UpdateAddressResponse {
+  success: boolean;
+}
+// Add Address request/response types
+export interface AddAddressRequest {
+  title: string;
+  recipient_first_name: string;
+  recipient_middle_name?: string;
+  recipient_last_name: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  country: string;
+  zip_code: string;
+  phone_country_code: string;
+  phone_number: string;
+  is_default?: boolean;
+}
+
+export interface AddAddressResponse {
+  success: boolean;
+  address: AddressApi;
+}
+// Address API response types
+export interface AddressApiResponse {
+  success: boolean;
+  addresses: AddressApi[];
+}
+
+export interface AddressApi {
+  id: number;
+  user_id: number;
+  title: string;
+  recipient_first_name: string;
+  recipient_middle_name?: string;
+  recipient_last_name: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  country: string;
+  zip_code: string;
+  phone_country_code: string;
+  phone_number: string;
+  is_default: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 import apiClient from '../apiClient';
 import { ENDPOINTS } from '../endpoints';
 import { ApiResponse } from '../config';
@@ -44,6 +99,7 @@ export interface RegisterRequest {
   lastName: string;
   country: string;
   phone?: string;
+  selectedCountry?: string;
 }
 
 export interface AuthResponse {
@@ -105,6 +161,57 @@ export interface UpdateForgotPasswordResponse {
 
 class UserService {
   /**
+   * Update an address (e.g., set as default)
+   */
+  async updateAddress(addressId: string, data: UpdateAddressRequest): Promise<UpdateAddressResponse> {
+    try {
+      const response = await apiClient.put<UpdateAddressResponse>(`${ENDPOINTS.USER.ADDRESSES}/${addressId}`, data);
+      const resp = (response as any).data || response;
+      if (!resp.success) {
+        throw new Error('Failed to update address');
+      }
+      return resp;
+    } catch (error) {
+      console.error('Error updating address:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an address (e.g., set as default)
+   */
+  async setDefaultAddress(addressId: string, data: UpdateAddressRequest): Promise<UpdateAddressResponse> {
+    try {
+      const response = await apiClient.put<UpdateAddressResponse>(`${ENDPOINTS.USER.SET_DEFAULT_ADDRESSES}/${addressId}`, data);
+      const resp = (response as any).data || response;
+      if (!resp.success) {
+        throw new Error('Failed to update address');
+      }
+      return resp;
+    } catch (error) {
+      console.error('Error updating address:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add a new address for the user
+   */
+  async addAddress(data: AddAddressRequest): Promise<AddAddressResponse> {
+    try {
+      const response = await apiClient.post<AddAddressResponse>(ENDPOINTS.USER.ADDRESSES, data);
+      // If apiClient wraps in .data, unwrap, else use as is
+      const resp = (response as any).data || response;
+      if (!resp.success || !resp.address) {
+        throw new Error('Failed to add address');
+      }
+      return resp;
+    } catch (error) {
+      console.error('Error adding address:', error);
+      throw error;
+    }
+  }
+  /**
    * User login
    */
   async login(credentials: LoginRequest): Promise<ApiResponse<AuthResponse>> {
@@ -137,7 +244,7 @@ class UserService {
         last_name: userData.lastName,
         country: userData.country,
         phone_number: userData.phone,
-        phone_country_code: '+91'
+        phone_country_code: userData.selectedCountry
       };
       const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.REGISTER, requestBody);
       
@@ -302,6 +409,34 @@ class UserService {
       return (response as any).data || response;
     } catch (error) {
       console.error('Error updating password:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get address list of user
+   */
+
+  async getAddresses(): Promise<AddressApi[]> {
+    try {
+      // Response is { success, addresses: [...] }
+      const apiRaw = await apiClient.get<any>(ENDPOINTS.USER.ADDRESSES);
+      // If apiClient wraps in .data, unwrap, else use as is
+      let addresses: AddressApi[] | undefined;
+      let success: boolean | undefined;
+      if ('addresses' in apiRaw) {
+        addresses = apiRaw.addresses as AddressApi[];
+        success = apiRaw.success;
+      } else if (apiRaw.data && 'addresses' in apiRaw.data) {
+        addresses = apiRaw.data.addresses as AddressApi[];
+        success = apiRaw.data.success;
+      }
+      if (!success || !addresses) {
+        throw new Error('Failed to fetch addresses');
+      }
+      return addresses;
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
       throw error;
     }
   }
