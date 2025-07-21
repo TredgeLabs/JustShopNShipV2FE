@@ -59,4 +59,9 @@ export const ENDPOINTS = {
   INVENTORY: {
     GET_INVENTORY: '/api/v1/inventory',
   },
+
+  // Product Scraping
+  PRODUCTS: {
+    DETAILS: 'products/details',
+  },
 } as const;

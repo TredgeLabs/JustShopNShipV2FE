@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  X, 
-  ExternalLink, 
-  Package, 
-  Edit3, 
-  Save, 
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  X,
+  ExternalLink,
+  Package,
+  Edit3,
+  Save,
   ArrowRight,
   Loader2,
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
 import { inventoryService } from '../api/services/inventoryService';
+import { productService, ProductDetailsResponse } from '../api/services/userService';
 
 interface Product {
   id: string;
@@ -84,23 +85,23 @@ const CreateOrder: React.FC = () => {
     setError('');
 
     try {
-      // Simulate URL scraping - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock scraped data
-      const mockScrapedData: Partial<Product> = {
-        name: 'Handwoven Cotton Kurta',
-        color: 'White',
-        size: 'L',
-        quantity: 1,
-        price: 1299,
-        url: productUrl,
-        image: 'https://images.pexels.com/photos/8148582/pexels-photo-8148582.jpeg?auto=compress&cs=tinysrgb&w=300'
-      };
-
-      setScrapedProduct(mockScrapedData);
-      setSuccess('Product details fetched successfully!');
-      setTimeout(() => setSuccess(''), 3000);
+      const response: ProductDetailsResponse = await productService.getProductDetailsByUrl(productUrl);
+      if (response.success && response.details) {
+        const scrapedData: Partial<Product> = {
+          name: response.details.product_name,
+          color: response.details.colors && response.details.colors.length > 0 ? response.details.colors[0] : '',
+          size: response.details.sizes && response.details.sizes.length > 0 ? response.details.sizes[0] : '',
+          quantity: 1,
+          price: 0, // Price may not be available from scraping
+          url: productUrl,
+          image: response.details.product_image
+        };
+        setScrapedProduct(scrapedData);
+        setSuccess('Product details fetched successfully!');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError('Failed to fetch product details. Please check the URL and try again.');
+      }
     } catch (err) {
       setError('Failed to fetch product details. Please check the URL and try again.');
     } finally {
@@ -147,7 +148,7 @@ const CreateOrder: React.FC = () => {
   };
 
   const updateCartItem = (id: string, field: keyof Product, value: string | number) => {
-    setCart(prev => prev.map(item => 
+    setCart(prev => prev.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
@@ -157,7 +158,7 @@ const CreateOrder: React.FC = () => {
   };
 
   const toggleEdit = (id: string) => {
-    setCart(prev => prev.map(item => 
+    setCart(prev => prev.map(item =>
       item.id === id ? { ...item, isEditing: !item.isEditing } : item
     ));
   };
@@ -171,7 +172,7 @@ const CreateOrder: React.FC = () => {
       setError('Please add at least one product to your cart');
       return;
     }
-    
+
     // Store cart data in localStorage for order confirmation page
     localStorage.setItem('orderCart', JSON.stringify(cart));
     navigate('/order-confirmation');
@@ -212,7 +213,7 @@ const CreateOrder: React.FC = () => {
             {/* Add New Product Section */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Add Product from URL</h2>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -345,7 +346,7 @@ const CreateOrder: React.FC = () => {
           {/* Right Column - Cart */}
           <div className="bg-white rounded-lg shadow-lg p-6 h-fit sticky top-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Shopping Cart</h2>
-            
+
             {cart.length === 0 ? (
               <div className="text-center py-8">
                 <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -411,7 +412,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onUpdate, onRemove, onToggleE
             className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
           />
         )}
-        
+
         <div className="flex-1 min-w-0">
           {item.isEditing ? (
             <div className="space-y-2">
@@ -512,14 +513,14 @@ const InventoryQuickCard: React.FC<InventoryQuickCardProps> = ({ item, onAddToCa
         className="w-full h-32 object-cover rounded-lg mb-3 cursor-pointer"
         onClick={onViewDetails}
       />
-      
-      <h3 
+
+      <h3
         className="font-medium text-gray-900 text-sm leading-tight mb-2 cursor-pointer hover:text-blue-600 transition-colors"
         onClick={onViewDetails}
       >
         {item.name}
       </h3>
-      
+
       <p className="text-sm font-semibold text-gray-900 mb-3">
         ₹{item.price.toLocaleString()}
       </p>

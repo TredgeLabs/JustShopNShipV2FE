@@ -1,3 +1,29 @@
+// Product details scraping API response type
+export interface ProductDetailsResponse {
+  success: boolean;
+  source: string;
+  details: {
+    product_name: string;
+    product_image: string;
+    sizes: string[] | null;
+    colors: string[] | null;
+    source: string;
+  };
+}
+
+class ProductService {
+  async getProductDetailsByUrl(url: string): Promise<ProductDetailsResponse> {
+    try {
+      const response = await apiClient.get<ProductDetailsResponse>(`${ENDPOINTS.PRODUCTS.DETAILS}?url=${encodeURIComponent(url)}`);
+      return (response as any).data || response;
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      throw error;
+    }
+  }
+}
+
+export const productService = new ProductService();
 // Update Address request/response types
 export interface UpdateAddressRequest {
   is_default: boolean;
