@@ -61,6 +61,9 @@ class ApiClient {
         if (refreshToken) {
           try {
             // Implement token refresh logic here
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/login';
             console.log('Token refresh needed');
           } catch (error) {
             // Refresh failed, redirect to login

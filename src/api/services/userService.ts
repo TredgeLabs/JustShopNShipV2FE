@@ -128,6 +128,11 @@ export interface RegisterRequest {
   selectedCountry?: string;
 }
 
+export interface Data {
+  data: AuthResponse;
+}
+
+
 export interface AuthResponse {
   user: User;
   token: string;
@@ -240,15 +245,15 @@ class UserService {
   /**
    * User login
    */
-  async login(credentials: LoginRequest): Promise<ApiResponse<AuthResponse>> {
+  async login(credentials: LoginRequest): Promise<ApiResponse<Data>> {
     try {
-      const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.LOGIN, credentials);
+      const response = await apiClient.post<Data>(ENDPOINTS.AUTH.LOGIN, credentials);
       
       // Store tokens in localStorage
       if (response.success && response.data) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('authToken', response.data.data.token);
+        localStorage.setItem('refreshToken', response.data.data.refreshToken);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
       }
 
       return response;
