@@ -133,7 +133,7 @@ const OrdersList: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Pending Evaluations</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {localOrders.filter(order => order.status === 'pending').length}
+                  {localOrders.filter(order => order.status === 'pending' || order.status === 'processing').length}
                 </p>
               </div>
             </div>
@@ -145,7 +145,7 @@ const OrdersList: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency([...localOrders, ...internationalOrders].reduce((sum, order) => sum + order.totalAmount, 0))}
+                  {formatCurrency([...localOrders, ...internationalOrders].reduce((sum, order) => sum + order.total_amount, 0))}
                 </p>
               </div>
             </div>

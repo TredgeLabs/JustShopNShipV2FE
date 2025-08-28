@@ -9,13 +9,16 @@ import {
   XCircle,
   AlertCircle,
   Calendar,
-  DollarSign
+  DollarSign,
+  Package,
+  Layers
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { adminApiService, LocalOrderDetails, LocalOrderItem, BulkProcessRequest } from '../services/adminApiService';
 import { formatDate, formatCurrency, copyToClipboard } from '../utils/adminHelpers';
 import { DENY_REASONS } from '../constants/adminConstants';
+import BulkProcessModal from '../components/BulkProcessModal';
 
 interface EvaluationData {
   [itemId: number]: {
@@ -35,6 +38,7 @@ const LocalOrderEvaluation: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showBulkModal, setShowBulkModal] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -163,6 +167,58 @@ Phone: +91 9876543210`;
       setError(`Error submitting evaluation: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleBulkProcess = async (bulkData: BulkProcessRequest) => {
+    if (!orderDetails) return;
+
+    try {
+      const response = await adminApiService.bulkProcessOrderItems(orderDetails.id.toString(), bulkData);
+      
+      if (response.success) {
+        setSuccess('Order items processed successfully!');
+        // Reload order details to see updated statuses
+        await loadOrderDetails();
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError('Failed to process order items');
+      }
+    } catch (err) {
+      setError(`Error processing order items: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleAddToVault = async (item: LocalOrderItem) => {
+    if (!orderDetails) return;
+
+    try {
+      const vaultItemData = {
+        vault_id: parseInt(orderDetails.vault_id.split('-')[2]) || 1,
+        name: item.name,
+        description: item.name,
+        source_type: 'user_sent',
+        received_date: new Date().toISOString(),
+        weight_gm: 500, // Default weight - should be input by admin
+        status: 'received',
+        is_returnable: false,
+        returnable_until: null,
+        storage_days_free: 90,
+        storage_fee_per_day: 2,
+        image_urls: item.image_url ? [item.image_url] : [],
+        is_ready_to_ship: true
+      };
+
+      const response = await adminApiService.addVaultItem(vaultItemData.vault_id, vaultItemData);
+      
+      if (response.success) {
+        setSuccess(`Item "${item.name}" added to vault successfully!`);
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError('Failed to add item to vault');
+      }
+    } catch (err) {
+      setError(`Error adding item to vault: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -304,7 +360,16 @@ Phone: +91 9876543210`;
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Items Evaluation</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Items Evaluation</h3>
+                  <button
+                    onClick={() => setShowBulkModal(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  >
+                    <Layers className="h-4 w-4" />
+                    <span>Bulk Process</span>
+                  </button>
+                </div>
               </div>
               
               <div className="p-6 space-y-6">
@@ -313,6 +378,13 @@ Phone: +91 9876543210`;
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <h4 className="text-lg font-medium text-gray-900 mb-2">{item.name}</h4>
+                        {item.image_url && (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-20 h-20 object-cover rounded-lg mb-3"
+                          />
+                        )}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div>
                             <span className="font-medium">Original Cost:</span>
@@ -331,6 +403,19 @@ Phone: +91 9876543210`;
                             <p>#{item.id}</p>
                           </div>
                         </div>
+                        
+                        {/* Add to Vault Button for Approved Items */}
+                        {item.status === 'approved' && (
+                          <div className="mt-4">
+                            <button
+                              onClick={() => handleAddToVault(item)}
+                              className="flex items-center space-x-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
+                            >
+                              <Package className="h-4 w-4" />
+                              <span>Add to Vault</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <a
                         href={item.link}
@@ -457,6 +542,14 @@ Phone: +91 9876543210`;
             </div>
           </div>
         </div>
+
+        {/* Bulk Process Modal */}
+        <BulkProcessModal
+          isOpen={showBulkModal}
+          onClose={() => setShowBulkModal(false)}
+          items={orderDetails.items}
+          onSubmit={handleBulkProcess}
+        />
       </div>
     </AdminLayout>
   );
