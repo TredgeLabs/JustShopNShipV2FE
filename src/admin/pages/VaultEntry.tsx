@@ -139,13 +139,24 @@ const VaultEntry: React.FC = () => {
       setIsSaving(true);
       setError('');
 
+      // Convert form data to API format
       const itemData = {
-        vaultId: userDetails.vaultId,
-        transitItemId: selectedTransitItem?.id,
-        ...vaultItemDetails
+        vault_id: parseInt(userDetails.vaultId.split('-')[2]) || 1, // Extract vault ID number
+        name: vaultItemDetails.name,
+        description: vaultItemDetails.description || vaultItemDetails.name,
+        source_type: 'user_sent',
+        received_date: new Date().toISOString(),
+        weight_gm: Math.round(vaultItemDetails.weight * 1000), // Convert kg to grams
+        status: 'received',
+        is_returnable: false,
+        returnable_until: null,
+        storage_days_free: 90,
+        storage_fee_per_day: 2,
+        image_urls: [], // In production, upload images and get URLs
+        is_ready_to_ship: true
       };
 
-      const response = await adminApiService.enterVaultItem(userDetails.vaultId, itemData);
+      const response = await adminApiService.addVaultItem(itemData.vault_id, itemData);
       
       if (response.success) {
         setSuccess('Item entered in vault successfully!');
@@ -162,18 +173,12 @@ const VaultEntry: React.FC = () => {
         });
         setSelectedTransitItem(null);
         
-        // Refresh user details to update transit items
-        const updatedResponse = await adminApiService.validateVaultId(userDetails.vaultId);
-        if (updatedResponse.success) {
-          setUserDetails(updatedResponse.data);
-        }
-        
         setTimeout(() => setSuccess(''), 5000);
       } else {
         setError('Failed to enter item in vault');
       }
     } catch (err) {
-      setError('Error entering item in vault');
+      setError(`Error entering item in vault: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }

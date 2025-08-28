@@ -13,55 +13,24 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { adminApiService } from '../services/adminApiService';
+import { adminApiService, LocalOrderDetails, LocalOrderItem, BulkProcessRequest } from '../services/adminApiService';
 import { formatDate, formatCurrency, copyToClipboard } from '../utils/adminHelpers';
 import { DENY_REASONS } from '../constants/adminConstants';
 
-interface OrderItem {
-  id: string;
-  name: string;
-  cost: number;
-  link: string;
-  size: string;
-  quantity: number;
-  color: string;
-  actualPrice: number;
-  status: string;
-}
-
-interface OrderDetails {
-  id: string;
-  orderDate: string;
-  userName: string;
-  userEmail: string;
-  userPhone: string;
-  vaultAddress: {
-    name: string;
-    vaultId: string;
-    street: string;
-    address: string;
-    city: string;
-    country: string;
-    phone: string;
-  };
-  items: OrderItem[];
-}
-
 interface EvaluationData {
-  [itemId: string]: {
+  [itemId: number]: {
     actualPrice: number;
     decision: 'accept' | 'deny';
     denyReasons: string[];
-    shipmentDate: string;
   };
 }
 
 const LocalOrderEvaluation: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [orderDetails, setOrderDetails] = useState<LocalOrderDetails | null>(null);
   const [evaluationData, setEvaluationData] = useState<EvaluationData>({});
-  const [paymentReturnDone, setPaymentReturnDone] = useState(false);
+  const [adminNotes, setAdminNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -76,17 +45,17 @@ const LocalOrderEvaluation: React.FC = () => {
   const loadOrderDetails = async () => {
     try {
       setIsLoading(true);
+      setError('');
       const response = await adminApiService.getOrderDetails(orderId!);
       if (response.success) {
         setOrderDetails(response.data);
         // Initialize evaluation data
         const initialEvaluation: EvaluationData = {};
-        response.data.items.forEach((item: OrderItem) => {
+        response.data.items.forEach((item: LocalOrderItem) => {
           initialEvaluation[item.id] = {
-            actualPrice: item.cost,
+            actualPrice: item.price,
             decision: 'accept',
-            denyReasons: [],
-            shipmentDate: new Date().toISOString().split('T')[0]
+            denyReasons: []
           };
         });
         setEvaluationData(initialEvaluation);
@@ -94,13 +63,13 @@ const LocalOrderEvaluation: React.FC = () => {
         setError('Failed to load order details');
       }
     } catch (err) {
-      setError('Error loading order details');
+      setError(`Error loading order details: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleItemEvaluationChange = (itemId: string, field: string, value: any) => {
+  const handleItemEvaluationChange = (itemId: number, field: string, value: any) => {
     setEvaluationData(prev => ({
       ...prev,
       [itemId]: {
@@ -110,7 +79,7 @@ const LocalOrderEvaluation: React.FC = () => {
     }));
   };
 
-  const handleDenyReasonToggle = (itemId: string, reason: string) => {
+  const handleDenyReasonToggle = (itemId: number, reason: string) => {
     setEvaluationData(prev => {
       const currentReasons = prev[itemId]?.denyReasons || [];
       const newReasons = currentReasons.includes(reason)
@@ -130,13 +99,13 @@ const LocalOrderEvaluation: React.FC = () => {
   const handleCopyVaultAddress = async () => {
     if (!orderDetails) return;
     
-    const address = `${orderDetails.vaultAddress.name}
-Vault ID: ${orderDetails.vaultAddress.vaultId}
-${orderDetails.vaultAddress.street}
-${orderDetails.vaultAddress.address}
-${orderDetails.vaultAddress.city}
-${orderDetails.vaultAddress.country}
-Phone: ${orderDetails.vaultAddress.phone}`;
+    const address = `${orderDetails.user_name}
+Vault ID: ${orderDetails.vault_id}
+JustShopAndShip Warehouse
+Plot No. 45, Sector 18, Gurgaon
+Gurgaon, Haryana 122001
+India
+Phone: +91 9876543210`;
 
     const copied = await copyToClipboard(address);
     if (copied) {
@@ -162,13 +131,25 @@ Phone: ${orderDetails.vaultAddress.phone}`;
       setIsSaving(true);
       setError('');
 
-      const submissionData = {
-        orderId: orderDetails.id,
-        evaluations: evaluationData,
-        paymentReturnDone
+      // Convert evaluation data to API format
+      const items = Object.entries(evaluationData).map(([itemId, evaluation]) => ({
+        item_id: parseInt(itemId),
+        action: evaluation.decision,
+        ...(evaluation.decision === 'deny' && { 
+          deny_reasons: evaluation.denyReasons.map(reason => {
+            // Map reason text to reason ID (you may need to adjust this mapping)
+            const reasonIndex = DENY_REASONS.indexOf(reason as any);
+            return reasonIndex >= 0 ? reasonIndex + 1 : 8; // Default to "Other"
+          })
+        })
+      }));
+
+      const submissionData: BulkProcessRequest = {
+        items,
+        admin_notes: adminNotes || `Bulk processed on ${new Date().toLocaleDateString()}`
       };
 
-      const response = await adminApiService.submitOrderEvaluation(orderDetails.id, submissionData);
+      const response = await adminApiService.bulkProcessOrderItems(orderDetails.id.toString(), submissionData);
       
       if (response.success) {
         setSuccess('Order evaluation submitted successfully!');
@@ -179,7 +160,7 @@ Phone: ${orderDetails.vaultAddress.phone}`;
         setError('Failed to submit evaluation');
       }
     } catch (err) {
-      setError('Error submitting evaluation');
+      setError(`Error submitting evaluation: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
@@ -258,19 +239,19 @@ Phone: ${orderDetails.vaultAddress.phone}`;
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Name</label>
-                  <p className="text-gray-900">{orderDetails.userName}</p>
+                  <p className="text-gray-900">{orderDetails.user_name}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-gray-900">{orderDetails.userEmail}</p>
+                  <p className="text-gray-900">{orderDetails.user_email}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Phone</label>
-                  <p className="text-gray-900">{orderDetails.userPhone}</p>
+                  <p className="text-gray-900">{orderDetails.user_phone}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Order Date</label>
-                  <p className="text-gray-900">{formatDate(orderDetails.orderDate)}</p>
+                  <p className="text-gray-900">{formatDate(orderDetails.created_at)}</p>
                 </div>
               </div>
             </div>
@@ -289,31 +270,33 @@ Phone: ${orderDetails.vaultAddress.phone}`;
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="space-y-1 text-sm">
-                  <div className="font-semibold text-blue-900">{orderDetails.vaultAddress.name}</div>
-                  <div className="text-blue-800">Vault ID: {orderDetails.vaultAddress.vaultId}</div>
-                  <div className="text-blue-800">{orderDetails.vaultAddress.street}</div>
-                  <div className="text-blue-800">{orderDetails.vaultAddress.address}</div>
-                  <div className="text-blue-800">{orderDetails.vaultAddress.city}</div>
-                  <div className="text-blue-800">{orderDetails.vaultAddress.country}</div>
-                  <div className="text-blue-800">Phone: {orderDetails.vaultAddress.phone}</div>
+                  <div className="font-semibold text-blue-900">{orderDetails.user_name}</div>
+                  <div className="text-blue-800">Vault ID: {orderDetails.vault_id}</div>
+                  <div className="text-blue-800">JustShopAndShip Warehouse</div>
+                  <div className="text-blue-800">Plot No. 45, Sector 18, Gurgaon</div>
+                  <div className="text-blue-800">Gurgaon, Haryana 122001</div>
+                  <div className="text-blue-800">India</div>
+                  <div className="text-blue-800">Phone: +91 9876543210</div>
                 </div>
               </div>
             </div>
 
-            {/* Payment Return */}
+            {/* Admin Notes */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Status</h3>
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={paymentReturnDone}
-                  onChange={(e) => setPaymentReturnDone(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <span className="text-sm text-gray-700">
-                  Payment Return Done (for partial/full refund if required)
-                </span>
-              </label>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Admin Notes</h3>
+              <textarea
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Add notes about this evaluation..."
+              />
+              {orderDetails.admin_notes && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Previous notes:</p>
+                  <p className="text-sm text-gray-800">{orderDetails.admin_notes}</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -333,19 +316,19 @@ Phone: ${orderDetails.vaultAddress.phone}`;
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div>
                             <span className="font-medium">Original Cost:</span>
-                            <p>{formatCurrency(item.cost)}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium">Size:</span>
-                            <p>{item.size}</p>
+                            <p>{formatCurrency(item.price)}</p>
                           </div>
                           <div>
                             <span className="font-medium">Quantity:</span>
                             <p>{item.quantity}</p>
                           </div>
                           <div>
-                            <span className="font-medium">Color:</span>
-                            <p>{item.color}</p>
+                            <span className="font-medium">Status:</span>
+                            <p className="capitalize">{item.status}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium">Item ID:</span>
+                            <p>#{item.id}</p>
                           </div>
                         </div>
                       </div>
@@ -360,7 +343,7 @@ Phone: ${orderDetails.vaultAddress.phone}`;
                       </a>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Actual Price */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -369,24 +352,10 @@ Phone: ${orderDetails.vaultAddress.phone}`;
                         </label>
                         <input
                           type="number"
-                          value={evaluationData[item.id]?.actualPrice || item.cost}
+                          value={evaluationData[item.id]?.actualPrice || item.price}
                           onChange={(e) => handleItemEvaluationChange(item.id, 'actualPrice', parseFloat(e.target.value))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Enter actual price"
-                        />
-                      </div>
-
-                      {/* Shipment Date */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          <Calendar className="inline h-4 w-4 mr-1" />
-                          Shipment Date
-                        </label>
-                        <input
-                          type="date"
-                          value={evaluationData[item.id]?.shipmentDate || new Date().toISOString().split('T')[0]}
-                          onChange={(e) => handleItemEvaluationChange(item.id, 'shipmentDate', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
 
@@ -452,6 +421,20 @@ Phone: ${orderDetails.vaultAddress.phone}`;
 
                 {/* Submit Button */}
                 <div className="pt-6 border-t border-gray-200">
+                  {/* Admin Notes */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Admin Notes (Optional)
+                    </label>
+                    <textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Add any notes about this evaluation..."
+                    />
+                  </div>
+                  
                   <button
                     onClick={handleSubmitEvaluation}
                     disabled={isSaving}

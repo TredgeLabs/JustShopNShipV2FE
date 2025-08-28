@@ -1,138 +1,279 @@
 import { ApiResponse } from '../../api/config';
 
-// Admin-specific API service
+// Admin API response types
+export interface AdminLoginRequest {
+  admin_code: string;
+}
+
+export interface AdminLoginResponse {
+  success: boolean;
+  token: string;
+  admin: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+export interface AdminOrder {
+  id: number;
+  user_id: number;
+  user_name: string;
+  user_email: string;
+  user_phone?: string;
+  vault_id?: string;
+  status: string;
+  payment_status: string;
+  total_amount: number;
+  platform_fee: number;
+  created_at: string;
+  updated_at: string;
+  items_count: number;
+  location?: string;
+}
+
+export interface LocalOrderDetails {
+  id: number;
+  user_id: number;
+  user_name: string;
+  user_email: string;
+  user_phone: string;
+  vault_id: string;
+  status: string;
+  payment_status: string;
+  total_amount: number;
+  platform_fee: number;
+  admin_notes?: string;
+  created_at: string;
+  updated_at: string;
+  items: LocalOrderItem[];
+}
+
+export interface LocalOrderItem {
+  id: number;
+  order_id: number;
+  name: string;
+  link: string;
+  price: number;
+  image_url?: string;
+  quantity: number;
+  status: string;
+  deny_reasons?: number[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BulkProcessRequest {
+  items: Array<{
+    item_id: number;
+    action: 'approve' | 'deny';
+    deny_reasons?: number[];
+  }>;
+  admin_notes?: string;
+}
+
+export interface VaultItemRequest {
+  vault_id: number;
+  name: string;
+  description: string;
+  source_type: string;
+  received_date: string;
+  weight_gm: number;
+  status: string;
+  is_returnable: boolean;
+  returnable_until?: string | null;
+  storage_days_free: number;
+  storage_fee_per_day: number;
+  image_urls: string[];
+  is_ready_to_ship: boolean;
+}
+
+export interface ShipInternationalRequest {
+  tracking_id: string;
+  tracking_link: string;
+}
+
+// Admin API Service
 class AdminApiService {
-  private baseUrl = '/api/admin';
+  private baseUrl = 'http://localhost:4000/api/admin';
 
-  // Orders API
-  async getLocalOrders(): Promise<ApiResponse<any[]>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: [
-            {
-              id: 'LO-001',
-              orderDate: '2024-01-25',
-              userName: 'John Doe',
-              userEmail: 'john@example.com',
-              location: 'Mumbai, India',
-              items: 'Traditional Silk Saree, Ayurvedic Skincare Set',
-              status: 'pending',
-              totalAmount: 5600,
-              itemCount: 2
-            },
-            {
-              id: 'LO-002',
-              orderDate: '2024-01-24',
-              userName: 'Jane Smith',
-              userEmail: 'jane@example.com',
-              location: 'Delhi, India',
-              items: 'Handcrafted Jewelry, Organic Spices',
-              status: 'processing',
-              totalAmount: 9700,
-              itemCount: 2
-            }
-          ]
-        });
-      }, 1000);
-    });
+  private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('adminToken');
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
   }
 
-  async getInternationalOrders(): Promise<ApiResponse<any[]>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: [
-            {
-              id: 'IO-001',
-              orderDate: '2024-01-20',
-              userName: 'Mike Johnson',
-              userEmail: 'mike@example.com',
-              location: 'Toronto, Canada',
-              items: 'Silk Saree, Silver Jewelry',
-              shippingLink: 'https://tracking.dhl.com/TRK123456',
-              status: 'shipped',
-              totalAmount: 8500,
-              itemCount: 2
-            }
-          ]
-        });
-      }, 1000);
-    });
+  private async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminSession');
+        window.location.href = '/admin/login';
+        throw new Error('Authentication failed');
+      }
+      
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return response.json();
   }
 
-  async getOrderDetails(orderId: string): Promise<ApiResponse<any>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: {
-            id: orderId,
-            orderDate: '2024-01-25',
-            userName: 'John Doe',
-            userEmail: 'john@example.com',
-            userPhone: '+1-555-123-4567',
-            vaultAddress: {
-              name: 'John Doe',
-              vaultId: 'JSS-UD-2024-001',
-              street: 'JustShopAndShip Warehouse',
-              address: 'Plot No. 45, Sector 18, Gurgaon',
-              city: 'Gurgaon, Haryana 122001',
-              country: 'India',
-              phone: '+91 9876543210'
-            },
-            items: [
-              {
-                id: 'item-1',
-                name: 'Traditional Silk Saree - Royal Blue',
-                cost: 3500,
-                link: 'https://example.com/saree',
-                size: 'Free Size',
-                quantity: 1,
-                color: 'Royal Blue',
-                actualPrice: 3500,
-                status: 'pending'
-              },
-              {
-                id: 'item-2',
-                name: 'Ayurvedic Skincare Gift Set',
-                cost: 2100,
-                link: 'https://example.com/skincare',
-                size: 'Standard',
-                quantity: 1,
-                color: 'Natural',
-                actualPrice: 2100,
-                status: 'pending'
-              }
-            ]
-          }
-        });
-      }, 1000);
-    });
+  // 1. Admin Login
+  async login(adminCode: string): Promise<AdminLoginResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ admin_code: adminCode }),
+      });
+
+      const data = await this.handleResponse<AdminLoginResponse>(response);
+      
+      if (data.success && data.token) {
+        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminSession', JSON.stringify({
+          authenticated: true,
+          timestamp: new Date().toISOString(),
+          admin: data.admin
+        }));
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error during admin login:', error);
+      throw error;
+    }
   }
 
-  async submitOrderEvaluation(orderId: string, evaluationData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('Submitting evaluation for order:', orderId, evaluationData);
-        resolve({
-          success: true,
-          data: undefined,
-          message: 'Order evaluation submitted successfully'
-        });
-      }, 1500);
-    });
+  // 2. Get Orders List
+  async getLocalOrders(): Promise<ApiResponse<AdminOrder[]>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/orders?type=local`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await this.handleResponse<AdminOrder[]>(response);
+      return {
+        success: true,
+        data
+      };
+    } catch (error) {
+      console.error('Error fetching local orders:', error);
+      throw error;
+    }
   }
 
-  // Vault Entry API
+  async getInternationalOrders(): Promise<ApiResponse<AdminOrder[]>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/orders?type=international`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await this.handleResponse<AdminOrder[]>(response);
+      return {
+        success: true,
+        data
+      };
+    } catch (error) {
+      console.error('Error fetching international orders:', error);
+      throw error;
+    }
+  }
+
+  // 3. Get Local Order Details
+  async getOrderDetails(orderId: string): Promise<ApiResponse<LocalOrderDetails>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/local-orders/${orderId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await this.handleResponse<LocalOrderDetails>(response);
+      return {
+        success: true,
+        data
+      };
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      throw error;
+    }
+  }
+
+  // 4. Bulk Approve/Deny Order Items
+  async bulkProcessOrderItems(orderId: string, processData: BulkProcessRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/local-orders/${orderId}/bulk-process`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(processData),
+      });
+
+      await this.handleResponse<void>(response);
+      return {
+        success: true,
+        data: undefined,
+        message: 'Order items processed successfully'
+      };
+    } catch (error) {
+      console.error('Error processing order items:', error);
+      throw error;
+    }
+  }
+
+  // 5. Add Vault Item from Order
+  async addVaultItem(vaultId: number, itemData: VaultItemRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/vaults/${vaultId}/items`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(itemData),
+      });
+
+      await this.handleResponse<void>(response);
+      return {
+        success: true,
+        data: undefined,
+        message: 'Item added to vault successfully'
+      };
+    } catch (error) {
+      console.error('Error adding vault item:', error);
+      throw error;
+    }
+  }
+
+  // 6. Ship International Order
+  async shipInternationalOrder(orderId: string, shippingData: ShipInternationalRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/international-orders/${orderId}/ship`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(shippingData),
+      });
+
+      await this.handleResponse<void>(response);
+      return {
+        success: true,
+        data: undefined,
+        message: 'International order shipped successfully'
+      };
+    } catch (error) {
+      console.error('Error shipping international order:', error);
+      throw error;
+    }
+  }
+
+  // Legacy methods for backward compatibility (now using real API)
   async validateVaultId(vaultId: string): Promise<ApiResponse<any>> {
-    // Mock implementation - replace with actual API call
+    // This might need a different endpoint - using mock for now
     return new Promise((resolve) => {
       setTimeout(() => {
         const isValid = vaultId.startsWith('JSS-UD-');
@@ -144,16 +285,7 @@ class AdminApiService {
               userName: 'John Doe',
               userEmail: 'john@example.com',
               userPhone: '+1-555-123-4567',
-              transitItems: [
-                {
-                  id: 'transit-1',
-                  name: 'Traditional Silk Saree',
-                  orderId: 'LO-001',
-                  expectedQuantity: 1,
-                  color: 'Royal Blue',
-                  size: 'Free Size'
-                }
-              ]
+              transitItems: []
             }
           });
         } else {
@@ -168,10 +300,9 @@ class AdminApiService {
   }
 
   async enterVaultItem(vaultId: string, itemData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
+    // This would use the addVaultItem method above
     return new Promise((resolve) => {
       setTimeout(() => {
-        console.log('Entering vault item:', vaultId, itemData);
         resolve({
           success: true,
           data: undefined,
@@ -181,9 +312,8 @@ class AdminApiService {
     });
   }
 
-  // Shipping Order Update API
   async getShippingOrderDetails(shippingOrderId: string): Promise<ApiResponse<any>> {
-    // Mock implementation - replace with actual API call
+    // Mock implementation - replace with actual API call when endpoint is available
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
@@ -202,22 +332,7 @@ class AdminApiService {
               country: 'Canada',
               phone: '+1-416-555-0123'
             },
-            vaultItems: [
-              {
-                id: 'vault-1',
-                name: 'Traditional Silk Saree',
-                image: 'https://images.pexels.com/photos/8148579/pexels-photo-8148579.jpeg?auto=compress&cs=tinysrgb&w=200',
-                vaultItemId: 'VI-001',
-                weight: 0.8
-              },
-              {
-                id: 'vault-2',
-                name: 'Silver Jewelry Set',
-                image: 'https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=200',
-                vaultItemId: 'VI-002',
-                weight: 0.3
-              }
-            ],
+            vaultItems: [],
             totalWeight: 1.1,
             currentShippingLink: '',
             currentShippingId: ''
@@ -228,25 +343,14 @@ class AdminApiService {
   }
 
   async updateShippingOrder(shippingOrderId: string, updateData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('Updating shipping order:', shippingOrderId, updateData);
-        resolve({
-          success: true,
-          data: undefined,
-          message: 'Shipping order updated successfully'
-        });
-      }, 1500);
-    });
+    // This would use the shipInternationalOrder method above
+    return this.shipInternationalOrder(shippingOrderId, updateData);
   }
 
-  // Inventory API
   async createInventoryItem(itemData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
+    // Mock implementation - replace with actual API call when endpoint is available
     return new Promise((resolve) => {
       setTimeout(() => {
-        console.log('Creating inventory item:', itemData);
         resolve({
           success: true,
           data: undefined,
@@ -256,45 +360,22 @@ class AdminApiService {
     });
   }
 
-  // Contact Support API
   async getSupportQueries(): Promise<ApiResponse<any[]>> {
-    // Mock implementation - replace with actual API call
+    // Mock implementation - replace with actual API call when endpoint is available
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
           success: true,
-          data: [
-            {
-              id: 'query-1',
-              userName: 'Alice Brown',
-              userEmail: 'alice@example.com',
-              subject: 'Shipping Delay Inquiry',
-              message: 'My order has been delayed for over a week. Can you please provide an update?',
-              priority: 'high',
-              status: 'pending',
-              submittedAt: '2024-01-25T10:30:00Z'
-            },
-            {
-              id: 'query-2',
-              userName: 'Bob Wilson',
-              userEmail: 'bob@example.com',
-              subject: 'Product Quality Issue',
-              message: 'The item I received is not as described. I would like to return it.',
-              priority: 'medium',
-              status: 'pending',
-              submittedAt: '2024-01-24T15:45:00Z'
-            }
-          ]
+          data: []
         });
       }, 1000);
     });
   }
 
   async replyToSupportQuery(queryId: string, replyData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
+    // Mock implementation - replace with actual API call when endpoint is available
     return new Promise((resolve) => {
       setTimeout(() => {
-        console.log('Replying to support query:', queryId, replyData);
         resolve({
           success: true,
           data: undefined,

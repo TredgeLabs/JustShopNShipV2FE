@@ -12,38 +12,13 @@ import {
 import AdminLayout from '../components/AdminLayout';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { adminApiService } from '../services/adminApiService';
+import { adminApiService, AdminOrder } from '../services/adminApiService';
 import { formatDate, formatCurrency } from '../utils/adminHelpers';
-
-interface LocalOrder {
-  id: string;
-  orderDate: string;
-  userName: string;
-  userEmail: string;
-  location: string;
-  items: string;
-  status: string;
-  totalAmount: number;
-  itemCount: number;
-}
-
-interface InternationalOrder {
-  id: string;
-  orderDate: string;
-  userName: string;
-  userEmail: string;
-  location: string;
-  items: string;
-  shippingLink: string;
-  status: string;
-  totalAmount: number;
-  itemCount: number;
-}
 
 const OrdersList: React.FC = () => {
   const navigate = useNavigate();
-  const [localOrders, setLocalOrders] = useState<LocalOrder[]>([]);
-  const [internationalOrders, setInternationalOrders] = useState<InternationalOrder[]>([]);
+  const [localOrders, setLocalOrders] = useState<AdminOrder[]>([]);
+  const [internationalOrders, setInternationalOrders] = useState<AdminOrder[]>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [isLoadingInternational, setIsLoadingInternational] = useState(true);
   const [error, setError] = useState('');
@@ -56,6 +31,7 @@ const OrdersList: React.FC = () => {
   const loadLocalOrders = async () => {
     try {
       setIsLoadingLocal(true);
+      setError('');
       const response = await adminApiService.getLocalOrders();
       if (response.success) {
         setLocalOrders(response.data);
@@ -63,7 +39,7 @@ const OrdersList: React.FC = () => {
         setError('Failed to load local orders');
       }
     } catch (err) {
-      setError('Error loading local orders');
+      setError(`Error loading local orders: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoadingLocal(false);
     }
@@ -72,6 +48,7 @@ const OrdersList: React.FC = () => {
   const loadInternationalOrders = async () => {
     try {
       setIsLoadingInternational(true);
+      setError('');
       const response = await adminApiService.getInternationalOrders();
       if (response.success) {
         setInternationalOrders(response.data);
@@ -79,7 +56,7 @@ const OrdersList: React.FC = () => {
         setError('Failed to load international orders');
       }
     } catch (err) {
-      setError('Error loading international orders');
+      setError(`Error loading international orders: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoadingInternational(false);
     }
@@ -92,9 +69,13 @@ const OrdersList: React.FC = () => {
   const handleCompleteOrder = async (orderId: string) => {
     const confirmed = window.confirm('Are you sure you want to mark this order as completed?');
     if (confirmed) {
-      // TODO: Implement order completion API call
-      alert(`Order ${orderId} marked as completed`);
-      loadInternationalOrders(); // Refresh the list
+      try {
+        // TODO: Implement order completion API call when endpoint is available
+        alert(`Order ${orderId} marked as completed`);
+        loadInternationalOrders(); // Refresh the list
+      } catch (err) {
+        setError(`Error completing order: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
     }
   };
 
@@ -216,23 +197,23 @@ const OrdersList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
-                            <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order.totalAmount)}</div>
+                            <div className="text-sm text-gray-500">{formatDate(order.created_at)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_amount)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{order.userName}</div>
-                            <div className="text-sm text-gray-500">{order.userEmail}</div>
+                            <div className="text-sm font-medium text-gray-900">{order.user_name}</div>
+                            <div className="text-sm text-gray-500">{order.user_email}</div>
                             <div className="text-sm text-gray-500">{order.location}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
-                            {order.items}
+                            Order Items
                           </div>
                           <div className="text-sm text-gray-500">
-                            {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
+                            {order.items_count} item{order.items_count !== 1 ? 's' : ''}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -240,7 +221,7 @@ const OrdersList: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
-                            onClick={() => handleEvaluateOrder(order.id)}
+                            onClick={() => handleEvaluateOrder(order.id.toString())}
                             className="flex items-center space-x-1 text-blue-600 hover:text-blue-900 transition-colors"
                           >
                             <Eye className="h-4 w-4" />
@@ -301,51 +282,41 @@ const OrdersList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
-                            <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order.totalAmount)}</div>
+                            <div className="text-sm text-gray-500">{formatDate(order.created_at)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_amount)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{order.userName}</div>
-                            <div className="text-sm text-gray-500">{order.userEmail}</div>
+                            <div className="text-sm font-medium text-gray-900">{order.user_name}</div>
+                            <div className="text-sm text-gray-500">{order.user_email}</div>
                             <div className="text-sm text-gray-500">{order.location}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
-                            {order.items}
+                            Order Items
                           </div>
                           <div className="text-sm text-gray-500">
-                            {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
+                            {order.items_count} item{order.items_count !== 1 ? 's' : ''}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             <StatusBadge status={order.status} />
-                            {order.shippingLink && (
-                              <a
-                                href={order.shippingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleUpdateShippingOrder(order.id)}
+                              onClick={() => handleUpdateShippingOrder(order.id.toString())}
                               className="flex items-center space-x-1 text-blue-600 hover:text-blue-900 transition-colors"
                             >
                               <Eye className="h-4 w-4" />
                               <span>Update</span>
                             </button>
                             <button
-                              onClick={() => handleCompleteOrder(order.id)}
+                              onClick={() => handleCompleteOrder(order.id.toString())}
                               className="flex items-center space-x-1 text-green-600 hover:text-green-900 transition-colors"
                             >
                               <CheckCircle className="h-4 w-4" />

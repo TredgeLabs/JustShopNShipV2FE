@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { adminApiService } from '../services/adminApiService';
+import { adminApiService, ShipInternationalRequest } from '../services/adminApiService';
 
 interface VaultItem {
   id: string;
@@ -88,16 +88,23 @@ const ShippingOrderUpdate: React.FC = () => {
       return;
     }
 
+    // Validate URL format
+    try {
+      new URL(shippingLink);
+    } catch {
+      setError('Please enter a valid tracking URL');
+      return;
+    }
     try {
       setIsSaving(true);
       setError('');
 
-      const updateData = {
-        shippingLink: shippingLink.trim(),
-        shippingId: shippingId.trim()
+      const updateData: ShipInternationalRequest = {
+        tracking_link: shippingLink.trim(),
+        tracking_id: shippingId.trim()
       };
 
-      const response = await adminApiService.updateShippingOrder(orderDetails.id, updateData);
+      const response = await adminApiService.shipInternationalOrder(orderDetails.id, updateData);
       
       if (response.success) {
         setSuccess('Shipping order updated successfully!');
@@ -108,7 +115,7 @@ const ShippingOrderUpdate: React.FC = () => {
         setError('Failed to update shipping order');
       }
     } catch (err) {
-      setError('Error updating shipping order');
+      setError(`Error updating shipping order: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
