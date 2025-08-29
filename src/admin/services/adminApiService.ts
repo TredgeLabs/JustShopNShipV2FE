@@ -17,51 +17,51 @@ export interface AdminLoginResponse {
 
 export interface AdminOrder {
   id: number;
-  user_id: number;
-  user_name: string;
-  user_email: string;
-  user_phone?: string;
-  vault_id?: string;
-  status: string;
-  payment_status: string;
-  total_amount: number;
-  platform_fee: number;
-  created_at: string;
-  updated_at: string;
-  items_count: number;
-  location?: string;
+  orderDate: string;     // e.g., "2025-08-28"
+  userName: string;
+  userEmail: string;
+  location?: string;     // backend sometimes empty string
+  items: string;         // comma-separated names: "Kurta, Socks"
+  itemCount: number;
+  status: string;       // e.g., "pending", "processing", "completed"
+  total_amount: number;   // note: string in API
 }
 
 export interface LocalOrderDetails {
   id: number;
-  user_id: number;
-  user_name: string;
-  user_email: string;
-  user_phone: string;
-  vault_id: string;
-  status: string;
+  order_status: string;
   payment_status: string;
-  total_amount: number;
-  platform_fee: number;
+  total_price: string;      // note: string in API
+  platform_fee: string;     // note: string in API
   admin_notes?: string;
   created_at: string;
   updated_at: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    vault_id: string;
+  };
   items: LocalOrderItem[];
 }
 
 export interface LocalOrderItem {
   id: number;
-  order_id: number;
-  name: string;
-  link: string;
-  price: number;
-  image_url?: string;
+  source_type: string;         // e.g., "manual_link"
+  product_name: string;
+  product_link: string;
+  image_link?: string;
+  color?: string;
+  size?: string;
   quantity: number;
-  status: string;
-  deny_reasons?: number[];
-  created_at: string;
-  updated_at: string;
+  price: string;               // note: string in API
+  final_price?: string;        // note: string in API
+  status: string;              // e.g., "accepted" | "denied"
+  deny_reasons?: number[] | null;
+  // created_at / updated_at are NOT sent per item in current API
 }
+
 
 export interface BulkProcessRequest {
   items: Array<{
@@ -159,12 +159,7 @@ class AdminApiService {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
-
-      const data = await this.handleResponse<AdminOrder[]>(response);
-      return {
-        success: true,
-        data
-      };
+      return await this.handleResponse<ApiResponse<AdminOrder[]>>(response);
     } catch (error) {
       console.error('Error fetching local orders:', error);
       throw error;
@@ -178,11 +173,7 @@ class AdminApiService {
         headers: this.getAuthHeaders(),
       });
 
-      const data = await this.handleResponse<AdminOrder[]>(response);
-      return {
-        success: true,
-        data
-      };
+     return await this.handleResponse<ApiResponse<AdminOrder[]>>(response);
     } catch (error) {
       console.error('Error fetching international orders:', error);
       throw error;
@@ -196,12 +187,7 @@ class AdminApiService {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
-
-      const data = await this.handleResponse<LocalOrderDetails>(response);
-      return {
-        success: true,
-        data
-      };
+     return await this.handleResponse<ApiResponse<LocalOrderDetails>>(response);
     } catch (error) {
       console.error('Error fetching order details:', error);
       throw error;

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Save, 
-  ExternalLink, 
-  Copy, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  Save,
+  ExternalLink,
+  Copy,
+  CheckCircle,
   XCircle,
   AlertCircle,
   Calendar,
@@ -54,11 +54,12 @@ const LocalOrderEvaluation: React.FC = () => {
       const response = await adminApiService.getOrderDetails(orderId!);
       if (response.success) {
         setOrderDetails(response.data);
+
         // Initialize evaluation data
         const initialEvaluation: EvaluationData = {};
         response.data.items.forEach((item: LocalOrderItem) => {
           initialEvaluation[item.id] = {
-            actualPrice: item.price,
+            actualPrice: Number(item.price),
             decision: 'accept',
             denyReasons: []
           };
@@ -68,7 +69,10 @@ const LocalOrderEvaluation: React.FC = () => {
         setError('Failed to load order details');
       }
     } catch (err) {
-      setError(`Error loading order details: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(
+        `Error loading order details: ${err instanceof Error ? err.message : 'Unknown error'
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +94,7 @@ const LocalOrderEvaluation: React.FC = () => {
       const newReasons = currentReasons.includes(reason)
         ? currentReasons.filter(r => r !== reason)
         : [...currentReasons, reason];
-      
+
       return {
         ...prev,
         [itemId]: {
@@ -103,9 +107,9 @@ const LocalOrderEvaluation: React.FC = () => {
 
   const handleCopyVaultAddress = async () => {
     if (!orderDetails) return;
-    
-    const address = `${orderDetails.user_name}
-Vault ID: ${orderDetails.vault_id}
+
+    const address = `${orderDetails.user.name}
+Vault ID: ${orderDetails.user.vault_id}
 JustShopAndShip Warehouse
 Plot No. 45, Sector 18, Gurgaon
 Gurgaon, Haryana 122001
@@ -127,7 +131,7 @@ Phone: +91 9876543210`;
   const handleVaultSubmit = async (vaultId: number, itemData: any) => {
     try {
       const response = await adminApiService.addVaultItem(vaultId, itemData);
-      
+
       if (response.success) {
         setSuccess(`Item "${itemData.name}" added to vault successfully!`);
         setTimeout(() => setSuccess(''), 3000);
@@ -160,8 +164,8 @@ Phone: +91 9876543210`;
       const items = Object.entries(evaluationData).map(([itemId, evaluation]) => ({
         item_id: parseInt(itemId),
         action: evaluation.decision,
-        ...(evaluation.decision === 'deny' && { 
-          deny_reasons: evaluation.denyReasons.map(reason => {
+        ...(evaluation.decision === 'deny' && {
+          deny_reasons: evaluation.denyReasons.map((reason: any) => {
             // Map reason text to reason ID (you may need to adjust this mapping)
             const reasonIndex = DENY_REASONS.indexOf(reason as any);
             return reasonIndex >= 0 ? reasonIndex + 1 : 8; // Default to "Other"
@@ -175,7 +179,7 @@ Phone: +91 9876543210`;
       };
 
       const response = await adminApiService.bulkProcessOrderItems(orderDetails.id.toString(), submissionData);
-      
+
       if (response.success) {
         setSuccess('Order evaluation submitted successfully!');
         setTimeout(() => {
@@ -190,6 +194,8 @@ Phone: +91 9876543210`;
       setIsSaving(false);
     }
   };
+
+  const handleBulkProcess = async () => { }
 
   if (isLoading) {
     return (
@@ -231,7 +237,7 @@ Phone: +91 9876543210`;
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Orders</span>
           </button>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Order Evaluation</h1>
@@ -264,15 +270,15 @@ Phone: +91 9876543210`;
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Name</label>
-                  <p className="text-gray-900">{orderDetails.user_name}</p>
+                  <p className="text-gray-900">{orderDetails.user.name}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-gray-900">{orderDetails.user_email}</p>
+                  <p className="text-gray-900">{orderDetails.user.email}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Phone</label>
-                  <p className="text-gray-900">{orderDetails.user_phone}</p>
+                  <p className="text-gray-900">{orderDetails.user.phone}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Order Date</label>
@@ -295,8 +301,8 @@ Phone: +91 9876543210`;
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="space-y-1 text-sm">
-                  <div className="font-semibold text-blue-900">{orderDetails.user_name}</div>
-                  <div className="text-blue-800">Vault ID: {orderDetails.vault_id}</div>
+                  <div className="font-semibold text-blue-900">{orderDetails.user.name}</div>
+                  <div className="text-blue-800">Vault ID: {orderDetails.user.vault_id}</div>
                   <div className="text-blue-800">JustShopAndShip Warehouse</div>
                   <div className="text-blue-800">Plot No. 45, Sector 18, Gurgaon</div>
                   <div className="text-blue-800">Gurgaon, Haryana 122001</div>
@@ -331,17 +337,17 @@ Phone: +91 9876543210`;
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">Items Evaluation</h3>
               </div>
-              
+
               <div className="p-6 space-y-6">
                 {orderDetails.items.map((item) => (
                   <div key={item.id} className="border border-gray-200 rounded-lg p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">{item.name}</h4>
+                        <h4 className="text-lg font-medium text-gray-900 mb-2">{item.product_name}</h4>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div>
                             <span className="font-medium">Original Cost:</span>
-                            <p>{formatCurrency(item.price)}</p>
+                            <p>{formatCurrency(Number(item.price))}</p>
                           </div>
                           <div>
                             <span className="font-medium">Quantity:</span>
@@ -358,7 +364,7 @@ Phone: +91 9876543210`;
                         </div>
                       </div>
                       <a
-                        href={item.link}
+                        href={item.product_link}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 transition-colors"
@@ -459,7 +465,7 @@ Phone: +91 9876543210`;
                       placeholder="Add any notes about this evaluation..."
                     />
                   </div>
-                  
+
                   <button
                     onClick={handleSubmitEvaluation}
                     disabled={isSaving}
@@ -500,7 +506,7 @@ Phone: +91 9876543210`;
               setSelectedVaultItem(null);
             }}
             item={selectedVaultItem}
-            vaultId={parseInt(orderDetails.vault_id.split('-')[2]) || 1}
+            vaultId={parseInt(orderDetails.user.vault_id.split('-')[2]) || 1}
             onSubmit={handleVaultSubmit}
           />
         )}

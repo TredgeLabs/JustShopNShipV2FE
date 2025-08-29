@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, 
-  Eye, 
-  CheckCircle, 
-  ExternalLink, 
-  Users, 
+import {
+  ShoppingCart,
+  Eye,
+  CheckCircle,
+  ExternalLink,
+  Users,
   Package,
   AlertCircle
 } from 'lucide-react';
@@ -33,7 +33,7 @@ const OrdersList: React.FC = () => {
       setIsLoadingLocal(true);
       setError('');
       const response = await adminApiService.getLocalOrders();
-      if (response.success) {
+      if (response.success && Array.isArray(response.data)) {
         setLocalOrders(response.data);
       } else {
         setError('Failed to load local orders');
@@ -50,7 +50,7 @@ const OrdersList: React.FC = () => {
       setIsLoadingInternational(true);
       setError('');
       const response = await adminApiService.getInternationalOrders();
-      if (response.success) {
+      if (response.success && Array.isArray(response.data)) {
         setInternationalOrders(response.data);
       } else {
         setError('Failed to load international orders');
@@ -116,7 +116,7 @@ const OrdersList: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <ShoppingCart className="h-8 w-8 text-green-600" />
@@ -126,7 +126,7 @@ const OrdersList: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <Users className="h-8 w-8 text-purple-600" />
@@ -138,7 +138,7 @@ const OrdersList: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-orange-600" />
@@ -160,7 +160,7 @@ const OrdersList: React.FC = () => {
               Local Orders (Domestic India)
             </h2>
           </div>
-          
+
           <div className="p-6">
             {isLoadingLocal ? (
               <LoadingSpinner text="Loading local orders..." />
@@ -197,14 +197,14 @@ const OrdersList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
-                            <div className="text-sm text-gray-500">{formatDate(order.created_at)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_amount)}</div>
+                            <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.total_amount || 0)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{order.user_name}</div>
-                            <div className="text-sm text-gray-500">{order.user_email}</div>
+                            <div className="text-sm font-medium text-gray-900">{order.userName}</div>
+                            <div className="text-sm text-gray-500">{order.userEmail}</div>
                             <div className="text-sm text-gray-500">{order.location}</div>
                           </div>
                         </td>
@@ -213,11 +213,11 @@ const OrdersList: React.FC = () => {
                             Order Items
                           </div>
                           <div className="text-sm text-gray-500">
-                            {order.items_count} item{order.items_count !== 1 ? 's' : ''}
+                            {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={order.status} />
+                          <StatusBadge status={order?.status || ''} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
@@ -245,7 +245,7 @@ const OrdersList: React.FC = () => {
               International Orders (Shipping)
             </h2>
           </div>
-          
+
           <div className="p-6">
             {isLoadingInternational ? (
               <LoadingSpinner text="Loading international orders..." />
@@ -282,14 +282,14 @@ const OrdersList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
-                            <div className="text-sm text-gray-500">{formatDate(order.created_at)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order.total_amount)}</div>
+                            <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.total_amount || 0)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{order.user_name}</div>
-                            <div className="text-sm text-gray-500">{order.user_email}</div>
+                            <div className="text-sm font-medium text-gray-900">{order.userName}</div>
+                            <div className="text-sm text-gray-500">{order.userEmail}</div>
                             <div className="text-sm text-gray-500">{order.location}</div>
                           </div>
                         </td>
@@ -298,12 +298,12 @@ const OrdersList: React.FC = () => {
                             Order Items
                           </div>
                           <div className="text-sm text-gray-500">
-                            {order.items_count} item{order.items_count !== 1 ? 's' : ''}
+                            {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
-                            <StatusBadge status={order.status} />
+                            <StatusBadge status={order?.status || ''} />
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
