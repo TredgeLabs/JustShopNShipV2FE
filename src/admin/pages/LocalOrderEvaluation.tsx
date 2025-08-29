@@ -8,7 +8,6 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Calendar,
   DollarSign
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
@@ -22,7 +21,7 @@ import AddToVaultModal from '../components/AddToVaultModal';
 interface EvaluationData {
   [itemId: number]: {
     actualPrice: number;
-    decision: 'accept' | 'deny';
+    decision: 'approve' | 'deny';
     denyReasons: string[];
   };
 }
@@ -60,7 +59,7 @@ const LocalOrderEvaluation: React.FC = () => {
         response.data.items.forEach((item: LocalOrderItem) => {
           initialEvaluation[item.id] = {
             actualPrice: Number(item.price),
-            decision: 'accept',
+            decision: 'approve',
             denyReasons: []
           };
         });
@@ -128,7 +127,7 @@ Phone: +91 9876543210`;
     setShowVaultModal(true);
   };
 
-  const handleVaultSubmit = async (vaultId: number, itemData: any) => {
+  const handleVaultSubmit = async (vaultId: string, itemData: any) => {
     try {
       const response = await adminApiService.addVaultItem(vaultId, itemData);
 
@@ -398,8 +397,8 @@ Phone: +91 9876543210`;
                             <input
                               type="radio"
                               name={`decision-${item.id}`}
-                              value="accept"
-                              checked={evaluationData[item.id]?.decision === 'accept'}
+                              value="approve"
+                              checked={evaluationData[item.id]?.decision === 'approve'}
                               onChange={(e) => handleItemEvaluationChange(item.id, 'decision', e.target.value)}
                               className="h-4 w-4 text-green-600 focus:ring-green-500"
                             />
@@ -506,7 +505,7 @@ Phone: +91 9876543210`;
               setSelectedVaultItem(null);
             }}
             item={selectedVaultItem}
-            vaultId={parseInt(orderDetails.user.vault_id.split('-')[2]) || 1}
+            vaultId={orderDetails.user.vault_id}
             onSubmit={handleVaultSubmit}
           />
         )}

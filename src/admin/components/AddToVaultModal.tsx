@@ -6,8 +6,8 @@ interface AddToVaultModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: LocalOrderItem;
-  vaultId: number;
-  onSubmit: (vaultId: number, itemData: VaultItemRequest) => Promise<void>;
+  vaultId: string;
+  onSubmit: (vaultId: string, itemData: VaultItemRequest) => Promise<void>;
 }
 
 const AddToVaultModal: React.FC<AddToVaultModalProps> = ({

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  Package, 
-  Search, 
-  Upload, 
-  Save, 
-  AlertCircle, 
-  CheckCircle, 
+import {
+  Package,
+  Search,
+  Upload,
+  Save,
+  AlertCircle,
+  CheckCircle,
   User,
   Scale,
   Image as ImageIcon,
@@ -72,7 +72,7 @@ const VaultEntry: React.FC = () => {
       setUserDetails(null);
 
       const response = await adminApiService.validateVaultId(vaultId);
-      
+
       if (response.success) {
         setUserDetails(response.data);
         setSuccess('Vault ID validated successfully!');
@@ -141,7 +141,7 @@ const VaultEntry: React.FC = () => {
 
       // Convert form data to API format
       const itemData = {
-        vault_id: parseInt(userDetails.vaultId.split('-')[2]) || 1, // Extract vault ID number
+        vault_id: userDetails.vaultId, // Extract vault ID number
         name: vaultItemDetails.name,
         description: vaultItemDetails.description || vaultItemDetails.name,
         source_type: 'user_sent',
@@ -157,10 +157,10 @@ const VaultEntry: React.FC = () => {
       };
 
       const response = await adminApiService.addVaultItem(itemData.vault_id, itemData);
-      
+
       if (response.success) {
         setSuccess('Item entered in vault successfully!');
-        
+
         // Reset form
         setVaultItemDetails({
           name: '',
@@ -172,7 +172,7 @@ const VaultEntry: React.FC = () => {
           images: []
         });
         setSelectedTransitItem(null);
-        
+
         setTimeout(() => setSuccess(''), 5000);
       } else {
         setError('Failed to enter item in vault');
@@ -233,7 +233,7 @@ const VaultEntry: React.FC = () => {
         {/* Vault ID Entry */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Vault ID Validation</h2>
-          
+
           <div className="flex space-x-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -282,7 +282,7 @@ const VaultEntry: React.FC = () => {
               <User className="h-5 w-5 mr-2 text-green-600" />
               Customer Details
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">Name</label>
@@ -304,17 +304,16 @@ const VaultEntry: React.FC = () => {
         {userDetails && userDetails.transitItems.length > 0 && (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Items in Transit</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {userDetails.transitItems.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => handleTransitItemSelect(item)}
-                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                    selectedTransitItem?.id === item.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${selectedTransitItem?.id === item.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                    }`}
                 >
                   <h3 className="font-medium text-gray-900 mb-2">{item.name}</h3>
                   <div className="space-y-1 text-sm text-gray-600">
@@ -333,7 +332,7 @@ const VaultEntry: React.FC = () => {
         {userDetails && (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Vault Item Details</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Item Information */}
               <div className="space-y-4">
@@ -427,7 +426,7 @@ const VaultEntry: React.FC = () => {
                   <ImageIcon className="inline h-4 w-4 mr-1" />
                   Item Images
                 </label>
-                
+
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <input
                     type="file"

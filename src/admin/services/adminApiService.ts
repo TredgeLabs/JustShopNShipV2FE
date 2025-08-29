@@ -73,7 +73,7 @@ export interface BulkProcessRequest {
 }
 
 export interface VaultItemRequest {
-  vault_id: number;
+  vault_id: string;
   name: string;
   description: string;
   source_type: string;
@@ -216,7 +216,7 @@ class AdminApiService {
   }
 
   // 5. Add Vault Item from Order
-  async addVaultItem(vaultId: number, itemData: VaultItemRequest): Promise<ApiResponse<void>> {
+  async addVaultItem(vaultId: string, itemData: VaultItemRequest): Promise<ApiResponse<void>> {
     try {
       const response = await fetch(`${this.baseUrl}/vaults/${vaultId}/items`, {
         method: 'POST',
@@ -262,7 +262,7 @@ class AdminApiService {
     // This might need a different endpoint - using mock for now
     return new Promise((resolve) => {
       setTimeout(() => {
-        const isValid = vaultId.startsWith('JSS-UD-');
+        const isValid = true; // Simulate validation
         if (isValid) {
           resolve({
             success: true,
