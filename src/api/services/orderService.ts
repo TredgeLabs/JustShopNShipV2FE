@@ -3,105 +3,225 @@ import { ENDPOINTS } from '../endpoints';
 import { ApiResponse } from '../config';
 
 // Order status enum
-export type OrderStatus = 'pending' | 'ordered' | 'received' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus = 'created' | 'pending' | 'processing' | 'completed' | 'shipped' | 'delivered' | 'cancelled' | 'denied';
 
-// Order interface
-export interface Order {
-  id: string;
-  userId: string;
-  productName: string;
-  productUrl: string;
-  seller: string;
-  price: number;
-  currency: string;
-  status: OrderStatus;
-  orderDate: Date;
-  estimatedDelivery?: Date;
-  trackingNumber?: string;
-  notes?: string;
-  images?: string[];
-}
-
-// Create order request interface
-export interface CreateOrderRequest {
-  productName: string;
-  productUrl: string;
-  seller: string;
-  price: number;
-  currency: string;
-  notes?: string;
-  quantity?: number;
-}
-
-// Order list response interface
-export interface OrderListResponse {
-  orders: Order[];
-  totalCount: number;
-  currentPage: number;
-  totalPages: number;
-}
-
-// Tracking information interface
-export interface TrackingInfo {
-  orderId: string;
-  trackingNumber: string;
-  status: OrderStatus;
-  events: TrackingEvent[];
-  estimatedDelivery?: Date;
-}
-
-export interface TrackingEvent {
-  date: Date;
+// Local Order Item interface (matching backend structure)
+export interface LocalOrderItem {
+  id: number;
+  local_order_id: number;
+  source_type: string;
+  product_name: string;
+  product_link: string;
+  inventory_item_id?: number | null;
+  color?: string;
+  size?: string;
+  quantity: number;
+  price: string;
+  final_price?: string;
   status: string;
-  location: string;
-  description: string;
+  deny_reasons?: number[] | null;
+  image_link?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Local Order interface (matching backend structure)
+export interface LocalOrder {
+  id: number;
+  user_id: number;
+  vault_id?: number | null;
+  order_status: string;
+  payment_status: string;
+  total_price: string;
+  platform_fee: string;
+  admin_notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  local_order_items?: LocalOrderItem[];
+}
+
+// International Order Item interface
+export interface InternationalOrderItem {
+  id: number;
+  international_order_id: number;
+  vault_item_id: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// International Order interface (matching backend structure)
+export interface InternationalOrder {
+  id: number;
+  user_id: number;
+  vault_id: number;
+  shipping_address_id: number;
+  shipment_weight_gm: number;
+  shipping_cost: string;
+  storage_cost: string;
+  platform_fee: string;
+  total_cost: string;
+  tracking_id?: string;
+  tracking_link?: string;
+  shipping_status: string;
+  createdAt: string;
+  updatedAt: string;
+  international_order_items?: InternationalOrderItem[];
+}
+
+// Create local order request interface
+export interface CreateLocalOrderRequest {
+  orderData: {
+    order_status: string;
+    payment_status: string;
+    total_price: number;
+    platform_fee: number;
+    admin_notes?: string;
+  };
+  items: Array<{
+    source_type: string;
+    product_name: string;
+    product_link: string;
+    color?: string;
+    size?: string;
+    quantity: number;
+    price: number;
+    final_price: number;
+    status: string;
+    deny_reasons?: number[];
+    image_link?: string;
+  }>;
+}
+
+// Create international order request interface
+export interface CreateInternationalOrderRequest {
+  orderData: {
+    vault_id: number;
+    shipping_address_id: number;
+    shipment_weight_gm: number;
+    shipping_cost: number;
+    storage_cost: number;
+    platform_fee: number;
+    total_cost: number;
+    tracking_id?: string;
+    tracking_link?: string;
+    shipping_status: string;
+  };
+  vaultItemIds: number[];
+}
+
+// Order list response interfaces
+export interface LocalOrderListResponse {
+  success: boolean;
+  orders: LocalOrder[];
+}
+
+export interface InternationalOrderListResponse {
+  success: boolean;
+  orders: InternationalOrder[];
+}
+
+// Order details response interfaces
+export interface LocalOrderDetailsResponse {
+  success: boolean;
+  order: LocalOrder;
+}
+
+export interface InternationalOrderDetailsResponse {
+  success: boolean;
+  order: InternationalOrder;
 }
 
 class OrderService {
   /**
-   * Create a new order
+   * Create a new local order
    */
-  async createOrder(orderData: CreateOrderRequest): Promise<ApiResponse<Order>> {
+  async createLocalOrder(orderData: CreateLocalOrderRequest): Promise<ApiResponse<LocalOrder>> {
     try {
-      const response = await apiClient.post<Order>(ENDPOINTS.ORDERS.CREATE, orderData);
-      return response;
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get list of orders for the current user
-   */
-  async getOrders(page = 1, limit = 10, status?: OrderStatus): Promise<ApiResponse<OrderListResponse>> {
-    try {
-      const params: Record<string, any> = {
-        page,
-        limit,
-      };
-
-      if (status) {
-        params.status = status;
+      const response = await apiClient.post<{ success: boolean; order: LocalOrder }>('local-orders', orderData);
+      
+      if (response.success && response.data) {
+        return {
+          success: true,
+          data: response.data.order
+        };
       }
-
-      const response = await apiClient.get<OrderListResponse>(ENDPOINTS.ORDERS.LIST, params);
-      return response;
+      
+      throw new Error('Failed to create local order');
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error creating local order:', error);
       throw error;
     }
   }
 
   /**
-   * Get order details by ID
+   * Create a new international order
    */
-  async getOrderDetails(orderId: string): Promise<ApiResponse<Order>> {
+  async createInternationalOrder(orderData: CreateInternationalOrderRequest): Promise<ApiResponse<InternationalOrder>> {
     try {
-      const response = await apiClient.get<Order>(ENDPOINTS.ORDERS.DETAILS(orderId));
-      return response;
+      const response = await apiClient.post<{ success: boolean; order: InternationalOrder }>('international-orders', orderData);
+      
+      if (response.success && response.data) {
+        return {
+          success: true,
+          data: response.data.order
+        };
+      }
+      
+      throw new Error('Failed to create international order');
     } catch (error) {
-      console.error('Error fetching order details:', error);
+      console.error('Error creating international order:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get list of local orders for the current user
+   */
+  async getLocalOrders(): Promise<LocalOrderListResponse> {
+    try {
+      const response = await apiClient.get<LocalOrderListResponse>('local-orders');
+      return response.data || response;
+    } catch (error) {
+      console.error('Error fetching local orders:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get list of international orders for the current user
+   */
+  async getInternationalOrders(): Promise<InternationalOrderListResponse> {
+    try {
+      const response = await apiClient.get<InternationalOrderListResponse>('international-orders');
+      return response.data || response;
+    } catch (error) {
+      console.error('Error fetching international orders:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get local order details by ID
+   */
+  async getLocalOrderDetails(orderId: string): Promise<LocalOrderDetailsResponse> {
+    try {
+      const response = await apiClient.get<LocalOrderDetailsResponse>(`local-orders/${orderId}`);
+      return response.data || response;
+    } catch (error) {
+      console.error('Error fetching local order details:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get international order details by ID
+   */
+  async getInternationalOrderDetails(orderId: string): Promise<InternationalOrderDetailsResponse> {
+    try {
+      const response = await apiClient.get<InternationalOrderDetailsResponse>(`international-orders/${orderId}`);
+      return response.data || response;
+    } catch (error) {
+      console.error('Error fetching international order details:', error);
       throw error;
     }
   }
@@ -109,9 +229,9 @@ class OrderService {
   /**
    * Update order information
    */
-  async updateOrder(orderId: string, updateData: Partial<Order>): Promise<ApiResponse<Order>> {
+  async updateOrder(orderId: string, updateData: Partial<LocalOrder>): Promise<ApiResponse<LocalOrder>> {
     try {
-      const response = await apiClient.put<Order>(ENDPOINTS.ORDERS.UPDATE(orderId), updateData);
+      const response = await apiClient.put<LocalOrder>(`local-orders/${orderId}`, updateData);
       return response;
     } catch (error) {
       console.error('Error updating order:', error);
@@ -124,23 +244,10 @@ class OrderService {
    */
   async cancelOrder(orderId: string, reason?: string): Promise<ApiResponse<void>> {
     try {
-      const response = await apiClient.post<void>(ENDPOINTS.ORDERS.CANCEL(orderId), { reason });
+      const response = await apiClient.post<void>(`local-orders/${orderId}/cancel`, { reason });
       return response;
     } catch (error) {
       console.error('Error cancelling order:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Track an order
-   */
-  async trackOrder(orderId: string): Promise<ApiResponse<TrackingInfo>> {
-    try {
-      const response = await apiClient.get<TrackingInfo>(ENDPOINTS.ORDERS.TRACK(orderId));
-      return response;
-    } catch (error) {
-      console.error('Error tracking order:', error);
       throw error;
     }
   }

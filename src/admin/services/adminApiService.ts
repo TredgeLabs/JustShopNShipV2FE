@@ -15,16 +15,45 @@ export interface AdminLoginResponse {
   };
 }
 
-export interface AdminOrder {
+// Updated to match actual backend response structure
+export interface AdminLocalOrder {
   id: number;
-  orderDate: string;     // e.g., "2025-08-28"
-  userName: string;
-  userEmail: string;
-  location?: string;     // backend sometimes empty string
-  items: string;         // comma-separated names: "Kurta, Socks"
-  itemCount: number;
-  status: string;       // e.g., "pending", "processing", "completed"
-  total_amount: number;   // note: string in API
+  user_id: number;
+  vault_id?: number | null;
+  order_status: string;
+  payment_status: string;
+  total_price: string;
+  platform_fee: string;
+  admin_notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  local_order_items?: LocalOrderItem[];
+}
+
+export interface AdminInternationalOrder {
+  id: number;
+  user_id: number;
+  vault_id: number;
+  shipping_address_id: number;
+  shipment_weight_gm: number;
+  shipping_cost: string;
+  storage_cost: string;
+  platform_fee: string;
+  total_cost: string;
+  tracking_id?: string;
+  tracking_link?: string;
+  shipping_status: string;
+  createdAt: string;
+  updatedAt: string;
+  international_order_items?: InternationalOrderItem[];
+}
+
+export interface InternationalOrderItem {
+  id: number;
+  international_order_id: number;
+  vault_item_id: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LocalOrderDetails {
@@ -59,7 +88,8 @@ export interface LocalOrderItem {
   final_price?: string;        // note: string in API
   status: string;              // e.g., "accepted" | "denied"
   deny_reasons?: number[] | null;
-  // created_at / updated_at are NOT sent per item in current API
+  createdAt: string;
+  updatedAt: string;
 }
 
 
@@ -153,27 +183,27 @@ class AdminApiService {
   }
 
   // 2. Get Orders List
-  async getLocalOrders(): Promise<ApiResponse<AdminOrder[]>> {
+  async getLocalOrders(): Promise<ApiResponse<AdminLocalOrder[]>> {
     try {
       const response = await fetch(`${this.baseUrl}/orders?type=local`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
-      return await this.handleResponse<ApiResponse<AdminOrder[]>>(response);
+      return await this.handleResponse<ApiResponse<AdminLocalOrder[]>>(response);
     } catch (error) {
       console.error('Error fetching local orders:', error);
       throw error;
     }
   }
 
-  async getInternationalOrders(): Promise<ApiResponse<AdminOrder[]>> {
+  async getInternationalOrders(): Promise<ApiResponse<AdminInternationalOrder[]>> {
     try {
       const response = await fetch(`${this.baseUrl}/orders?type=international`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
 
-     return await this.handleResponse<ApiResponse<AdminOrder[]>>(response);
+     return await this.handleResponse<ApiResponse<AdminInternationalOrder[]>>(response);
     } catch (error) {
       console.error('Error fetching international orders:', error);
       throw error;

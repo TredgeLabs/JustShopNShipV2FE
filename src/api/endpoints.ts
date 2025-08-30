@@ -25,12 +25,12 @@ export const ENDPOINTS = {
 
   // Orders
   ORDERS: {
-    CREATE: '/orders',
-    LIST: '/orders',
-    DETAILS: (id: string) => `/orders/${id}`,
-    UPDATE: (id: string) => `/orders/${id}`,
-    CANCEL: (id: string) => `/orders/${id}/cancel`,
-    TRACK: (id: string) => `/orders/${id}/track`,
+    LOCAL_ORDERS: 'local-orders',
+    INTERNATIONAL_ORDERS: 'international-orders',
+    LOCAL_ORDER_DETAILS: (id: string) => `local-orders/${id}`,
+    INTERNATIONAL_ORDER_DETAILS: (id: string) => `international-orders/${id}`,
+    UPDATE: (id: string) => `local-orders/${id}`,
+    CANCEL: (id: string) => `local-orders/${id}/cancel`,
   },
 
   // Shipping

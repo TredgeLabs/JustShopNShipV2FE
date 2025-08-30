@@ -66,16 +66,14 @@ const OrderConfirmation: React.FC = () => {
       return;
     }
     
-    // Store order data for payment page
-    const orderData = {
-      items: cartItems,
-      totalPrice: getTotalPrice(),
-      totalWeight: getTotalWeight(),
-      totalItems: getTotalItems(),
-      orderDate: new Date().toISOString()
-    };
+    // Get existing order data from localStorage (set by CreateOrder page)
+    const existingOrderData = localStorage.getItem('orderData');
+    if (!existingOrderData) {
+      alert('Order data not found. Please create order again.');
+      navigate('/create-order');
+      return;
+    }
     
-    localStorage.setItem('orderData', JSON.stringify(orderData));
     navigate('/payment');
   };
 

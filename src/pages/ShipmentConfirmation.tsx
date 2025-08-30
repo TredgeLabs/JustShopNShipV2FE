@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { orderService, CreateInternationalOrderRequest } from '../api/services/orderService';
 import { 
   Package, 
   ArrowLeft, 
@@ -12,7 +13,8 @@ import {
   CreditCard,
   Info,
   Truck,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react';
 
 interface VaultItem {
@@ -30,6 +32,7 @@ interface ShipmentData {
   items: VaultItem[];
   destination: string;
   shippingService: string;
+  orderRequest?: CreateInternationalOrderRequest;
 }
 
 const ShipmentConfirmation: React.FC = () => {
@@ -37,6 +40,7 @@ const ShipmentConfirmation: React.FC = () => {
   const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   // Shipping calculation constants
   const SHIPPING_RATE_PER_KG = 18; // USD per kg
@@ -105,28 +109,48 @@ const ShipmentConfirmation: React.FC = () => {
 
     if (!shipmentData) return;
 
-    // Prepare shipment order data for payment
-    const shipmentOrderData = {
-      type: 'shipment',
-      items: shipmentData.items,
-      destination: shipmentData.destination,
-      shippingService: shipmentData.shippingService,
-      totalWeight: getTotalWeight(),
-      totalValue: getTotalValue(),
-      shippingCost: getShippingCost(),
-      insuranceCost: getInsuranceCost(),
-      platformFee: getPlatformFee(),
-      overStorageCost: getOverStorageCost(),
-      totalPrice: getTotalCost(), // Use totalPrice to match Payment page expectations
-      totalItems: shipmentData.items.reduce((total, item) => total + item.quantity, 0),
-      orderDate: new Date().toISOString()
-    };
+    // Create international order
+    createInternationalOrder();
+  };
 
-    // Store shipment order data for payment page
-    localStorage.setItem('orderData', JSON.stringify(shipmentOrderData));
+  const createInternationalOrder = async () => {
+    if (!shipmentData?.orderRequest) return;
     
-    // Navigate to payment page
-    navigate('/payment');
+    try {
+      setIsCreatingOrder(true);
+      
+      const response = await orderService.createInternationalOrder(shipmentData.orderRequest);
+      
+      if (response.success) {
+        // Store order data for payment page
+        const orderData = {
+          type: 'international',
+          orderId: response.data.id,
+          items: shipmentData.items,
+          destination: shipmentData.destination,
+          shippingService: shipmentData.shippingService,
+          totalWeight: getTotalWeight(),
+          totalValue: getTotalValue(),
+          totalPrice: getTotalCost(),
+          totalItems: shipmentData.items.reduce((total, item) => total + item.quantity, 0),
+          orderDate: new Date().toISOString()
+        };
+        
+        localStorage.setItem('orderData', JSON.stringify(orderData));
+        
+        // Clear shipment data
+        localStorage.removeItem('shipmentData');
+        
+        // Navigate to payment page
+        navigate('/payment');
+      } else {
+        alert('Failed to create international order. Please try again.');
+      }
+    } catch (err) {
+      alert('Failed to create international order. Please check your connection and try again.');
+    } finally {
+      setIsCreatingOrder(false);
+    }
   };
 
   const handleBackToVault = () => {
@@ -400,12 +424,21 @@ const ShipmentConfirmation: React.FC = () => {
             {/* Proceed Button */}
             <button
               onClick={handleProceedToPay}
-              disabled={!acceptedTerms}
+              disabled={!acceptedTerms || isCreatingOrder}
               className="w-full flex items-center justify-center space-x-2 py-4 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-lg"
             >
-              <CreditCard className="h-5 w-5" />
-              <span>Proceed to Payment</span>
-              <ArrowRight className="h-5 w-5" />
+              {isCreatingOrder ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Creating Order...</span>
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-5 w-5" />
+                  <span>Proceed to Payment</span>
+                  <ArrowRight className="h-5 w-5" />
+                </>
+              )}
             </button>
 
             {/* Important Notes */}

@@ -94,7 +94,7 @@ class ApiClient {
       }
 
       // Build URL with params
-      const url = new URL(finalConfig.url, this.baseURL);
+      const url = new URL(finalConfig.url, this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/');
       if (finalConfig.params) {
         Object.entries(finalConfig.params).forEach(([key, value]) => {
           url.searchParams.append(key, String(value));

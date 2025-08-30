@@ -191,18 +191,51 @@ const MyVault: React.FC = () => {
       return;
     }
 
-    // Prepare shipment data for confirmation page
-    const shipmentData = {
-      items: selectedItems,
-      destination: 'United States', // This would come from user's profile
-      shippingService: 'Standard International'
-    };
+    // Create international order directly
+    createInternationalOrder(selectedItems);
+  };
 
-    // Store shipment data for confirmation page
-    localStorage.setItem('shipmentData', JSON.stringify(shipmentData));
-    
-    // Navigate to shipment confirmation page
-    window.location.href = '/shipment-confirmation';
+  const createInternationalOrder = async (selectedItems: VaultItem[]) => {
+    try {
+      setIsCalculatingShipping(true);
+      
+      // Calculate totals
+      const totalWeight = selectedItems.reduce((sum, item) => sum + item.weight * 1000, 0); // Convert to grams
+      const shippingCost = totalWeight * 0.02; // Mock calculation
+      const storageCost = selectedItems.reduce((sum, item) => sum + item.storageCost, 0);
+      const platformFee = (shippingCost + storageCost) * 0.05;
+      const totalCost = shippingCost + storageCost + platformFee;
+      
+      const orderRequest = {
+        orderData: {
+          vault_id: 1, // This should come from user's vault
+          shipping_address_id: 1, // This should come from user's default address
+          shipment_weight_gm: totalWeight,
+          shipping_cost: shippingCost,
+          storage_cost: storageCost,
+          platform_fee: platformFee,
+          total_cost: totalCost,
+          shipping_status: 'pending'
+        },
+        vaultItemIds: selectedItems.map(item => parseInt(item.id.replace('VI-', ''))) // Extract numeric IDs
+      };
+      
+      // For now, just show confirmation - in production, call the API
+      const shipmentData = {
+        items: selectedItems,
+        destination: 'United States',
+        shippingService: 'Standard International',
+        orderRequest
+      };
+      
+      localStorage.setItem('shipmentData', JSON.stringify(shipmentData));
+      navigate('/shipment-confirmation');
+      
+    } catch (err) {
+      alert('Failed to create international order. Please try again.');
+    } finally {
+      setIsCalculatingShipping(false);
+    }
   };
 
   const handleReturnItem = (itemId: string) => {
