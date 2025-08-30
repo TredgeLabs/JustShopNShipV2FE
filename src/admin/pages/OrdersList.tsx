@@ -12,13 +12,13 @@ import {
 import AdminLayout from '../components/AdminLayout';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { adminApiService, AdminLocalOrder, AdminInternationalOrder } from '../services/adminApiService';
+import { adminApiService, AdminOrder } from '../services/adminApiService';
 import { formatDate, formatCurrency } from '../utils/adminHelpers';
 
 const OrdersList: React.FC = () => {
   const navigate = useNavigate();
-  const [localOrders, setLocalOrders] = useState<AdminLocalOrder[]>([]);
-  const [internationalOrders, setInternationalOrders] = useState<AdminInternationalOrder[]>([]);
+  const [localOrders, setLocalOrders] = useState<AdminOrder[]>([]);
+  const [internationalOrders, setInternationalOrders] = useState<AdminOrder[]>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [isLoadingInternational, setIsLoadingInternational] = useState(true);
   const [error, setError] = useState('');
@@ -133,7 +133,7 @@ const OrdersList: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Pending Evaluations</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {localOrders.filter(order => order.order_status === 'created' || order.order_status === 'pending').length}
+                  {localOrders.filter(order => order.status === 'pending' || order.status === 'processing').length}
                 </p>
               </div>
             </div>
@@ -145,10 +145,7 @@ const OrdersList: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(
-                    localOrders.reduce((sum, order) => sum + parseFloat(order.total_price), 0) +
-                    internationalOrders.reduce((sum, order) => sum + parseFloat(order.total_cost), 0)
-                  )}
+                  {formatCurrency([...localOrders, ...internationalOrders].reduce((sum, order) => sum + order.total_amount, 0))}
                 </p>
               </div>
             </div>
@@ -200,26 +197,27 @@ const OrdersList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
-                            <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(parseFloat(order.total_price))}</div>
+                            <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.total_amount || 0)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">User #{order.user_id}</div>
-                            <div className="text-sm text-gray-500">Vault: {order.vault_id || 'N/A'}</div>
+                            <div className="text-sm font-medium text-gray-900">{order.userName}</div>
+                            <div className="text-sm text-gray-500">{order.userEmail}</div>
+                            <div className="text-sm text-gray-500">{order.location}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
-                            {order.local_order_items?.length || 0} item(s)
+                            Order Items
                           </div>
                           <div className="text-sm text-gray-500">
-                            Status: {order.order_status}
+                            {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={order.order_status} />
+                          <StatusBadge status={order?.status || ''} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
@@ -284,28 +282,28 @@ const OrdersList: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
-                            <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(parseFloat(order.total_cost))}</div>
+                            <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.total_amount || 0)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">User #{order.user_id}</div>
-                            <div className="text-sm text-gray-500">Vault: {order.vault_id}</div>
-                            <div className="text-sm text-gray-500">Address: {order.shipping_address_id}</div>
+                            <div className="text-sm font-medium text-gray-900">{order.userName}</div>
+                            <div className="text-sm text-gray-500">{order.userEmail}</div>
+                            <div className="text-sm text-gray-500">{order.location}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
-                            {order.international_order_items?.length || 0} vault item(s)
+                            Order Items
                           </div>
                           <div className="text-sm text-gray-500">
-                            Weight: {(order.shipment_weight_gm / 1000).toFixed(1)} kg
+                            {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
-                            <StatusBadge status={order.shipping_status} />
+                            <StatusBadge status={order?.status || ''} />
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Shield, 
-  Lock, 
-  AlertCircle, 
+import {
+  Shield,
+  Lock,
+  AlertCircle,
   Loader2,
   Settings
 } from 'lucide-react';
@@ -17,7 +17,7 @@ const AdminLogin: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!passkey.trim()) {
       setError('Please enter the admin passkey');
       return;
@@ -33,7 +33,7 @@ const AdminLogin: React.FC = () => {
 
     try {
       const response = await adminApiService.login(passkey);
-      
+
       if (response.success) {
         // Redirect to admin dashboard
         navigate('/admin/orders');

@@ -1,3 +1,42 @@
+// Vault items API response type
+export interface VaultItemApi {
+  id: number;
+  vault_id: number;
+  order_item_id: number | null;
+  name: string;
+  description: string;
+  source_type: string;
+  received_date: string;
+  weight_gm: number;
+  status: string;
+  is_returnable: boolean;
+  returnable_until: string | null;
+  storage_days_free: number;
+  storage_fee_per_day: string;
+  image_urls: string[];
+  is_ready_to_ship: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VaultItemsApiResponse {
+  success: boolean;
+  items: VaultItemApi[];
+}
+
+class VaultService {
+  async getVaultItems(): Promise<VaultItemsApiResponse> {
+    try {
+      const response = await apiClient.get<VaultItemsApiResponse>("vault/items");
+      return (response as any).data || response;
+    } catch (error) {
+      console.error('Error fetching vault items:', error);
+      throw error;
+    }
+  }
+}
+
+export const vaultService = new VaultService();
 // Product details scraping API response type
 export interface ProductDetailsResponse {
   success: boolean;
