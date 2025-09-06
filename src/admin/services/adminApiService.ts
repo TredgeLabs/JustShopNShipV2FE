@@ -24,7 +24,7 @@ export interface AdminOrder {
   items: string;         // comma-separated names: "Kurta, Socks"
   itemCount: number;
   status: string;       // e.g., "pending", "processing", "completed"
-  total_amount: number;   // note: string in API
+  totalAmount: number;   // note: string in API
 }
 
 export interface LocalOrderDetails {
@@ -299,33 +299,16 @@ class AdminApiService {
   }
 
   async getShippingOrderDetails(shippingOrderId: string): Promise<ApiResponse<any>> {
-    // Mock implementation - replace with actual API call when endpoint is available
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: {
-            id: shippingOrderId,
-            userName: 'Mike Johnson',
-            userEmail: 'mike@example.com',
-            selectedAddress: {
-              name: 'Mike Johnson',
-              line1: '123 Main Street',
-              line2: 'Apt 4B',
-              city: 'Toronto',
-              state: 'ON',
-              zipCode: 'M5V 3A8',
-              country: 'Canada',
-              phone: '+1-416-555-0123'
-            },
-            vaultItems: [],
-            totalWeight: 1.1,
-            currentShippingLink: '',
-            currentShippingId: ''
-          }
-        });
-      }, 1000);
-    });
+    try {
+      const response = await fetch(`http://localhost:4000/api/v1/international-orders/${shippingOrderId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse<any>(response);
+    } catch (error) {
+      console.error('Error fetching shipping order details:', error);
+      throw error;
+    }
   }
 
   async updateShippingOrder(shippingOrderId: string, updateData: any): Promise<ApiResponse<void>> {

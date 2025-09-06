@@ -145,7 +145,7 @@ const OrdersList: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency([...localOrders, ...internationalOrders].reduce((sum, order) => sum + order.total_amount, 0))}
+                  {formatCurrency([...localOrders, ...internationalOrders].reduce((sum, order) => sum + order.totalAmount, 0))}
                 </p>
               </div>
             </div>
@@ -198,7 +198,7 @@ const OrdersList: React.FC = () => {
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
                             <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.total_amount || 0)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.totalAmount || 0)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -283,7 +283,7 @@ const OrdersList: React.FC = () => {
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
                             <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.total_amount || 0)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.totalAmount || 0)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

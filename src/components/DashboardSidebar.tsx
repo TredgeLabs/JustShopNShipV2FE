@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Package, 
-  ShoppingCart, 
-  Truck, 
-  Plane, 
-  ShoppingBag, 
+import {
+  Package,
+  ShoppingCart,
+  Truck,
+  Plane,
+  ShoppingBag,
   Search,
   AlertTriangle,
   HelpCircle,
@@ -218,7 +218,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
             className="fixed inset-0 bg-gray-600 bg-opacity-75"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          
+
           {/* Sidebar */}
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white h-full">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
@@ -229,7 +229,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                 <X className="h-6 w-6 text-white" />
               </button>
             </div>
-            
+
             <div className="flex-1 h-0 pt-20 pb-4 overflow-y-auto scrollbar-thin scrollbar-thumb-transparent hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
               <div className="px-4 py-6">
                 <SidebarContent />
