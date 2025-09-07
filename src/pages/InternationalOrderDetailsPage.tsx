@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { orderService, InternationalOrder } from '../api/services/orderService';
-import { 
-  ArrowLeft, 
-  ExternalLink, 
-  Loader2, 
-  AlertCircle, 
-  RefreshCw, 
-  MapPin, 
-  Truck, 
+import {
+  ArrowLeft,
+  ExternalLink,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  MapPin,
+  Truck,
   Calendar,
   Package,
   Plane
@@ -26,15 +26,15 @@ const InternationalOrderDetailsPage: React.FC = () => {
   useEffect(() => {
     const loadOrderDetails = async () => {
       if (!orderId) return;
-      
+
       setIsLoading(true);
       setError(null);
-      
+
       try {
         const response = await orderService.getInternationalOrderDetails(orderId);
-        
-        if (response.success && response.order) {
-          setOrder(response.order);
+
+        if (response.success && response.data) {
+          setOrder(response.data);
         } else {
           setError('International order not found');
         }
@@ -55,7 +55,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
   };
 
   const getTotalWeight = () => {
-    return order ? order.shipment_weight_gm / 1000 : 0; // Convert grams to kg
+    return order ? order.shipment_weight_gm : 0; // Convert grams to kg
   };
 
   if (isLoading) {
@@ -100,7 +100,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
               <span>Back to International Orders</span>
             </button>
-            
+
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleRefreshOrder}
@@ -109,10 +109,10 @@ const InternationalOrderDetailsPage: React.FC = () => {
                 <RefreshCw className="h-4 w-4" />
                 <span>Refresh</span>
               </button>
-              
-              {order.trackingLink && (
+
+              {order.tracking_link && (
                 <a
-                  href={order.trackingLink}
+                  href={order.tracking_link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -123,7 +123,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">International Order #{order.id}</h1>
@@ -139,36 +139,36 @@ const InternationalOrderDetailsPage: React.FC = () => {
             {/* Order Summary */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-600">Order ID</p>
                     <p className="font-semibold text-gray-900">#{order.id}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600">Created Date</p>
                     <p className="font-semibold text-gray-900">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600">Total Cost</p>
                     <p className="font-semibold text-gray-900">₹{parseFloat(order.total_cost).toLocaleString()}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-600">Vault Items</p>
                     <p className="font-semibold text-gray-900">{order.international_order_items?.length || 0}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600">Total Weight</p>
                     <p className="font-semibold text-gray-900">{getTotalWeight().toFixed(1)} kg</p>
                   </div>
-                  
+
                   {order.tracking_id && (
                     <div>
                       <p className="text-sm text-gray-600">Tracking ID</p>
@@ -187,7 +187,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
                   Total Weight: {getTotalWeight().toFixed(1)} kg
                 </span>
               </div>
-              
+
               {order.international_order_items && order.international_order_items.length > 0 ? (
                 <div className="space-y-4">
                   {order.international_order_items.map((item) => (
@@ -218,7 +218,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
             {/* Shipping Timeline */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Shipping Timeline</h2>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -227,13 +227,12 @@ const InternationalOrderDetailsPage: React.FC = () => {
                     <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 rounded-full ${
-                    ['shipped', 'in-transit', 'delivered'].includes(order.shipping_status) 
-                      ? 'bg-green-500' 
-                      : 'bg-gray-300'
-                  }`}></div>
+                  <div className={`w-3 h-3 rounded-full ${['shipped', 'in-transit', 'delivered'].includes(order.shipping_status)
+                    ? 'bg-green-500'
+                    : 'bg-gray-300'
+                    }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">Shipped</p>
                     {['shipped', 'in-transit', 'delivered'].includes(order.shipping_status) && (
@@ -241,13 +240,12 @@ const InternationalOrderDetailsPage: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 rounded-full ${
-                    ['in-transit', 'delivered'].includes(order.shipping_status) 
-                      ? 'bg-green-500' 
-                      : 'bg-gray-300'
-                  }`}></div>
+                  <div className={`w-3 h-3 rounded-full ${['in-transit', 'delivered'].includes(order.shipping_status)
+                    ? 'bg-green-500'
+                    : 'bg-gray-300'
+                    }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">In Transit</p>
                     {['in-transit', 'customs', 'delivered'].includes(order.status) && (
@@ -255,11 +253,10 @@ const InternationalOrderDetailsPage: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 rounded-full ${
-                    order.shipping_status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
-                  }`}></div>
+                  <div className={`w-3 h-3 rounded-full ${order.shipping_status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
+                    }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">Delivered</p>
                     {order.actualDelivery ? (
@@ -278,18 +275,18 @@ const InternationalOrderDetailsPage: React.FC = () => {
             {/* Shipping Information */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Information</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600">Vault ID</p>
                   <p className="font-medium">{order.vault_id}</p>
                 </div>
-                
+
                 <div>
                   <p className="text-sm text-gray-600">Shipping Address ID</p>
                   <p className="font-medium">{order.shipping_address_id}</p>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
                   <Package className="h-5 w-5 text-purple-600" />
                   <div>
@@ -297,7 +294,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
                     <p className="font-medium">{getTotalWeight().toFixed(1)} kg</p>
                   </div>
                 </div>
-                
+
                 {order.tracking_id && (
                   <div className="flex items-center space-x-3">
                     <Truck className="h-5 w-5 text-green-600" />
@@ -313,23 +310,23 @@ const InternationalOrderDetailsPage: React.FC = () => {
             {/* Pricing Breakdown */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Costs</h3>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping Fee:</span>
                   <span className="font-medium">₹{parseFloat(order.shipping_cost).toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">Storage Cost:</span>
                   <span className="font-medium">₹{parseFloat(order.storage_cost).toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">Platform Fee:</span>
                   <span className="font-medium">₹{parseFloat(order.platform_fee).toFixed(2)}</span>
                 </div>
-                
+
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total Cost:</span>
@@ -342,7 +339,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              
+
               <div className="space-y-3">
                 {order.tracking_link && (
                   <a
@@ -355,7 +352,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
                     <span>Track Package</span>
                   </a>
                 )}
-                
+
                 <a
                   href="/contact-support"
                   className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"

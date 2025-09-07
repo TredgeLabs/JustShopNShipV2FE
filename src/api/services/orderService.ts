@@ -128,7 +128,7 @@ export interface LocalOrderDetailsResponse {
 
 export interface InternationalOrderDetailsResponse {
   success: boolean;
-  order: InternationalOrder;
+  data: InternationalOrder;
 }
 
 class OrderService {

@@ -300,7 +300,7 @@ class AdminApiService {
 
   async getShippingOrderDetails(shippingOrderId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await fetch(`http://localhost:4000/api/v1/international-orders/${shippingOrderId}`, {
+      const response = await fetch(`${this.baseUrl}/international-orders/${shippingOrderId}`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
