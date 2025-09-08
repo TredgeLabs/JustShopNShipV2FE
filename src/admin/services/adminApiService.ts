@@ -259,30 +259,16 @@ class AdminApiService {
 
   // Legacy methods for backward compatibility (now using real API)
   async validateVaultId(vaultId: string): Promise<ApiResponse<any>> {
-    // This might need a different endpoint - using mock for now
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const isValid = true; // Simulate validation
-        if (isValid) {
-          resolve({
-            success: true,
-            data: {
-              vaultId,
-              userName: 'John Doe',
-              userEmail: 'john@example.com',
-              userPhone: '+1-555-123-4567',
-              transitItems: []
-            }
-          });
-        } else {
-          resolve({
-            success: false,
-            data: null,
-            error: 'Invalid Vault ID'
-          });
-        }
-      }, 1000);
-    });
+     try {
+      const response = await fetch(`${this.baseUrl}/accepted-items/${vaultId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse<any>(response);
+    } catch (error) {
+      console.error('Error fetching shipping order details:', error);
+      throw error;
+    }
   }
 
   async enterVaultItem(vaultId: string, itemData: any): Promise<ApiResponse<void>> {

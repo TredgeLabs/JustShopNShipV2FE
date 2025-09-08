@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { vaultService, VaultItemApi } from '../api/services/userService';
 import {
   Package,
@@ -42,6 +43,8 @@ const MyVault: React.FC = () => {
   const [selectedImageModal, setSelectedImageModal] = useState<{ item: VaultItem; imageIndex: number } | null>(null);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+  const [vaultCode, setVaultCode] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadVaultItems = async () => {
@@ -73,6 +76,7 @@ const MyVault: React.FC = () => {
               quantity: 1
             };
           });
+          setVaultCode(response.vaultCode);
           setVaultItems(mappedItems);
         }
       } catch (err) {
@@ -153,8 +157,8 @@ const MyVault: React.FC = () => {
 
       const orderRequest = {
         orderData: {
-          vault_id: 1, // This should come from user's vault
-          shipping_address_id: 1, // This should come from user's default address
+          vault_id: vaultCode, // This should come from user's vault
+          shipping_address_id: 2, // This should come from user's default address
           shipment_weight_gm: totalWeight,
           shipping_cost: shippingCost,
           storage_cost: storageCost,

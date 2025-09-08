@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService, LocalOrder, LocalOrderItem } from '../api/services/orderService';
-import { 
-  ShoppingCart, 
-  Package, 
-  Eye, 
-  EyeOff, 
-  ExternalLink, 
-  Edit3, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
+import {
+  ShoppingCart,
+  Package,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  Edit3,
+  AlertCircle,
+  CheckCircle,
+  Clock,
   XCircle,
   Loader2,
   ChevronDown,
@@ -31,7 +31,7 @@ const DomesticOrders: React.FC = () => {
         setIsLoading(true);
         setError('');
         const response = await orderService.getLocalOrders();
-        
+
         if (response.success && response.orders) {
           setOrders(response.orders);
         } else {
@@ -51,6 +51,7 @@ const DomesticOrders: React.FC = () => {
   const getOrderStatusColor = (status: string) => {
     switch (status) {
       case 'created': return 'bg-blue-100 text-blue-800';
+      case 'accepted': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-blue-100 text-blue-800';
       case 'processing': return 'bg-yellow-100 text-yellow-800';
       case 'completed': return 'bg-green-100 text-green-800';
@@ -63,6 +64,7 @@ const DomesticOrders: React.FC = () => {
   const getOrderStatusText = (status: string) => {
     switch (status) {
       case 'created': return 'Created';
+      case 'accepted': return 'Accepted';
       case 'pending': return 'Pending';
       case 'processing': return 'Processing';
       case 'completed': return 'Completed';
@@ -188,7 +190,7 @@ const DomesticOrders: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-green-600" />
@@ -200,7 +202,7 @@ const DomesticOrders: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <Clock className="h-8 w-8 text-yellow-600" />
@@ -212,7 +214,7 @@ const DomesticOrders: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <AlertCircle className="h-8 w-8 text-orange-600" />
@@ -242,7 +244,7 @@ const DomesticOrders: React.FC = () => {
                       {getOrderStatusText(order.order_status)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <p className="text-sm text-gray-600">
@@ -252,7 +254,7 @@ const DomesticOrders: React.FC = () => {
                         ₹{parseFloat(order.total_price).toLocaleString()}
                       </p>
                     </div>
-                    
+
                     <button
                       onClick={() => toggleOrderExpansion(order.id.toString())}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -279,7 +281,7 @@ const DomesticOrders: React.FC = () => {
                       <Edit3 className="h-4 w-4" />
                       <span>Correct Your Order</span>
                     </button>
-                    
+
                     <button
                       onClick={() => handleViewDetails(order.id.toString())}
                       className="flex items-center space-x-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
@@ -288,7 +290,7 @@ const DomesticOrders: React.FC = () => {
                       <span>View Details</span>
                     </button>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {order.local_order_items.map((item) => (
                       <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -300,23 +302,23 @@ const DomesticOrders: React.FC = () => {
                               className="w-16 h-16 object-cover rounded-lg"
                             />
                           )}
-                          
+
                           <div className="flex-1 min-w-0">
                             <h5 className="font-medium text-gray-900 text-sm leading-tight mb-2">
                               {item.product_name}
                             </h5>
-                            
+
                             <div className="flex items-center space-x-2 mb-2">
                               {getItemStatusIcon(item.status)}
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getItemStatusColor(item.status)}`}>
                                 {getItemStatusText(item.status)}
                               </span>
                             </div>
-                            
+
                             <p className="text-sm font-semibold text-gray-900 mb-3">
                               ₹{parseFloat(item.price).toLocaleString()}
                             </p>
-                            
+
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleViewDetails(order.id.toString())}

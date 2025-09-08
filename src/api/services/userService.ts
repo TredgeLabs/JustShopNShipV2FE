@@ -21,6 +21,7 @@ export interface VaultItemApi {
 
 export interface VaultItemsApiResponse {
   success: boolean;
+  vaultCode: string;
   items: VaultItemApi[];
 }
 
