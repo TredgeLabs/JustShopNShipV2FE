@@ -136,6 +136,26 @@ export interface User {
   membershipTier: 'basic' | 'silver' | 'gold' | 'platinum';
 }
 
+export interface Profile {
+  id: number;
+  vault_id: string;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  email: string;
+  phone_country_code: string;
+  phone_number: string;
+  google_id: string | null;
+  referral_code: string | null;
+  referred_by: string | null;
+  country: string | null;
+  virtual_address_id: number;
+  is_admin: boolean;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
+
+
 // Vault information interface
 export interface VaultInfo {
   id: string;
@@ -398,10 +418,10 @@ class UserService {
   /**
    * Get user profile
    */
-  async getProfile(): Promise<ApiResponse<User>> {
+  async getProfile(): Promise<ApiResponse<Profile>> {
     try {
-      const response = await apiClient.get<User>(ENDPOINTS.USER.PROFILE);
-      return response;
+      const response = await apiClient.get<ApiResponse<Profile>>(ENDPOINTS.USER.PROFILE);
+      return response.data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       throw error;

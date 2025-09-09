@@ -11,10 +11,10 @@ const EnhancedNavigation: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (isLoggedIn) {
-      userService.logout();
-      navigate('/login');
+      await userService.logout();
+      navigate('/login', { replace: true });
     }
   };
 
@@ -38,8 +38,8 @@ const EnhancedNavigation: React.FC = () => {
             <Link
               to="/"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
               Home
@@ -47,8 +47,8 @@ const EnhancedNavigation: React.FC = () => {
             <Link
               to="/dashboard"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
               Dashboard
@@ -99,8 +99,8 @@ const EnhancedNavigation: React.FC = () => {
               <Link
                 to="/"
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/')
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                   }`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -109,8 +109,8 @@ const EnhancedNavigation: React.FC = () => {
               <Link
                 to="/dashboard"
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/dashboard')
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                   }`}
                 onClick={() => setIsMenuOpen(false)}
               >

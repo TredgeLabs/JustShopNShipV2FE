@@ -105,9 +105,9 @@ const Profile: React.FC = () => {
   const loadProfile = async () => {
     try {
       setIsLoading(true);
-      const apiUser = await userService.getProfile();
-      const user = apiUser && (apiUser as any).user ? (apiUser as any).user : apiUser;
-      if (user) {
+      const response = await userService.getProfile();
+      if (response.success && response.data) {
+        const user = response.data
         const mappedProfile: UserProfile = {
           id: String(user.id),
           firstName: user.first_name || '',
@@ -117,7 +117,7 @@ const Profile: React.FC = () => {
           country: user.country || '',
           membershipTier: 'basic', // or map from user if available
           isVerified: true, // or map from user if available
-          createdAt: user.createdAt || user.created_at || user.updatedAt || '',
+          createdAt: user.createdAt || '',
         };
         setProfile(mappedProfile);
         setEditData({
