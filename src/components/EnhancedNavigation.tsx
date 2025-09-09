@@ -19,8 +19,11 @@ const EnhancedNavigation: React.FC = () => {
   };
 
   const handleCreateOrder = () => {
-    // Navigate to create order page
-    window.location.href = '/create-order';
+    if (isLoggedIn) {
+      navigate('/create-order');
+    } else {
+      navigate('/login');
+    }
   };
 
   return (
@@ -44,15 +47,25 @@ const EnhancedNavigation: React.FC = () => {
             >
               Home
             </Link>
-            <Link
-              to="/dashboard"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
-            >
-              Dashboard
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                to="/dashboard"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                  }`}
+              >
+                Dashboard
+              </Link>) : (
+              <Link
+                to="/signup"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                  }`}
+              >
+                Sign Up
+              </Link>)}
             <div className="flex items-center space-x-4">
               {isLoggedIn ? (
                 <button
