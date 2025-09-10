@@ -100,7 +100,6 @@ class AdminApiService {
   private getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('adminToken');
     return {
-      'Content-Type': 'application/json',
       'Accept': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
     };
@@ -305,6 +304,7 @@ class AdminApiService {
   async createInventoryItem(itemData: any): Promise<ApiResponse<void>> {
     // itemData should include all fields and images as File or File[]
     const formData = new FormData();
+    formData.append('sub_category', itemData.subCategory || '');
     for (const key in itemData) {
       if (key === 'images' && Array.isArray(itemData.images)) {
         itemData.images.forEach((file: File) => formData.append('images', file));

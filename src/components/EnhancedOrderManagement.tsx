@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Truck, Plane, CheckCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Package, Truck, Plane, CheckCircle, Check, Clock, AlertCircle, Loader2, TicketPlusIcon } from 'lucide-react';
 import { orderService, LocalOrder, InternationalOrder } from '../api/services/orderService';
 
 const EnhancedOrderManagement: React.FC = () => {
@@ -42,6 +42,7 @@ const EnhancedOrderManagement: React.FC = () => {
     switch (status) {
       case 'created':
       case 'pending': return <Clock className="h-5 w-5 text-yellow-500" />;
+      case 'accepted': return <Check className="h-5 w-5 text-green-500" />;
       case 'received': return <Package className="h-5 w-5 text-blue-500" />;
       case 'shipped': return <Plane className="h-5 w-5 text-purple-500" />;
       case 'delivered': return <CheckCircle className="h-5 w-5 text-green-500" />;
@@ -53,6 +54,7 @@ const EnhancedOrderManagement: React.FC = () => {
     switch (status) {
       case 'created':
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'accepted': return 'bg-green-100 text-green-800';
       case 'received': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-purple-100 text-purple-800';
       case 'delivered': return 'bg-green-100 text-green-800';
@@ -63,6 +65,7 @@ const EnhancedOrderManagement: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'created': return 'Order Created';
+      case 'accepted': return 'Order Accepted';
       case 'pending': return 'Order Pending';
       case 'received': return 'Received at Vault';
       case 'shipped': return 'Shipped Internationally';
@@ -223,12 +226,12 @@ const EnhancedOrderManagement: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <span className="text-sm font-medium text-gray-500">#{isLocal ? 'L' : 'I'}{order.id}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                      {getStatusText(order.status)}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                      {getStatusText(status)}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {getStatusIcon(order.status)}
+                    {getStatusIcon(status)}
                     <span className="text-sm text-gray-500">{new Date(orderDate).toLocaleDateString()}</span>
                   </div>
                 </div>
