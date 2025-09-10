@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Archive, 
-  Save, 
-  AlertCircle, 
-  CheckCircle, 
+import {
+  Archive,
+  Save,
+  AlertCircle,
+  CheckCircle,
   Package,
   Tag,
   Layers,
@@ -26,9 +26,9 @@ interface InventoryItemData {
   category: string;
   subCategory: string;
   material: string;
-  stockQuantity: number;
+  quantity: number;
   price: number;
-  weight: number;
+  weight_gm: number;
   images: File[];
 }
 
@@ -42,9 +42,9 @@ const InventoryEntry: React.FC = () => {
     category: '',
     subCategory: '',
     material: '',
-    stockQuantity: 1,
+    quantity: 1,
     price: 0,
-    weight: 0,
+    weight_gm: 0,
     images: []
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -104,15 +104,15 @@ const InventoryEntry: React.FC = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ['name', 'category', 'brand', 'stockQuantity', 'price'];
+    const requiredFields = ['name', 'category', 'brand', 'quantity', 'price'];
     const missingFields = requiredFields.filter(field => !itemData[field as keyof InventoryItemData]);
-    
+
     if (missingFields.length > 0) {
       setError(`Please fill in all required fields: ${missingFields.join(', ')}`);
       return false;
     }
 
-    if (itemData.stockQuantity <= 0) {
+    if (itemData.quantity <= 0) {
       setError('Stock quantity must be greater than 0');
       return false;
     }
@@ -134,7 +134,7 @@ const InventoryEntry: React.FC = () => {
 
       // In production, you would upload images to a cloud storage service
       // and get URLs back to store in the database
-      const imageUrls = itemData.images.map((file, index) => 
+      const imageUrls = itemData.images.map((file, index) =>
         `https://example.com/inventory-images/${Date.now()}-${index}-${file.name}`
       );
 
@@ -144,10 +144,10 @@ const InventoryEntry: React.FC = () => {
       };
 
       const response = await adminApiService.createInventoryItem(submissionData);
-      
+
       if (response.success) {
         setSuccess('Inventory item created successfully!');
-        
+
         // Reset form
         setItemData({
           name: '',
@@ -158,12 +158,12 @@ const InventoryEntry: React.FC = () => {
           category: '',
           subCategory: '',
           material: '',
-          stockQuantity: 1,
+          quantity: 1,
           price: 0,
-          weight: 0,
+          weight_gm: 0,
           images: []
         });
-        
+
         setTimeout(() => setSuccess(''), 5000);
       } else {
         setError('Failed to create inventory item');
@@ -207,7 +207,7 @@ const InventoryEntry: React.FC = () => {
         {/* Inventory Entry Form */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Add New Inventory Item</h2>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Basic Information */}
             <div className="space-y-4">
@@ -350,8 +350,8 @@ const InventoryEntry: React.FC = () => {
                   <input
                     type="number"
                     min="1"
-                    value={itemData.stockQuantity}
-                    onChange={(e) => handleInputChange('stockQuantity', parseInt(e.target.value))}
+                    value={itemData.quantity}
+                    onChange={(e) => handleInputChange('quantity', parseInt(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="0"
                   />
@@ -380,8 +380,8 @@ const InventoryEntry: React.FC = () => {
                     type="number"
                     min="0"
                     step="0.1"
-                    value={itemData.weight}
-                    onChange={(e) => handleInputChange('weight', parseFloat(e.target.value))}
+                    value={itemData.weight_gm}
+                    onChange={(e) => handleInputChange('weight_gm', parseFloat(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="0.0"
                   />
