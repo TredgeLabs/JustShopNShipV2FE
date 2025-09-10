@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  Plane, 
-  Globe, 
-  Shield, 
-  Clock, 
+import {
+  Plane,
+  Globe,
+  Shield,
+  Clock,
   Truck,
   CheckCircle,
   ArrowRight,
@@ -11,6 +11,7 @@ import {
   MapPin,
   Star
 } from 'lucide-react';
+import { countries } from '../constants/countries';
 
 const InternationalShipping: React.FC = () => {
   const features = [
@@ -62,21 +63,6 @@ const InternationalShipping: React.FC = () => {
       icon: Package,
       color: 'bg-gray-600'
     }
-  ];
-
-  const countries = [
-    { name: 'United States', flag: '🇺🇸', popular: true },
-    { name: 'Canada', flag: '🇨🇦', popular: true },
-    { name: 'United Kingdom', flag: '🇬🇧', popular: true },
-    { name: 'Australia', flag: '🇦🇺', popular: true },
-    { name: 'Germany', flag: '🇩🇪', popular: true },
-    { name: 'UAE', flag: '🇦🇪', popular: true },
-    { name: 'Singapore', flag: '🇸🇬', popular: false },
-    { name: 'France', flag: '🇫🇷', popular: false },
-    { name: 'Japan', flag: '🇯🇵', popular: false },
-    { name: 'Netherlands', flag: '🇳🇱', popular: false },
-    { name: 'Sweden', flag: '🇸🇪', popular: false },
-    { name: 'Norway', flag: '🇳🇴', popular: false }
   ];
 
   const testimonials = [

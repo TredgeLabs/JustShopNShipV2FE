@@ -303,16 +303,37 @@ class AdminApiService {
   }
 
   async createInventoryItem(itemData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call when endpoint is available
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: undefined,
-          message: 'Inventory item created successfully'
-        });
-      }, 1500);
-    });
+    // itemData should include all fields and images as File or File[]
+    const formData = new FormData();
+    for (const key in itemData) {
+      if (key === 'images' && Array.isArray(itemData.images)) {
+        itemData.images.forEach((file: File) => formData.append('images', file));
+      } else if (key === 'images' && itemData.images instanceof File) {
+        formData.append('images', itemData.images);
+      } else {
+        formData.append(key, itemData[key]);
+      }
+    }
+    try {
+      const response = await fetch('http://localhost:4000/api/v1/inventory', {
+        method: 'POST',
+        headers: {
+          ...this.getAuthHeaders(),
+          // Let browser set Content-Type for FormData
+          // Remove Content-Type if present
+        },
+        body: formData,
+      });
+      const data = await this.handleResponse<any>(response);
+      return {
+        success: !!data.success,
+        data: undefined,
+        message: data.success ? 'Inventory item created successfully' : (data.message || 'Failed to create inventory item')
+      };
+    } catch (error) {
+      console.error('Error creating inventory item:', error);
+      throw error;
+    }
   }
 
   async getSupportQueries(): Promise<ApiResponse<any[]>> {

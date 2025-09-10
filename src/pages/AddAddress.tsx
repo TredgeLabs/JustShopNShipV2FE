@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { userService } from '../api/services/userService';
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
+import { countries } from '../constants/countries';
 
 interface AddressFormData {
   title: string;
@@ -28,6 +29,8 @@ interface AddressFormData {
 
 const AddAddress: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const totalAddress = location.state?.totalAddress ?? 0;
   const [formData, setFormData] = useState<AddressFormData>({
     title: 'Home',
     firstName: '',
@@ -49,19 +52,6 @@ const AddAddress: React.FC = () => {
     { value: 'Home', label: 'Home' },
     { value: 'Office', label: 'Office' },
     { value: 'Other', label: 'Other' }
-  ];
-
-  const countries = [
-    { code: 'US', name: 'United States', phoneCode: '+1' },
-    { code: 'CA', name: 'Canada', phoneCode: '+1' },
-    { code: 'GB', name: 'United Kingdom', phoneCode: '+44' },
-    { code: 'AU', name: 'Australia', phoneCode: '+61' },
-    { code: 'DE', name: 'Germany', phoneCode: '+49' },
-    { code: 'AE', name: 'United Arab Emirates', phoneCode: '+971' },
-    { code: 'SG', name: 'Singapore', phoneCode: '+65' },
-    { code: 'FR', name: 'France', phoneCode: '+33' },
-    { code: 'JP', name: 'Japan', phoneCode: '+81' },
-    { code: 'IN', name: 'India', phoneCode: '+91' }
   ];
 
   const validateForm = () => {
@@ -142,7 +132,7 @@ const AddAddress: React.FC = () => {
         zip_code: formData.zipCode,
         phone_country_code: formData.countryCode,
         phone_number: formData.phone,
-        is_default: false,
+        is_default: totalAddress === 0
       };
       await userService.addAddress(payload);
       setSuccess(true);

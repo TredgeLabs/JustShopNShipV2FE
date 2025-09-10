@@ -87,7 +87,7 @@ const ForgotPassword: React.FC = () => {
     setSuccess('');
 
     if (!validateMobileNumber(mobileNumber)) {
-      setError('Please enter a valid 10-digit mobile number');
+      setError('Please enter a valid mobile number');
       return;
     }
 
@@ -276,7 +276,7 @@ const ForgotPassword: React.FC = () => {
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter 10-digit mobile number"
+              placeholder="Enter mobile number"
               required
             />
           </div>

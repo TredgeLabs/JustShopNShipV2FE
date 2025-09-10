@@ -1,9 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Globe, Package, Shield } from 'lucide-react';
+import { userService } from '../api/services/userService';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
+  const isLoggedIn = userService.isAuthenticated();
+
   return (
     <div className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white overflow-hidden min-h-screen flex items-center">
       {/* Background Pattern */}
@@ -28,12 +31,13 @@ const Hero: React.FC = () => {
               Create Order
               <ArrowRight className="h-5 w-5 ml-2" />
             </button>
-            <button
+
+            {!isLoggedIn && (<button
               className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold rounded-lg transition-all duration-300"
               onClick={() => navigate('/login')}
             >
               Sign In
-            </button>
+            </button>)}
           </div>
 
           {/* Trust Indicators */}
