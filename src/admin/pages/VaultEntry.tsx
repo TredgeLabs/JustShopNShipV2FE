@@ -153,7 +153,8 @@ const VaultEntry: React.FC = () => {
         storage_days_free: 90,
         storage_fee_per_day: 2,
         image_urls: [], // In production, upload images and get URLs
-        is_ready_to_ship: true
+        is_ready_to_ship: true,
+        local_order_item_id: selectedTransitItem ? selectedTransitItem.id : '',
       };
 
       const response = await adminApiService.addVaultItem(itemData.vault_id, itemData);
