@@ -89,8 +89,9 @@ export interface VaultItemRequest {
 }
 
 export interface ShipInternationalRequest {
-  tracking_id: string;
-  tracking_link: string;
+  tracking_id?: string;
+  tracking_link?: string;
+  shipping_status?: string;
 }
 
 // Admin API Service

@@ -58,6 +58,7 @@ const EnhancedOrderManagement: React.FC = () => {
       case 'received': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-purple-100 text-purple-800';
       case 'delivered': return 'bg-green-100 text-green-800';
+      case 'denied': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -65,6 +66,7 @@ const EnhancedOrderManagement: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'created': return 'Order Created';
+      case 'denied': return 'Order Denied';
       case 'accepted': return 'Order Accepted';
       case 'pending': return 'Order Pending';
       case 'received': return 'Received at Vault';
@@ -96,12 +98,11 @@ const EnhancedOrderManagement: React.FC = () => {
 
   const getOrderCounts = () => {
     const pendingLocal = localOrders.filter(order =>
-      order.order_status === 'created' || order.order_status === 'pending'
+      order.order_status === 'created' || order.order_status === 'pending' || order.order_status === 'denied'
     ).length;
 
     const receivedLocal = localOrders.filter(order =>
-      order.order_status === 'completed' ||
-      order.local_order_items?.some(item => item.status === 'accepted')
+      order.local_order_items?.some(item => item.status === 'in_vault')
     ).length;
 
     const shippedInternational = internationalOrders.filter(order =>
@@ -217,7 +218,7 @@ const EnhancedOrderManagement: React.FC = () => {
           recentOrders.map((order) => {
             const isLocal = 'order_status' in order;
             const status = isLocal ? order.order_status : order.shipping_status;
-            const price = isLocal ? parseFloat(order.total_price) : parseFloat(order.total_cost);
+            const price = isLocal ? parseFloat(order?.total_price?.toLocaleString()) : parseFloat(order.total_cost);
             const orderDate = order.createdAt;
             const trackingNumber = isLocal ? undefined : order.tracking_id;
 

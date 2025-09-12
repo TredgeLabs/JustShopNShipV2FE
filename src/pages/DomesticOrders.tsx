@@ -48,7 +48,7 @@ const DomesticOrders: React.FC = () => {
     loadDomesticOrders();
   }, []);
 
-  const getOrderStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'created': return 'bg-blue-100 text-blue-800';
       case 'accepted': return 'bg-green-100 text-green-800';
@@ -62,7 +62,7 @@ const DomesticOrders: React.FC = () => {
     }
   };
 
-  const getOrderStatusText = (status: string) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'created': return 'Created';
       case 'accepted': return 'Accepted';
@@ -245,8 +245,8 @@ const DomesticOrders: React.FC = () => {
                       <h3 className="text-lg font-semibold text-gray-900">Order #{order.id}</h3>
                       <p className="text-sm text-gray-600">Placed on {formatDate(order.createdAt)}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getOrderStatusColor(order.order_status)}`}>
-                      {getOrderStatusText(order.order_status)}
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.order_status)}`}>
+                      {getStatusText(order.order_status)}
                     </span>
                   </div>
 
