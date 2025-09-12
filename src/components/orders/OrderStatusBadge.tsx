@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Clock, Truck, Plane, AlertTriangle, XCircle, Package } from 'lucide-react';
+import { CheckCircle, Ban, FilePlus, Clock, Truck, Plane, AlertTriangle, XCircle, Package } from 'lucide-react';
 
 interface OrderStatusBadgeProps {
   status: string;
@@ -46,6 +46,18 @@ const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({ status, type = 'loc
             icon: Clock,
             text: 'Processing',
             color: 'bg-orange-100 text-orange-800'
+          };
+        case 'created':
+          return {
+            icon: FilePlus, // ✅ distinct icon for created
+            text: 'Created',
+            color: 'bg-blue-100 text-blue-800' // ✅ blue instead of orange
+          };
+        case 'denied':
+          return {
+            icon: Ban, // 🚫 clearly shows admin denial
+            text: 'Denied',
+            color: 'bg-red-200 text-red-900'
           };
         default:
           return {

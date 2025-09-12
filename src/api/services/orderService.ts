@@ -1,5 +1,4 @@
 import apiClient from '../apiClient';
-import { ENDPOINTS } from '../endpoints';
 import { ApiResponse } from '../config';
 
 // Order status enum
@@ -16,13 +15,16 @@ export interface LocalOrderItem {
   color?: string;
   size?: string;
   quantity: number;
-  price: string;
-  final_price?: string;
+  price: number;
+  final_price: number;
   status: string;
   deny_reasons?: number[] | null;
   image_link?: string;
   createdAt: string;
   updatedAt: string;
+  isEditing: boolean;
+  hasError?: boolean; // For frontend use
+  errorMessage?: string; // For frontend use
 }
 
 // Local Order interface (matching backend structure)
@@ -32,7 +34,7 @@ export interface LocalOrder {
   vault_id?: number | null;
   order_status: string;
   payment_status: string;
-  total_price: string;
+  total_price: number;
   platform_fee: string;
   admin_notes?: string;
   createdAt: string;
@@ -44,6 +46,15 @@ export interface LocalOrder {
 export interface InternationalOrderItem {
   id: number;
   international_order_id: number;
+  name: string;
+  imageUrls?: string[];
+  color?: string;
+  size?: string;
+  quantity: number;
+  price: number;
+  product_link: string;
+  status: string;
+  inventory_item_id?: number | null;
   vault_item_id: number;
   createdAt: string;
   updatedAt: string;

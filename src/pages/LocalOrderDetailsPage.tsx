@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit3, ExternalLink, Loader2, AlertCircle, RefreshCw, User, Calendar, DollarSign } from 'lucide-react';
-import { orderService, LocalOrder, LocalOrderItem } from '../api/services/orderService';
+import { orderService, LocalOrder } from '../api/services/orderService';
 import OrderStatusBadge from '../components/orders/OrderStatusBadge';
 import OrderItemCard from '../components/orders/OrderItemCard';
-import OrderSummaryCard from '../components/orders/OrderSummaryCard';
 
 
 const LocalOrderDetailsPage: React.FC = () => {
@@ -50,7 +49,7 @@ const LocalOrderDetailsPage: React.FC = () => {
   };
 
   const getDeliveredItemsCount = () => {
-    return order?.local_order_items?.filter(item => item.status === 'accepted').length || 0;
+    return order?.local_order_items?.filter(item => item.status !== 'denied' && item.status !== 'pending').length || 0;
   };
 
   const getTotalItemsCount = () => {
@@ -107,17 +106,17 @@ const LocalOrderDetailsPage: React.FC = () => {
                 <RefreshCw className="h-4 w-4" />
                 <span>Refresh</span>
               </button>
-              
-              <button
+
+              {(order.order_status === 'denied') && <button
                 onClick={handleCorrectOrder}
                 className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
               >
                 <Edit3 className="h-4 w-4" />
                 <span>Correct Order</span>
-              </button>
+              </button>}
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Order #{order.id}</h1>
@@ -151,27 +150,27 @@ const LocalOrderDetailsPage: React.FC = () => {
                       <p className="font-semibold text-gray-900">{new Date(order.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3">
                     <DollarSign className="h-5 w-5 text-purple-600" />
                     <div>
                       <p className="text-sm text-gray-600">Total Amount</p>
-                      <p className="font-semibold text-gray-900">₹{parseFloat(order.total_price).toLocaleString()}</p>
+                      <p className="font-semibold text-gray-900">₹{parseFloat(order.total_price.toLocaleString()).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-600">Payment Status</p>
                     <p className="font-semibold text-gray-900 capitalize">{order.payment_status}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600">Platform Fee</p>
                     <p className="font-semibold text-gray-900">₹{parseFloat(order.platform_fee).toLocaleString()}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-gray-600">Total Items</p>
                     <p className="font-semibold text-gray-900">{getTotalItemsCount()}</p>
@@ -188,7 +187,7 @@ const LocalOrderDetailsPage: React.FC = () => {
                   {getDeliveredItemsCount()} of {getTotalItemsCount()} items accepted
                 </span>
               </div>
-              
+
               {order.local_order_items && order.local_order_items.length > 0 ? (
                 <div className="space-y-4">
                   {order.local_order_items.map((item) => (
@@ -201,7 +200,7 @@ const LocalOrderDetailsPage: React.FC = () => {
                         color: item.color || 'N/A',
                         size: item.size || 'N/A',
                         quantity: item.quantity,
-                        price: parseFloat(item.price),
+                        price: parseFloat(item.price.toLocaleString()),
                         status: item.status,
                         url: item.product_link
                       }}
@@ -219,7 +218,7 @@ const LocalOrderDetailsPage: React.FC = () => {
             {/* Order Timeline */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Order Timeline</h2>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -228,12 +227,11 @@ const LocalOrderDetailsPage: React.FC = () => {
                     <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
-                
+
                 {order.order_status !== 'created' && (
                   <div className="flex items-center space-x-4">
-                    <div className={`w-3 h-3 rounded-full ${
-                      order.order_status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'
-                    }`}></div>
+                    <div className={`w-3 h-3 rounded-full ${order.order_status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'
+                      }`}></div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">Order {order.order_status}</p>
                       <p className="text-sm text-gray-600">{new Date(order.updatedAt).toLocaleDateString()}</p>
@@ -249,22 +247,22 @@ const LocalOrderDetailsPage: React.FC = () => {
             {/* Pricing Breakdown */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Breakdown</h3>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">₹{parseFloat(order.total_price).toLocaleString()}</span>
+                  <span className="font-medium">₹{parseFloat(order.total_price.toLocaleString()).toLocaleString()}</span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">Platform Fee:</span>
                   <span className="font-medium">₹{parseFloat(order.platform_fee).toLocaleString()}</span>
                 </div>
-                
+
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total:</span>
-                    <span>₹{(parseFloat(order.total_price) + parseFloat(order.platform_fee)).toLocaleString()}</span>
+                    <span>₹{(parseFloat(order.total_price.toLocaleString()) + parseFloat(order.platform_fee)).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -302,16 +300,16 @@ const LocalOrderDetailsPage: React.FC = () => {
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              
+
               <div className="space-y-3">
-                <button
+                {(order.order_status === 'denied') && <button
                   onClick={handleCorrectOrder}
                   className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-colors"
                 >
                   <Edit3 className="h-4 w-4" />
                   <span>Correct Order</span>
-                </button>
-                
+                </button>}
+
                 <a
                   href="/contact-support"
                   className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService, InternationalOrder, InternationalOrderItem } from '../api/services/orderService';
-import { 
-  Plane, 
-  Package, 
-  ExternalLink, 
-  Truck, 
-  Eye, 
-  MapPin, 
-  Calendar, 
+import {
+  Plane,
+  Package,
+  ExternalLink,
+  Truck,
+  Eye,
+  MapPin,
+  Calendar,
   DollarSign,
   Loader2,
   ChevronDown,
@@ -32,7 +32,7 @@ const InternationalOrders: React.FC = () => {
         setIsLoading(true);
         setError('');
         const response = await orderService.getInternationalOrders();
-        
+
         if (response.success && response.orders) {
           setOrders(response.orders);
         } else {
@@ -163,7 +163,7 @@ const InternationalOrders: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-green-600" />
@@ -175,7 +175,7 @@ const InternationalOrders: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <Truck className="h-8 w-8 text-purple-600" />
@@ -187,7 +187,7 @@ const InternationalOrders: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <DollarSign className="h-8 w-8 text-orange-600" />
@@ -212,7 +212,7 @@ const InternationalOrders: React.FC = () => {
                     <div className={`p-2 rounded-lg ${getStatusColor(order.shipping_status)}`}>
                       {getStatusIcon(order.shipping_status)}
                     </div>
-                    
+
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">
                         Order ID: {order.id}
@@ -231,7 +231,7 @@ const InternationalOrders: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.shipping_status)}`}>
@@ -242,7 +242,7 @@ const InternationalOrders: React.FC = () => {
                       </p>
                       <p className="text-sm text-gray-600">Weight: {getTotalWeight(order).toFixed(1)} kg</p>
                     </div>
-                    
+
                     {order.tracking_link && (
                       <a
                         href={order.tracking_link}
@@ -254,7 +254,7 @@ const InternationalOrders: React.FC = () => {
                         <span>Track</span>
                       </a>
                     )}
-                    
+
                     <button
                       onClick={() => handleViewDetails(order.id.toString())}
                       className="flex items-center space-x-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
@@ -262,7 +262,7 @@ const InternationalOrders: React.FC = () => {
                       <Eye className="h-4 w-4" />
                       <span>Details</span>
                     </button>
-                    
+
                     <button
                       onClick={() => toggleOrderExpansion(order.id.toString())}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -286,10 +286,10 @@ const InternationalOrders: React.FC = () => {
                       Total Weight: {getTotalWeight(order).toFixed(1)} kg
                     </div>
                   </div>
-                  
+
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">
-                      This order contains {order.international_order_items.length} vault item(s) 
+                      This order contains {order.international_order_items.length} vault item(s)
                       with a total weight of {getTotalWeight(order).toFixed(1)} kg.
                     </p>
                     <div className="mt-2 space-y-1">
@@ -300,7 +300,7 @@ const InternationalOrders: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   {/* Shipping Timeline */}
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <h5 className="font-medium text-gray-900 mb-4">Shipping Timeline</h5>
@@ -312,13 +312,12 @@ const InternationalOrders: React.FC = () => {
                           <span className="text-gray-500 ml-2">{formatDate(order.createdAt)}</span>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${
-                          ['shipped', 'in-transit', 'delivered'].includes(order.shipping_status) 
-                            ? 'bg-green-500' 
-                            : 'bg-gray-300'
-                        }`}></div>
+                        <div className={`w-3 h-3 rounded-full ${['shipped', 'in-transit', 'delivered'].includes(order.shipping_status)
+                          ? 'bg-green-500'
+                          : 'bg-gray-300'
+                          }`}></div>
                         <div className="text-sm">
                           <span className="font-medium">Shipped</span>
                           {['shipped', 'in-transit', 'delivered'].includes(order.shipping_status) && (
@@ -326,22 +325,20 @@ const InternationalOrders: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${
-                          ['in-transit', 'delivered'].includes(order.shipping_status) 
-                            ? 'bg-green-500' 
-                            : 'bg-gray-300'
-                        }`}></div>
+                        <div className={`w-3 h-3 rounded-full ${['in-transit', 'delivered'].includes(order.shipping_status)
+                          ? 'bg-green-500'
+                          : 'bg-gray-300'
+                          }`}></div>
                         <div className="text-sm">
                           <span className="font-medium">In Transit</span>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${
-                          order.shipping_status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
-                        }`}></div>
+                        <div className={`w-3 h-3 rounded-full ${order.shipping_status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
+                          }`}></div>
                         <div className="text-sm">
                           <span className="font-medium">Delivered</span>
                         </div>

@@ -7,13 +7,11 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
-  MapPin,
   Truck,
-  Calendar,
   Package,
-  Plane
 } from 'lucide-react';
 import OrderStatusBadge from '../components/orders/OrderStatusBadge';
+import OrderItemCard from '../components/orders/OrderItemCard';
 
 
 const InternationalOrderDetailsPage: React.FC = () => {
@@ -191,14 +189,30 @@ const InternationalOrderDetailsPage: React.FC = () => {
               {order.international_order_items && order.international_order_items.length > 0 ? (
                 <div className="space-y-4">
                   {order.international_order_items.map((item) => (
+                    // <OrderItemCard
+                    //   key={item.id}
+                    //   item={{
+                    //     id: item.id.toString(),
+                    //     name: item.name,
+                    //     image: item.imageUrls?.[0] || '',
+                    //     color: item.color || 'N/A',
+                    //     size: item.size || 'N/A',
+                    //     quantity: item.quantity || 0,
+                    //     price: parseFloat(item?.price?.toLocaleString()),
+                    //     status: item.status || '',
+                    //     url: item.product_link || ''
+                    //   }}
+                    //   showStatus={true}
+                    // />
                     <div key={item.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h5 className="font-medium text-gray-900">Vault Item #{item.vault_item_id}</h5>
+                          <h5 className="font-medium text-gray-900">Vault Item #{item.id}</h5>
+                          <p className="text-sm text-gray-600">{item.name}</p>
                           <p className="text-sm text-gray-600">Added on {new Date(item.createdAt).toLocaleDateString()}</p>
                         </div>
                         <button
-                          onClick={() => navigate(`/vault-item/${item.vault_item_id}`)}
+                          onClick={() => navigate(`/vault-item/${item.id}`)}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
                           View Details →
@@ -248,7 +262,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
                     }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">In Transit</p>
-                    {['in-transit', 'customs', 'delivered'].includes(order.status) && (
+                    {['in-transit', 'customs', 'delivered'].includes(order.shipping_status) && (
                       <p className="text-sm text-gray-600">Package in transit</p>
                     )}
                   </div>
