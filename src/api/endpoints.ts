@@ -21,6 +21,7 @@ export const ENDPOINTS = {
     UPDATE_PASSWORD: 'users/update-password',
     ADDRESSES: 'users/addresses',
     SET_DEFAULT_ADDRESSES: 'users/addresses/set-default',
+    SUMMARY: 'users/summary',
   },
 
   // Orders

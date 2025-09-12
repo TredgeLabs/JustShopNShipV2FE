@@ -101,6 +101,7 @@ class AdminApiService {
     const token = localStorage.getItem('adminToken');
     return {
       'Accept': 'application/json',
+      'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
     };
   }

@@ -119,6 +119,25 @@ export interface AddressApi {
   updatedAt: string;
 }
 
+export interface UserSummary {
+  userName: string;
+  userFullName: string;
+  totalActiveOrders: number;
+  vaultWeight: number;
+  estimatedShippingCost: number;
+  vaultCode: string | null;
+  street: string;
+  address: string;
+  city: string;
+  country: string;
+  mobileNumber: string;
+}
+
+export interface UserSummaryResponse {
+  success: boolean;
+  data: UserSummary;
+}
+
 import apiClient from '../apiClient';
 import { ENDPOINTS } from '../endpoints';
 import { ApiResponse } from '../config';
@@ -266,6 +285,11 @@ class UserService {
       console.error('Error updating address:', error);
       throw error;
     }
+  }
+ 
+  async getUserSummary(): Promise<UserSummaryResponse> {
+    const response = await apiClient.get<UserSummaryResponse>(ENDPOINTS.USER.SUMMARY);
+    return response.data;
   }
 
   /**
