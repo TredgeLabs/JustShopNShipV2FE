@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService, CreateInternationalOrderRequest } from '../api/services/orderService';
-import { 
-  Package, 
-  ArrowLeft, 
-  ArrowRight, 
-  Scale, 
-  DollarSign, 
-  AlertCircle, 
-  CheckCircle, 
+import {
+  Package,
+  ArrowLeft,
+  ArrowRight,
+  DollarSign,
+  AlertCircle,
   FileText,
   CreditCard,
   Info,
@@ -115,12 +113,12 @@ const ShipmentConfirmation: React.FC = () => {
 
   const createInternationalOrder = async () => {
     if (!shipmentData?.orderRequest) return;
-    
+
     try {
       setIsCreatingOrder(true);
-      
+
       const response = await orderService.createInternationalOrder(shipmentData.orderRequest);
-      
+
       if (response.success) {
         // Store order data for payment page
         const orderData = {
@@ -135,12 +133,12 @@ const ShipmentConfirmation: React.FC = () => {
           totalItems: shipmentData.items.reduce((total, item) => total + item.quantity, 0),
           orderDate: new Date().toISOString()
         };
-        
+
         localStorage.setItem('orderData', JSON.stringify(orderData));
-        
+
         // Clear shipment data
         localStorage.removeItem('shipmentData');
-        
+
         // Navigate to payment page
         navigate('/payment');
       } else {
@@ -206,7 +204,7 @@ const ShipmentConfirmation: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to My Vault</span>
           </button>
-          
+
           <div className="flex items-center space-x-3 mb-4">
             <Truck className="h-8 w-8 text-blue-600" />
             <h1 className="text-3xl font-bold text-gray-900">Shipment Confirmation</h1>
@@ -221,7 +219,7 @@ const ShipmentConfirmation: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Items to Ship</h2>
-              
+
               <div className="space-y-4">
                 {shipmentData.items.map((item, index) => (
                   <div key={item.id} className="border border-gray-200 rounded-lg p-4">
@@ -239,11 +237,11 @@ const ShipmentConfirmation: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Item Details */}
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900 mb-2">{item.name}</h3>
-                        
+
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
                             <span className="text-gray-600">Color:</span>
@@ -262,7 +260,7 @@ const ShipmentConfirmation: React.FC = () => {
                             <p className="font-medium">{(item.weight * item.quantity).toFixed(2)} kg</p>
                           </div>
                         </div>
-                        
+
                         <div className="mt-3 flex items-center justify-between">
                           <div className="text-sm text-gray-600">
                             Original Value: ₹{(item.price * item.quantity).toLocaleString()}
@@ -312,7 +310,7 @@ const ShipmentConfirmation: React.FC = () => {
                 <DollarSign className="h-5 w-5 mr-2 text-green-600" />
                 Cost Breakdown
               </h2>
-              
+
               <div className="space-y-4">
                 {/* Shipping Cost */}
                 <div className="flex justify-between items-center">
@@ -368,7 +366,7 @@ const ShipmentConfirmation: React.FC = () => {
                 <Clock className="h-5 w-5 mr-2 text-blue-600" />
                 Delivery Information
               </h3>
-              
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Estimated Transit:</span>
@@ -395,7 +393,7 @@ const ShipmentConfirmation: React.FC = () => {
                 <FileText className="h-5 w-5 mr-2 text-gray-600" />
                 Terms & Conditions
               </h3>
-              
+
               <div className="bg-gray-50 rounded-lg p-4 mb-4 max-h-32 overflow-y-auto">
                 <div className="text-sm text-gray-700 space-y-2">
                   <p>1. International shipping is subject to customs regulations and may incur additional duties.</p>
@@ -407,7 +405,7 @@ const ShipmentConfirmation: React.FC = () => {
                   <p>7. Claims for lost or damaged items must be reported within 30 days of delivery.</p>
                 </div>
               </div>
-              
+
               <label className="flex items-start space-x-3 cursor-pointer">
                 <input
                   type="checkbox"

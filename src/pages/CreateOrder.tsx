@@ -219,10 +219,10 @@ const CreateOrder: React.FC = () => {
       };
 
       const response = await orderService.createLocalOrder(orderRequest);
-      
+
       if (response.success) {
         setSuccess('Order created successfully!');
-        
+
         // Store order data for confirmation page
         const orderData = {
           orderId: response.data.id,
@@ -232,12 +232,12 @@ const CreateOrder: React.FC = () => {
           totalItems: getTotalItems(),
           orderDate: new Date().toISOString()
         };
-        
+
         localStorage.setItem('orderData', JSON.stringify(orderData));
-        
+
         // Clear cart
         setCart([]);
-        
+
         // Navigate to confirmation
         navigate('/order-confirmation');
       } else {
@@ -372,10 +372,19 @@ const CreateOrder: React.FC = () => {
                         <input
                           type="number"
                           min="0"
-                          value={scrapedProduct.price || 0}
-                          onChange={(e) => setScrapedProduct(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={scrapedProduct.price}
+                          onChange={(e) =>
+                            setScrapedProduct((prev) => ({
+                              ...prev,
+                              price: parseFloat(e.target.value), // fallback to 0 if empty
+                            }))
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+             [&::-webkit-outer-spin-button]:appearance-none 
+             [&::-webkit-inner-spin-button]:appearance-none 
+             [appearance:textfield]"
                         />
+
                       </div>
                     </div>
                     <button

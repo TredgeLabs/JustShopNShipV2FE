@@ -61,11 +61,11 @@ const MyVault: React.FC = () => {
             return {
               id: `VI-${item.id}`,
               name: item.name,
-              images: item.image_urls && item.image_urls.length > 0 ? item.image_urls : ["https://via.placeholder.com/400x300?text=No+Image"],
+              images: item.image_urls.map((url: string) => url.startsWith('http') ? url : `http://localhost:4000${url}`),
               productLink: '#', // No product link in API, set to # or use item.description if needed
               price: 0, // No price in API, set to 0 or use item.description if needed
               weight: item.weight_gm ? item.weight_gm / 1000 : 0,
-              status: item.status === 'in_transit' ? 'in-transit' : item.status,
+              status: (item.status === 'in_transit' ? 'in-transit' : item.status) as VaultItem['status'],
               receivedDate: item.received_date,
               validityDays,
               storageCost: 0, // No storage cost in API, set to 0 or calculate if needed
@@ -158,7 +158,7 @@ const MyVault: React.FC = () => {
       const orderRequest = {
         orderData: {
           vault_id: vaultCode, // This should come from user's vault
-          shipping_address_id: 2, // This should come from user's default address
+          shipping_address_id: 6, // This should come from user's default address
           shipment_weight_gm: totalWeight,
           shipping_cost: shippingCost,
           storage_cost: storageCost,
@@ -346,7 +346,7 @@ const MyVault: React.FC = () => {
               {/* Item Header */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                  <button
+                  {(item.status !== 'in-transit') && <button
                     onClick={() => handleItemSelection(item.id)}
                     className="flex items-center space-x-2"
                   >
@@ -355,7 +355,7 @@ const MyVault: React.FC = () => {
                     ) : (
                       <Square className="h-5 w-5 text-gray-400" />
                     )}
-                  </button>
+                  </button>}
 
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
                     {getStatusText(item.status)}

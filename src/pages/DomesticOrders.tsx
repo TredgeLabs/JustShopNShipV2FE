@@ -224,7 +224,7 @@ const DomesticOrders: React.FC = () => {
             <div className="flex items-center">
               <AlertCircle className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Denied</p>
+                <p className="text-sm font-medium text-gray-500">Denied Items</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {orders.filter(order => order.order_status === 'denied').length}
                 </p>

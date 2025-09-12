@@ -84,8 +84,8 @@ export interface VaultItemRequest {
   returnable_until?: string | null;
   storage_days_free: number;
   storage_fee_per_day: number;
-  image_urls: string[];
   is_ready_to_ship: boolean;
+  images: File[];
 }
 
 export interface ShipInternationalRequest {
@@ -107,6 +107,15 @@ class AdminApiService {
     };
   }
 
+  private getMultiPartAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('adminToken');
+    return {
+      'Accept': 'application/json',
+      // 'Content-Type': 'multipart/form-data',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+  }
+
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       if (response.status === 401) {
@@ -116,11 +125,11 @@ class AdminApiService {
         window.location.href = '/admin/login';
         throw new Error('Authentication failed');
       }
-      
+
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     return response.json();
   }
 
@@ -136,7 +145,7 @@ class AdminApiService {
       });
 
       const data = await this.handleResponse<AdminLoginResponse>(response);
-      
+
       if (data.success && data.token) {
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('adminSession', JSON.stringify({
@@ -145,7 +154,7 @@ class AdminApiService {
           admin: data.admin
         }));
       }
-      
+
       return data;
     } catch (error) {
       console.error('Error during admin login:', error);
@@ -174,7 +183,7 @@ class AdminApiService {
         headers: this.getAuthHeaders(),
       });
 
-     return await this.handleResponse<ApiResponse<AdminOrder[]>>(response);
+      return await this.handleResponse<ApiResponse<AdminOrder[]>>(response);
     } catch (error) {
       console.error('Error fetching international orders:', error);
       throw error;
@@ -188,7 +197,7 @@ class AdminApiService {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
-     return await this.handleResponse<ApiResponse<LocalOrderDetails>>(response);
+      return await this.handleResponse<ApiResponse<LocalOrderDetails>>(response);
     } catch (error) {
       console.error('Error fetching order details:', error);
       throw error;
@@ -217,25 +226,38 @@ class AdminApiService {
   }
 
   // 5. Add Vault Item from Order
-  async addVaultItem(vaultId: string, itemData: VaultItemRequest): Promise<ApiResponse<void>> {
-    try {
-      const response = await fetch(`${this.baseUrl}/vaults/${vaultId}/items`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(itemData),
-      });
+  async addVaultItem(vaultId: string, itemData: any): Promise<any> {
+    const formData = new FormData();
 
-      await this.handleResponse<void>(response);
-      return {
-        success: true,
-        data: undefined,
-        message: 'Item added to vault successfully'
-      };
-    } catch (error) {
-      console.error('Error adding vault item:', error);
-      throw error;
+    // Append normal fields
+    Object.keys(itemData).forEach((key) => {
+      if (key !== 'images' && itemData[key] !== undefined && itemData[key] !== null) {
+        formData.append(key, itemData[key]);
+      }
+    });
+
+    // ✅ Append images if provided
+    if (itemData.images && Array.isArray(itemData.images)) {
+      itemData.images.forEach((file: File) => {
+        formData.append('images', file);
+      });
     }
+
+    const response = await fetch(`${this.baseUrl}/vaults/${vaultId}/items`, {
+      method: 'POST',
+      headers: {
+        ...this.getMultiPartAuthHeaders(),
+      },
+      body: formData,
+    });
+    const data = await this.handleResponse<any>(response);
+    return {
+      success: !!data.success,
+      data: undefined,
+      message: data.success ? 'Vault item created successfully' : (data.message || 'Failed to create vault item')
+    };
   }
+
 
   // 6. Ship International Order
   async shipInternationalOrder(orderId: string, shippingData: ShipInternationalRequest): Promise<ApiResponse<void>> {
@@ -260,7 +282,7 @@ class AdminApiService {
 
   // Legacy methods for backward compatibility (now using real API)
   async validateVaultId(vaultId: string): Promise<ApiResponse<any>> {
-     try {
+    try {
       const response = await fetch(`${this.baseUrl}/accepted-items/${vaultId}`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
@@ -320,7 +342,7 @@ class AdminApiService {
       const response = await fetch('http://localhost:4000/api/v1/inventory', {
         method: 'POST',
         headers: {
-          ...this.getAuthHeaders(),
+          ...this.getMultiPartAuthHeaders,
           // Let browser set Content-Type for FormData
           // Remove Content-Type if present
         },
