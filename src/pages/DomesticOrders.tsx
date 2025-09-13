@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { orderService, LocalOrder, LocalOrderItem } from '../api/services/orderService';
+import { orderService, LocalOrder } from '../api/services/orderService';
+import { getStatusConfig } from '../components/orders/OrderStatusBadge';
 import {
   ShoppingCart,
-  Package,
   Eye,
-  EyeOff,
   ExternalLink,
   Edit3,
   AlertCircle,
   CheckCircle,
   Clock,
-  XCircle,
   Loader2,
   ChevronDown,
   ChevronUp
@@ -76,35 +74,7 @@ const DomesticOrders: React.FC = () => {
     }
   };
 
-  const getItemStatusColor = (status: string) => {
-    switch (status) {
-      case 'accepted': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-blue-100 text-blue-800';
-      case 'denied': return 'bg-red-100 text-red-800';
-      case 'in_vault': return 'bg-purple-100 text-purple-800'; // ✅ NEW
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const getItemStatusText = (status: string) => {
-    switch (status) {
-      case 'accepted': return 'In Transit';
-      case 'pending': return 'Pending';
-      case 'denied': return 'Denied';
-      case 'in_vault': return 'In Vault'; // ✅ NEW
-      default: return 'Unknown';
-    }
-  };
-
-
-  const getItemStatusIcon = (status: string) => {
-    switch (status) {
-      case 'accepted': return <CheckCircle className="h-4 w-4" />;
-      case 'pending': return <Clock className="h-4 w-4" />;
-      case 'denied': return <XCircle className="h-4 w-4" />;
-      default: return <AlertCircle className="h-4 w-4" />;
-    }
-  };
 
   const toggleOrderExpansion = (orderId: string) => {
     setExpandedOrders(prev => {
@@ -256,7 +226,7 @@ const DomesticOrders: React.FC = () => {
                         {getDeliveredItemsCount(order)} of {getTotalItemsCount(order)} items accepted
                       </p>
                       <p className="text-lg font-bold text-gray-900">
-                        ₹{parseFloat(order.total_price).toLocaleString()}
+                        ₹{parseFloat(order.total_price.toLocaleString())}
                       </p>
                     </div>
 
@@ -314,14 +284,14 @@ const DomesticOrders: React.FC = () => {
                             </h5>
 
                             <div className="flex items-center space-x-2 mb-2">
-                              {getItemStatusIcon(item.status)}
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getItemStatusColor(item.status)}`}>
-                                {getItemStatusText(item.status)}
+                              {React.createElement(getStatusConfig(item.status, 'local_item').icon)}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusConfig(item.status, 'local_item').color}`}>
+                                {getStatusConfig(item.status, 'local_item').text}
                               </span>
                             </div>
 
                             <p className="text-sm font-semibold text-gray-900 mb-3">
-                              ₹{parseFloat(item.price).toLocaleString()}
+                              ₹{parseFloat(item.price.toLocaleString())}
                             </p>
 
                             <div className="flex space-x-2">

@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vaultService, VaultItemApi } from '../api/services/userService';
+import { getStatusConfig } from '../components/orders/OrderStatusBadge';
 import {
   Package,
   Eye,
   ExternalLink,
   Scale,
-  Clock,
   DollarSign,
   CheckSquare,
   Square,
   RotateCcw,
   Truck,
-  AlertCircle,
   Loader2,
   X,
   ChevronLeft,
@@ -26,7 +25,7 @@ interface VaultItem {
   productLink: string;
   price: number;
   weight: number;
-  status: 'in-transit' | 'received' | 'inventory-check' | 'processing';
+  status: string;
   receivedDate: string;
   validityDays: number;
   storageCost: number;
@@ -65,7 +64,7 @@ const MyVault: React.FC = () => {
               productLink: '#', // No product link in API, set to # or use item.description if needed
               price: 0, // No price in API, set to 0 or use item.description if needed
               weight: item.weight_gm ? item.weight_gm / 1000 : 0,
-              status: (item.status === 'in_transit' ? 'in-transit' : item.status) as VaultItem['status'],
+              status: (item.status) as VaultItem['status'],
               receivedDate: item.received_date,
               validityDays,
               storageCost: 0, // No storage cost in API, set to 0 or calculate if needed
@@ -86,26 +85,6 @@ const MyVault: React.FC = () => {
     };
     loadVaultItems();
   }, []);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'received': return 'bg-green-100 text-green-800';
-      case 'in-transit': return 'bg-blue-100 text-blue-800';
-      case 'inventory-check': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'received': return 'Received';
-      case 'in-transit': return 'In Transit';
-      case 'inventory-check': return 'Inventory Check';
-      case 'processing': return 'Processing';
-      default: return 'Unknown';
-    }
-  };
 
   const handleItemSelection = (itemId: string) => {
     setVaultItems(prev => prev.map(item =>
@@ -346,7 +325,7 @@ const MyVault: React.FC = () => {
               {/* Item Header */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                  {(item.status !== 'in-transit') && <button
+                  {(item.status !== 'in_transit') && <button
                     onClick={() => handleItemSelection(item.id)}
                     className="flex items-center space-x-2"
                   >
@@ -357,8 +336,8 @@ const MyVault: React.FC = () => {
                     )}
                   </button>}
 
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
-                    {getStatusText(item.status)}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusConfig(item.status, 'vault_item').color}`}>
+                    {getStatusConfig(item.status, 'vault_item').text}
                   </span>
                 </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { orderService, InternationalOrder, InternationalOrderItem } from '../api/services/orderService';
+import { orderService, InternationalOrder } from '../api/services/orderService';
+import { getStatusConfig } from '../components/orders/OrderStatusBadge';
 import {
   Plane,
   Package,
@@ -48,39 +49,6 @@ const InternationalOrders: React.FC = () => {
 
     loadInternationalOrders();
   }, []);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'shipped': return 'bg-purple-100 text-purple-800';
-      case 'in-transit': return 'bg-blue-100 text-blue-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Pending';
-      case 'shipped': return 'Shipped';
-      case 'in-transit': return 'In Transit';
-      case 'delivered': return 'Delivered';
-      case 'cancelled': return 'Cancelled';
-      default: return 'Unknown';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending': return <Clock className="h-5 w-5" />;
-      case 'shipped': return <Truck className="h-5 w-5" />;
-      case 'in-transit': return <Plane className="h-5 w-5" />;
-      case 'delivered': return <CheckCircle className="h-5 w-5" />;
-      case 'cancelled': return <AlertTriangle className="h-5 w-5" />;
-      default: return <Package className="h-5 w-5" />;
-    }
-  };
 
   const toggleOrderExpansion = (orderId: string) => {
     setExpandedOrders(prev => {
@@ -182,7 +150,7 @@ const InternationalOrders: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">In Transit</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {orders.filter(order => ['shipped', 'in-transit'].includes(order.shipping_status)).length}
+                  {orders.filter(order => ['shipped', 'in_transit'].includes(order.shipping_status)).length}
                 </p>
               </div>
             </div>
@@ -209,8 +177,8 @@ const InternationalOrders: React.FC = () => {
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className={`p-2 rounded-lg ${getStatusColor(order.shipping_status)}`}>
-                      {getStatusIcon(order.shipping_status)}
+                    <div className={`p-2 rounded-lg ${getStatusConfig(order.shipping_status, 'international').color}`}>
+                      {React.createElement(getStatusConfig(order.shipping_status, 'international').icon)}
                     </div>
 
                     <div>
@@ -234,8 +202,8 @@ const InternationalOrders: React.FC = () => {
 
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.shipping_status)}`}>
-                        {getStatusText(order.shipping_status)}
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusConfig(order.shipping_status, 'international').color}`}>
+                        {getStatusConfig(order.shipping_status, 'international').text}
                       </span>
                       <p className="text-lg font-bold text-gray-900 mt-2">
                         ₹{parseFloat(order.total_cost).toFixed(2)}
@@ -314,20 +282,20 @@ const InternationalOrders: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${['shipped', 'in-transit', 'delivered'].includes(order.shipping_status)
+                        <div className={`w-3 h-3 rounded-full ${['shipped', 'in_transit', 'delivered'].includes(order.shipping_status)
                           ? 'bg-green-500'
                           : 'bg-gray-300'
                           }`}></div>
                         <div className="text-sm">
                           <span className="font-medium">Shipped</span>
-                          {['shipped', 'in-transit', 'delivered'].includes(order.shipping_status) && (
+                          {['shipped', 'in_transit', 'delivered'].includes(order.shipping_status) && (
                             <span className="text-gray-500 ml-2">{formatDate(order.updatedAt)}</span>
                           )}
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${['in-transit', 'delivered'].includes(order.shipping_status)
+                        <div className={`w-3 h-3 rounded-full ${['in_transit', 'delivered'].includes(order.shipping_status)
                           ? 'bg-green-500'
                           : 'bg-gray-300'
                           }`}></div>

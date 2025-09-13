@@ -243,26 +243,26 @@ const InternationalOrderDetailsPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 rounded-full ${['shipped', 'in-transit', 'delivered'].includes(order.shipping_status)
+                  <div className={`w-3 h-3 rounded-full ${['shipped', 'in_transit', 'delivered'].includes(order.shipping_status)
                     ? 'bg-green-500'
                     : 'bg-gray-300'
                     }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">Shipped</p>
-                    {['shipped', 'in-transit', 'delivered'].includes(order.shipping_status) && (
+                    {['shipped', 'in_transit', 'delivered'].includes(order.shipping_status) && (
                       <p className="text-sm text-gray-600">{new Date(order.updatedAt).toLocaleDateString()}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 rounded-full ${['in-transit', 'delivered'].includes(order.shipping_status)
+                  <div className={`w-3 h-3 rounded-full ${['in_transit', 'delivered'].includes(order.shipping_status)
                     ? 'bg-green-500'
                     : 'bg-gray-300'
                     }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">In Transit</p>
-                    {['in-transit', 'customs', 'delivered'].includes(order.shipping_status) && (
+                    {['in_transit', 'customs', 'delivered'].includes(order.shipping_status) && (
                       <p className="text-sm text-gray-600">Package in transit</p>
                     )}
                   </div>

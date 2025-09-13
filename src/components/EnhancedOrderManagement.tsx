@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Truck, Plane, CheckCircle, Check, Clock, AlertCircle, Loader2, TicketPlusIcon } from 'lucide-react';
+import { Plus, Package, Truck, Plane, CheckCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { getStatusConfig } from '../components/orders/OrderStatusBadge';
 import { orderService, LocalOrder, InternationalOrder } from '../api/services/orderService';
 
 const EnhancedOrderManagement: React.FC = () => {
@@ -38,44 +39,6 @@ const EnhancedOrderManagement: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'created':
-      case 'pending': return <Clock className="h-5 w-5 text-yellow-500" />;
-      case 'accepted': return <Check className="h-5 w-5 text-green-500" />;
-      case 'received': return <Package className="h-5 w-5 text-blue-500" />;
-      case 'shipped': return <Plane className="h-5 w-5 text-purple-500" />;
-      case 'delivered': return <CheckCircle className="h-5 w-5 text-green-500" />;
-      default: return <AlertCircle className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'created':
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'accepted': return 'bg-green-100 text-green-800';
-      case 'received': return 'bg-blue-100 text-blue-800';
-      case 'shipped': return 'bg-purple-100 text-purple-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'denied': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'created': return 'Order Created';
-      case 'denied': return 'Order Denied';
-      case 'accepted': return 'Order Accepted';
-      case 'pending': return 'Order Pending';
-      case 'received': return 'Received at Vault';
-      case 'shipped': return 'Shipped Internationally';
-      case 'delivered': return 'Delivered';
-      default: return 'Unknown';
-    }
-  };
-
   const handleStatusClick = (status: string) => {
     if (status === 'created' || status === 'pending' || status === 'received') {
       navigate('/domestic-orders');
@@ -106,7 +69,7 @@ const EnhancedOrderManagement: React.FC = () => {
     ).length;
 
     const shippedInternational = internationalOrders.filter(order =>
-      order.shipping_status === 'shipped' || order.shipping_status === 'in-transit'
+      order.shipping_status === 'shipped' || order.shipping_status === 'in_transit'
     ).length;
 
     const deliveredInternational = internationalOrders.filter(order =>
@@ -227,12 +190,12 @@ const EnhancedOrderManagement: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <span className="text-sm font-medium text-gray-500">#{isLocal ? 'L' : 'I'}{order.id}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                      {getStatusText(status)}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusConfig(status, isLocal ? 'local' : 'international').color} cursor-pointer`} onClick={() => handleStatusClick(status)}>
+                      {getStatusConfig(status, isLocal ? 'local' : 'international').text}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {getStatusIcon(status)}
+                    {getStatusConfig(status, isLocal ? 'local' : 'international').color}
                     <span className="text-sm text-gray-500">{new Date(orderDate).toLocaleDateString()}</span>
                   </div>
                 </div>
