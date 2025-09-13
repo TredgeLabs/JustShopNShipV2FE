@@ -190,12 +190,12 @@ const EnhancedOrderManagement: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <span className="text-sm font-medium text-gray-500">#{isLocal ? 'L' : 'I'}{order.id}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusConfig(status, isLocal ? 'local' : 'international').color} cursor-pointer`} onClick={() => handleStatusClick(status)}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusConfig(status, isLocal ? 'local' : 'international').color}`} onClick={() => handleStatusClick(status)}>
                       {getStatusConfig(status, isLocal ? 'local' : 'international').text}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {getStatusConfig(status, isLocal ? 'local' : 'international').color}
+                    {React.createElement(getStatusConfig(status, isLocal ? 'local' : 'international').icon)}
                     <span className="text-sm text-gray-500">{new Date(orderDate).toLocaleDateString()}</span>
                   </div>
                 </div>

@@ -6,8 +6,6 @@ import {
   CheckCircle,
   Package,
   Tag,
-  Layers,
-  Upload,
   X,
   Image as ImageIcon,
   Plus

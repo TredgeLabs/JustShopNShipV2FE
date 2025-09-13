@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Package, Save, Scale, Image as ImageIcon } from 'lucide-react';
+import { X, Package, Save, Scale } from 'lucide-react';
 import { LocalOrderItem, VaultItemRequest } from '../services/adminApiService';
 
 interface AddToVaultModalProps {
@@ -18,18 +18,18 @@ const AddToVaultModal: React.FC<AddToVaultModalProps> = ({
   onSubmit
 }) => {
   const [formData, setFormData] = useState({
-    name: item.name,
-    description: item.name,
+    name: item.product_name,
+    description: item.product_name,
     weight_gm: 500,
     storage_days_free: 90,
     storage_fee_per_day: 2,
     is_returnable: false,
-    image_urls: item.image_url ? [item.image_url] : []
+    image_urls: item.image_link ? [item.image_link] : []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -63,7 +63,7 @@ const AddToVaultModal: React.FC<AddToVaultModalProps> = ({
         returnable_until: formData.is_returnable ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null,
         storage_days_free: formData.storage_days_free,
         storage_fee_per_day: formData.storage_fee_per_day,
-        image_urls: formData.image_urls,
+        images: formData.image_urls,
         is_ready_to_ship: true
       };
 

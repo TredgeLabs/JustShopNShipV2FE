@@ -51,7 +51,7 @@ export interface LocalOrderItem {
   source_type: string;         // e.g., "manual_link"
   product_name: string;
   product_link: string;
-  image_link?: string;
+  image_link?: File;
   color?: string;
   size?: string;
   quantity: number;

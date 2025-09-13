@@ -77,7 +77,7 @@ const LocalOrderEvaluation: React.FC = () => {
     }
   };
 
-  const handleItemEvaluationChange = (itemId: number, field: string, value: any) => {
+  const handleItemEvaluationChange = (itemId: number, field: string, value: string) => {
     setEvaluationData(prev => ({
       ...prev,
       [itemId]: {
@@ -127,7 +127,7 @@ Phone: +91 9876543210`;
     setShowVaultModal(true);
   };
 
-  const handleVaultSubmit = async (vaultId: string, itemData: any) => {
+  const handleVaultSubmit = async (vaultId: string, itemData: string) => {
     try {
       const response = await adminApiService.addVaultItem(vaultId, itemData);
 
@@ -164,7 +164,7 @@ Phone: +91 9876543210`;
         item_id: parseInt(itemId),
         action: evaluation.decision,
         ...(evaluation.decision === 'deny' && {
-          deny_reasons: evaluation.denyReasons.map((reason: any) => {
+          deny_reasons: evaluation.denyReasons.map((reason: string) => {
             // Map reason text to reason ID (you may need to adjust this mapping)
             const reasonIndex = DENY_REASONS.indexOf(reason as any);
             return reasonIndex >= 0 ? reasonIndex + 1 : 8; // Default to "Other"

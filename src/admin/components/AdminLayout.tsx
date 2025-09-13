@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Package, 
-  ShoppingCart, 
-  Truck, 
-  Archive, 
-  MessageCircle, 
+import {
+  Package,
+  ShoppingCart,
+  Archive,
+  MessageCircle,
   Settings,
   LogOut,
   Home
@@ -71,7 +70,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 JustShopAndShip
               </span>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <Link
                 to="/"
@@ -80,7 +79,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <Home className="h-4 w-4" />
                 <span>User Site</span>
               </Link>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 transition-colors"
               >
@@ -104,15 +103,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors ${
-                    isActive(item.href)
+                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors ${isActive(item.href)
                       ? 'bg-blue-50 text-blue-700 border border-blue-200'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
-                  <item.icon className={`h-5 w-5 ${
-                    isActive(item.href) ? 'text-blue-600' : 'text-gray-400'
-                  }`} />
+                  <item.icon className={`h-5 w-5 ${isActive(item.href) ? 'text-blue-600' : 'text-gray-400'
+                    }`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.name}</p>
                     <p className="text-xs text-gray-500 truncate">{item.description}</p>

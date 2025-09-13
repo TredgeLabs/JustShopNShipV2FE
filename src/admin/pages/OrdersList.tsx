@@ -4,7 +4,6 @@ import {
   ShoppingCart,
   Eye,
   CheckCircle,
-  ExternalLink,
   Users,
   Package,
   AlertCircle
