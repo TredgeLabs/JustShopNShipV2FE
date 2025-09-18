@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  MessageCircle, 
-  Send, 
-  User, 
-  Clock, 
+import {
+  MessageCircle,
+  Send,
+  User,
+  Clock,
   AlertTriangle,
   CheckCircle,
   Mail,
@@ -80,20 +80,20 @@ const ContactSupport: React.FC = () => {
       };
 
       const response = await adminApiService.replyToSupportQuery(selectedQuery.id, replyData);
-      
+
       if (response.success) {
         setSuccess('Reply sent successfully!');
         setReplyMessage('');
-        
+
         // Update query status
-        setQueries(prev => prev.map(query => 
-          query.id === selectedQuery.id 
+        setQueries(prev => prev.map(query =>
+          query.id === selectedQuery.id
             ? { ...query, status: 'replied' as const }
             : query
         ));
-        
+
         setSelectedQuery(prev => prev ? { ...prev, status: 'replied' as const } : null);
-        
+
         setTimeout(() => setSuccess(''), 3000);
       } else {
         setError('Failed to send reply');
@@ -158,7 +158,7 @@ const ContactSupport: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Support Queries</h2>
             </div>
-            
+
             <div className="p-6">
               {isLoading ? (
                 <LoadingSpinner text="Loading support queries..." />
@@ -173,11 +173,10 @@ const ContactSupport: React.FC = () => {
                     <div
                       key={query.id}
                       onClick={() => handleQuerySelect(query)}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedQuery?.id === query.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedQuery?.id === query.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center space-x-2">
@@ -187,9 +186,9 @@ const ContactSupport: React.FC = () => {
                             <span>{query.priority}</span>
                           </div>
                         </div>
-                        <StatusBadge status={query.status} />
+                        <StatusBadge status={query.status} type='query' />
                       </div>
-                      
+
                       <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
                         <div className="flex items-center space-x-1">
                           <User className="h-4 w-4" />
@@ -200,7 +199,7 @@ const ContactSupport: React.FC = () => {
                           <span>{formatDate(query.submittedAt)}</span>
                         </div>
                       </div>
-                      
+
                       <p className="text-sm text-gray-700 line-clamp-2">
                         {query.message}
                       </p>
@@ -218,7 +217,7 @@ const ContactSupport: React.FC = () => {
                 {selectedQuery ? 'Query Details & Reply' : 'Select a Query'}
               </h2>
             </div>
-            
+
             <div className="p-6">
               {!selectedQuery ? (
                 <div className="text-center py-12">
@@ -260,7 +259,7 @@ const ContactSupport: React.FC = () => {
                   <div>
                     <h3 className="font-medium text-gray-900 mb-2">Subject</h3>
                     <p className="text-gray-700 mb-4">{selectedQuery.subject}</p>
-                    
+
                     <h3 className="font-medium text-gray-900 mb-2">Message</h3>
                     <div className="bg-gray-50 rounded-lg p-4">
                       <p className="text-gray-700 whitespace-pre-wrap">{selectedQuery.message}</p>
@@ -277,7 +276,7 @@ const ContactSupport: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                       placeholder="Type your reply here..."
                     />
-                    
+
                     <div className="mt-4 flex items-center justify-between">
                       <div className="text-sm text-gray-500">
                         {replyMessage.length}/1000 characters

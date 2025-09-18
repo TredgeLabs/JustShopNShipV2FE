@@ -7,7 +7,8 @@ import {
   MessageCircle,
   Settings,
   LogOut,
-  Home
+  Home,
+  Search
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -30,6 +31,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: '/admin/vault-entry',
       icon: Package,
       description: 'Process incoming packages'
+    },
+    {
+      name: 'Vault Search',
+      href: '/admin/vault-search',
+      icon: Search,
+      description: 'Search and view vault contents'
     },
     {
       name: 'Inventory Management',

@@ -61,8 +61,12 @@ const OrdersList: React.FC = () => {
     }
   };
 
-  const handleEvaluateOrder = (orderId: string) => {
-    navigate(`/admin/local-order-evaluation/${orderId}`);
+  const handleEvaluateOrder = (orderId: string, status: string) => {
+    if (status === 'accepted') {
+      navigate(`/admin/evaluation-detail/${orderId}`);
+    } else {
+      navigate(`/admin/local-order-evaluation/${orderId}`);
+    }
   };
 
   const handleCompleteOrder = async (orderId: string) => {
@@ -216,15 +220,15 @@ const OrdersList: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={order?.status || ''} />
+                          <StatusBadge status={order?.status || ''} type='local' />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
-                            onClick={() => handleEvaluateOrder(order.id.toString())}
+                            onClick={() => handleEvaluateOrder(order.id.toString(), order?.status || '')}
                             className="flex items-center space-x-1 text-blue-600 hover:text-blue-900 transition-colors"
                           >
                             <Eye className="h-4 w-4" />
-                            <span>Evaluate</span>
+                            <span>{order?.status === 'accepted' || order?.status === 'delivered' ? 'Details' : 'Evaluate'}</span>
                           </button>
                         </td>
                       </tr>
@@ -302,7 +306,7 @@ const OrdersList: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
-                            <StatusBadge status={order?.status || ''} />
+                            <StatusBadge status={order?.status || ''} type='international' />
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

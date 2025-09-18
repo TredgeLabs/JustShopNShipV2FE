@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  CheckCircle, 
-  Package, 
-  ArrowRight, 
-  ArrowLeft, 
+import {
+  CheckCircle,
+  Package,
+  ArrowRight,
+  ArrowLeft,
   AlertCircle,
   FileText,
   CreditCard,
@@ -31,11 +31,11 @@ const OrderConfirmation: React.FC = () => {
 
   useEffect(() => {
     // Load cart data from localStorage
-    const savedCart = localStorage.getItem('orderCart');
+    const savedCart = localStorage.getItem('orderData');
     if (savedCart) {
       const parsedCart = JSON.parse(savedCart);
       // Add mock weight to items for display
-      const cartWithWeight = parsedCart.map((item: CartItem) => ({
+      const cartWithWeight = parsedCart.items.map((item: CartItem) => ({
         ...item,
         weight: Math.round((Math.random() * 2 + 0.5) * 100) / 100 // Mock weight between 0.5-2.5 kg
       }));
@@ -65,7 +65,7 @@ const OrderConfirmation: React.FC = () => {
       alert('Please accept the terms and conditions to proceed');
       return;
     }
-    
+
     // Get existing order data from localStorage (set by CreateOrder page)
     const existingOrderData = localStorage.getItem('orderData');
     if (!existingOrderData) {
@@ -73,8 +73,8 @@ const OrderConfirmation: React.FC = () => {
       navigate('/create-order');
       return;
     }
-    
-    navigate('/payment');
+
+    navigate('/payment', { state: { type: 'local' } });
   };
 
   const handleProceedToRefund = () => {
@@ -127,7 +127,7 @@ const OrderConfirmation: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Cart</span>
           </button>
-          
+
           <div className="flex items-center space-x-3 mb-4">
             <CheckCircle className="h-8 w-8 text-green-600" />
             <h1 className="text-3xl font-bold text-gray-900">Order Confirmation</h1>
@@ -142,7 +142,7 @@ const OrderConfirmation: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Items</h2>
-              
+
               <div className="space-y-4">
                 {cartItems.map((item, index) => (
                   <div key={item.id} className="border border-gray-200 rounded-lg p-4">
@@ -154,10 +154,10 @@ const OrderConfirmation: React.FC = () => {
                           className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                         />
                       )}
-                      
+
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900 mb-2">{item.name}</h3>
-                        
+
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div>
                             <span className="font-medium">Color:</span>
@@ -176,7 +176,7 @@ const OrderConfirmation: React.FC = () => {
                             <p>{item.weight} kg</p>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center justify-between mt-3">
                           <div className="text-sm text-gray-600">
                             Unit Price: ₹{item.price.toLocaleString()}
@@ -198,28 +198,28 @@ const OrderConfirmation: React.FC = () => {
             {/* Summary Card */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Summary</h2>
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Items:</span>
                   <span className="font-medium">{getTotalItems()}</span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Weight:</span>
                   <span className="font-medium">{getTotalWeight().toFixed(2)} kg</span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
                   <span className="font-medium">₹{getTotalPrice().toLocaleString()}</span>
                 </div>
-                
+
                 <div className="flex justify-between text-sm text-gray-500">
                   <span>Processing Fee:</span>
                   <span>₹0</span>
                 </div>
-                
+
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total Amount:</span>
@@ -235,7 +235,7 @@ const OrderConfirmation: React.FC = () => {
                 <FileText className="h-5 w-5 mr-2" />
                 Terms & Conditions
               </h3>
-              
+
               <div className="bg-gray-50 rounded-lg p-4 mb-4 max-h-32 overflow-y-auto">
                 <div className="text-sm text-gray-700 space-y-2">
                   <p>1. All orders are subject to product availability and verification.</p>
@@ -248,7 +248,7 @@ const OrderConfirmation: React.FC = () => {
                   <p>8. Refunds are subject to our refund policy and processing fees may apply.</p>
                 </div>
               </div>
-              
+
               <label className="flex items-start space-x-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -273,7 +273,7 @@ const OrderConfirmation: React.FC = () => {
                 <span>Proceed to Payment</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
-              
+
               <button
                 onClick={handleProceedToRefund}
                 className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium rounded-lg transition-colors"

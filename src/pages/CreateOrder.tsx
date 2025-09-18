@@ -183,8 +183,17 @@ const CreateOrder: React.FC = () => {
       return;
     }
 
-    // Create local order directly
-    createLocalOrder();
+    // Navigate to address selection first
+    const orderData = {
+      items: cart,
+      totalPrice: getTotalPrice(),
+      totalWeight: getTotalWeight(),
+      totalItems: getTotalItems(),
+      orderDate: new Date().toISOString()
+    };
+
+    localStorage.setItem('orderData', JSON.stringify(orderData));
+    navigate('/order-confirmation');
   };
 
   const createLocalOrder = async () => {

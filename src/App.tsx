@@ -27,6 +27,7 @@ import PaymentResult from './pages/PaymentResult';
 import ShipmentConfirmation from './pages/ShipmentConfirmation';
 import LocalOrderDetailsPage from './pages/LocalOrderDetailsPage';
 import InternationalOrderDetailsPage from './pages/InternationalOrderDetailsPage';
+import AddressSelectionPage from './pages/AddressSelectionPage';
 import EnhancedNavigation from './components/EnhancedNavigation';
 import ProtectedRoute from '../src/components/auth/ProtectedRoute';
 
@@ -62,6 +63,7 @@ function App() {
 
           {/* Order creation and payment flow */}
           <Route path="/create-order" element={<CreateOrder />} />
+          <Route path="/address-selection" element={<AddressSelectionPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/order-correction/:orderId" element={<OrderCorrection />} />
           <Route path="/payment" element={<Payment />} />

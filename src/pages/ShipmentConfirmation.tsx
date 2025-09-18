@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { orderService, CreateInternationalOrderRequest } from '../api/services/orderService';
 import {
   Package,
@@ -26,7 +26,7 @@ interface VaultItem {
   price: number;
 }
 
-interface ShipmentData {
+export interface ShipmentData {
   items: VaultItem[];
   destination: string;
   shippingService: string;
@@ -39,6 +39,8 @@ const ShipmentConfirmation: React.FC = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const location = useLocation();
+  const selectedAddressId = location.state?.selectedAddressId ?? 0;
 
   // Shipping calculation constants
   const SHIPPING_RATE_PER_KG = 18; // USD per kg
@@ -106,56 +108,14 @@ const ShipmentConfirmation: React.FC = () => {
     }
 
     if (!shipmentData) return;
-
-    // Create international order
-    createInternationalOrder();
-  };
-
-  const createInternationalOrder = async () => {
-    if (!shipmentData?.orderRequest) return;
-
-    try {
-      setIsCreatingOrder(true);
-
-      const response = await orderService.createInternationalOrder(shipmentData.orderRequest);
-
-      if (response.success) {
-        // Store order data for payment page
-        const orderData = {
-          type: 'international',
-          orderId: response.data.id,
-          items: shipmentData.items,
-          destination: shipmentData.destination,
-          shippingService: shipmentData.shippingService,
-          totalWeight: getTotalWeight(),
-          totalValue: getTotalValue(),
-          totalPrice: getTotalCost(),
-          totalItems: shipmentData.items.reduce((total, item) => total + item.quantity, 0),
-          orderDate: new Date().toISOString()
-        };
-
-        localStorage.setItem('orderData', JSON.stringify(orderData));
-
-        // Clear shipment data
-        localStorage.removeItem('shipmentData');
-
-        // Navigate to payment page
-        navigate('/payment');
-      } else {
-        alert('Failed to create international order. Please try again.');
-      }
-    } catch (err) {
-      alert('Failed to create international order. Please check your connection and try again.');
-    } finally {
-      setIsCreatingOrder(false);
-    }
+    navigate('/payment', { state: { type: 'international', selectedAddressId } });
   };
 
   const handleBackToVault = () => {
     navigate('/my-vault');
   };
 
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
+  const formatCurrency = (amount: number, currency: string = 'INR') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -316,9 +276,9 @@ const ShipmentConfirmation: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <span className="text-gray-700">Shipping Cost</span>
-                    <p className="text-xs text-gray-500">{getTotalWeight().toFixed(2)} kg × ${SHIPPING_RATE_PER_KG}/kg</p>
+                    <p className="text-xs text-gray-500">{getTotalWeight().toFixed(2)} kg × ₹{SHIPPING_RATE_PER_KG}/kg</p>
                   </div>
-                  <span className="font-semibold text-gray-900">{formatCurrency(getShippingCost())}</span>
+                  <span className="font-semibold text-gray-900">{formatCurrency(getShippingCost(),)}</span>
                 </div>
 
                 {/* Insurance */}

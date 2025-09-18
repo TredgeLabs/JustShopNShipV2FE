@@ -13,7 +13,7 @@ export const formatCurrency = (amount: number, currency: string = 'INR'): string
   if (currency === 'INR') {
     return `₹${amount.toLocaleString('en-IN')}`;
   }
-  
+
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
@@ -68,6 +68,7 @@ export const getStatusColor = (status: string): string => {
     case 'delivered': return 'bg-green-100 text-green-800';
     case 'accepted': return 'bg-green-100 text-green-800';
     case 'denied': return 'bg-red-100 text-red-800';
+    case 'in_vault': return 'bg-purple-100 text-purple-800';
     default: return 'bg-gray-100 text-gray-800';
   }
 };

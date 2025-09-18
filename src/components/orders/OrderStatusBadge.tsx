@@ -20,6 +20,7 @@ const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({ status, type = 'loc
 };
 
 export const getStatusConfig = (status: string, type: string) => {
+  //'created', 'under_review', 'accepted', 'denied', 'cancelled', 'delivered'
   if (type === 'local') {
     switch (status) {
       case 'created':
@@ -61,6 +62,7 @@ export const getStatusConfig = (status: string, type: string) => {
         };
     }
   } else if (type === 'local_item') {
+    //ENUM('pending', 'accepted', 'denied', 'in_transit', 'in_vault')
     switch (status) {
       case 'pending':
         return {
@@ -100,6 +102,7 @@ export const getStatusConfig = (status: string, type: string) => {
         };
     }
   } else if (type === 'vault_item') {
+    //ENUM('received', 'damaged', 'returned', 'in_transit', 'ready_to_ship')
     switch (status) {
       case 'received':
         return {
@@ -139,7 +142,7 @@ export const getStatusConfig = (status: string, type: string) => {
         };
     }
   } else {
-    // International order statuses
+    // International order statuses ('pending', 'shipped', 'delivered', 'cancelled')
     switch (status) {
       case 'shipped':
         return {
@@ -159,10 +162,16 @@ export const getStatusConfig = (status: string, type: string) => {
           text: 'Delivered',
           color: 'bg-green-100 text-green-800',
         };
-      case 'exception':
+      case 'pending':
+        return {
+          icon: Clock,
+          text: 'Pending',
+          color: 'bg-yellow-100 text-yellow-800',
+        };
+      case 'cancelled':
         return {
           icon: XCircle,
-          text: 'Exception',
+          text: 'Cancelled',
           color: 'bg-red-100 text-red-800',
         };
       default:

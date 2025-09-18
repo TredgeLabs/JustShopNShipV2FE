@@ -137,7 +137,7 @@ const MyVault: React.FC = () => {
       const orderRequest = {
         orderData: {
           vault_id: vaultCode, // This should come from user's vault
-          shipping_address_id: 6, // This should come from user's default address
+          shipping_address_id: '', // This should come from user's default address
           shipment_weight_gm: totalWeight,
           shipping_cost: shippingCost,
           storage_cost: storageCost,
@@ -157,7 +157,7 @@ const MyVault: React.FC = () => {
       };
 
       localStorage.setItem('shipmentData', JSON.stringify(shipmentData));
-      navigate('/shipment-confirmation');
+      navigate('/address-selection');
 
     } catch (err) {
       alert('Failed to create international order. Please try again.');
