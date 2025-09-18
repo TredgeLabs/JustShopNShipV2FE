@@ -171,10 +171,10 @@ const OrderConfirmation: React.FC = () => {
                             <span className="font-medium">Quantity:</span>
                             <p>{item.quantity}</p>
                           </div>
-                          <div>
+                          {/* <div>
                             <span className="font-medium">Weight:</span>
                             <p>{item.weight} kg</p>
-                          </div>
+                          </div> */}
                         </div>
 
                         <div className="flex items-center justify-between mt-3">
@@ -205,10 +205,10 @@ const OrderConfirmation: React.FC = () => {
                   <span className="font-medium">{getTotalItems()}</span>
                 </div>
 
-                <div className="flex justify-between">
+                {/* <div className="flex justify-between">
                   <span className="text-gray-600">Total Weight:</span>
                   <span className="font-medium">{getTotalWeight().toFixed(2)} kg</span>
-                </div>
+                </div> */}
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>

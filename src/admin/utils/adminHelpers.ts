@@ -11,7 +11,7 @@ export const formatDate = (dateString: string): string => {
 
 export const formatCurrency = (amount: number, currency: string = 'INR'): string => {
   if (currency === 'INR') {
-    return `₹${amount.toLocaleString('en-IN')}`;
+    return `₹${amount.toLocaleString()}`;
   }
 
   return new Intl.NumberFormat('en-US', {

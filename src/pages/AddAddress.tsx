@@ -32,7 +32,7 @@ const AddAddress: React.FC = () => {
   const location = useLocation();
   const totalAddress = location.state?.totalAddress ?? 0;
   const returnTo = location.state?.returnTo;
-  const orderData = location.state?.orderData;
+  // const orderData = location.state?.orderData;
   const [formData, setFormData] = useState<AddressFormData>({
     title: 'Home',
     firstName: '',
@@ -141,9 +141,9 @@ const AddAddress: React.FC = () => {
       setTimeout(() => {
         if (returnTo) {
           // If we came from address selection, go back there
-          if (orderData) {
-            localStorage.setItem('orderData', JSON.stringify(orderData));
-          }
+          // if (orderData) {
+          //   localStorage.setItem('orderData', JSON.stringify(orderData));
+          // }
           navigate(returnTo);
         } else {
           navigate('/profile');
@@ -173,9 +173,9 @@ const AddAddress: React.FC = () => {
             <button
               onClick={() => {
                 if (returnTo) {
-                  if (orderData) {
-                    localStorage.setItem('orderData', JSON.stringify(orderData));
-                  }
+                  // if (orderData) {
+                  //   localStorage.setItem('orderData', JSON.stringify(orderData));
+                  // }
                   navigate(returnTo);
                 } else {
                   navigate('/profile');
@@ -199,9 +199,9 @@ const AddAddress: React.FC = () => {
           <button
             onClick={() => {
               if (returnTo) {
-                if (orderData) {
-                  localStorage.setItem('orderData', JSON.stringify(orderData));
-                }
+                // if (orderData) {
+                //   localStorage.setItem('orderData', JSON.stringify(orderData));
+                // }
                 navigate(returnTo);
               } else {
                 navigate('/profile');

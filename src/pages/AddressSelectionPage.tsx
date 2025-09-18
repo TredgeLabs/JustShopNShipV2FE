@@ -55,8 +55,7 @@ const AddressSelectionPage: React.FC = () => {
         navigate('/add-address', {
           state: {
             totalAddress: 0,
-            returnTo: '/address-selection',
-            orderData: orderData
+            returnTo: '/address-selection'
           }
         });
         return;
@@ -85,7 +84,6 @@ const AddressSelectionPage: React.FC = () => {
       state: {
         totalAddress: addresses.length,
         returnTo: '/address-selection',
-        orderData: orderData
       }
     });
   };
@@ -233,12 +231,12 @@ const AddressSelectionPage: React.FC = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Items:</span>
-                    <span className="font-medium">{shipmentData.destination}</span>
+                    <span className="font-medium">{shipmentData.items.length}</span>
                   </div>
 
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Weight:</span>
-                    <span className="font-medium">{shipmentData.destination} kg</span>
+                    <span className="font-medium">{(shipmentData.items.reduce((sum, item) => sum + item.weight * 1000, 0)) / 1000} kg</span>
                   </div>
 
                   <div className="border-t pt-3">
