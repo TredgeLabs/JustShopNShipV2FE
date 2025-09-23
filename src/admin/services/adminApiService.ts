@@ -342,7 +342,7 @@ class AdminApiService {
       const response = await fetch('http://localhost:4000/api/v1/inventory', {
         method: 'POST',
         headers: {
-          ...this.getMultiPartAuthHeaders,
+          ...this.getMultiPartAuthHeaders(),
           // Let browser set Content-Type for FormData
           // Remove Content-Type if present
         },

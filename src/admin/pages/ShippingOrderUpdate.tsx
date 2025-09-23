@@ -129,7 +129,8 @@ const ShippingOrderUpdate: React.FC = () => {
 
       const updateData: ShipInternationalRequest = {
         tracking_link: shippingLink.trim(),
-        tracking_id: shippingId.trim()
+        tracking_id: shippingId.trim(),
+        shipping_status: 'shipped'
       };
 
       const response = await adminApiService.shipInternationalOrder(orderDetails.id, updateData);

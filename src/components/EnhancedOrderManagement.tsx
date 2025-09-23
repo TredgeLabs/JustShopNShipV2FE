@@ -61,7 +61,7 @@ const EnhancedOrderManagement: React.FC = () => {
 
   const getOrderCounts = () => {
     const pendingLocal = localOrders.filter(order =>
-      order.order_status === 'created' || order.order_status === 'pending' || order.order_status === 'denied'
+      order.order_status === 'created' || order.order_status === 'pending' || order.order_status === 'denied' || order.order_status === 'accepted'
     ).length;
 
     const receivedLocal = localOrders.filter(order =>
