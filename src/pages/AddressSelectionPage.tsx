@@ -11,7 +11,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { userService, AddressApi } from '../api/services/userService';
-import { ShipmentData } from './ShipmentConfirmation';
 
 interface OrderData {
   items: any[];
@@ -25,16 +24,16 @@ const AddressSelectionPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [addresses, setAddresses] = useState<AddressApi[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<number>();
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
 
   useEffect(() => {
     // Load order data from localStorage
-    const savedOrderData = localStorage.getItem('shipmentData');
+    const savedOrderData = localStorage.getItem('orderData');
     if (savedOrderData) {
-      setShipmentData(JSON.parse(savedOrderData));
+      setOrderData(JSON.parse(savedOrderData));
     } else {
       // No order data, redirect back to create order
       navigate('/create-order');
@@ -49,24 +48,25 @@ const AddressSelectionPage: React.FC = () => {
       setIsLoading(true);
       setError('');
       const userAddresses = await userService.getAddresses();
-
+      
       if (userAddresses.length === 0) {
         // No addresses exist, redirect to add address page
         navigate('/add-address', {
           state: {
             totalAddress: 0,
-            returnTo: '/address-selection'
+            returnTo: '/address-selection',
+            orderData: orderData
           }
         });
         return;
       }
 
       setAddresses(userAddresses);
-
+      
       // Auto-select default address if available
       const defaultAddress = userAddresses.find(addr => addr.is_default);
       if (defaultAddress) {
-        setSelectedAddressId(defaultAddress.id);
+        setSelectedAddressId(defaultAddress.id.toString());
       }
     } catch (err) {
       setError('Failed to load addresses. Please try again.');
@@ -75,7 +75,7 @@ const AddressSelectionPage: React.FC = () => {
     }
   };
 
-  const handleAddressSelect = (addressId: number) => {
+  const handleAddressSelect = (addressId: string) => {
     setSelectedAddressId(addressId);
   };
 
@@ -84,6 +84,7 @@ const AddressSelectionPage: React.FC = () => {
       state: {
         totalAddress: addresses.length,
         returnTo: '/address-selection',
+        orderData: orderData
       }
     });
   };
@@ -93,7 +94,15 @@ const AddressSelectionPage: React.FC = () => {
       setError('Please select a delivery address');
       return;
     }
-    navigate('/shipment-confirmation', { state: { selectedAddressId } });//
+
+    // Store selected address ID with order data
+    const updatedOrderData = {
+      ...orderData,
+      selectedAddressId: selectedAddressId
+    };
+    
+    localStorage.setItem('orderData', JSON.stringify(updatedOrderData));
+    navigate('/order-confirmation');
   };
 
   const handleBackToCart = () => {
@@ -115,7 +124,7 @@ const AddressSelectionPage: React.FC = () => {
       `${address.city}, ${address.state} ${address.zip_code}`,
       address.country
     ].filter(Boolean);
-
+    
     return parts.join(', ');
   };
 
@@ -179,19 +188,21 @@ const AddressSelectionPage: React.FC = () => {
                 {addresses.map((address) => (
                   <div
                     key={address.id}
-                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${selectedAddressId === address.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    onClick={() => handleAddressSelect(address.id)}
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                      selectedAddressId === address.id.toString()
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleAddressSelect(address.id.toString())}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-3">
-                        <div className={`p-2 rounded-lg ${selectedAddressId === address.id ? 'bg-blue-100' : 'bg-gray-100'
-                          }`}>
+                        <div className={`p-2 rounded-lg ${
+                          selectedAddressId === address.id.toString() ? 'bg-blue-100' : 'bg-gray-100'
+                        }`}>
                           {getAddressIcon(address.title)}
                         </div>
-
+                        
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
                             <h3 className="font-medium text-gray-900">{address.title}</h3>
@@ -201,7 +212,7 @@ const AddressSelectionPage: React.FC = () => {
                               </span>
                             )}
                           </div>
-
+                          
                           <div className="text-sm text-gray-600 space-y-1">
                             <p className="font-medium">{address.recipient_first_name} {address.recipient_last_name}</p>
                             <p>{formatFullAddress(address)}</p>
@@ -211,7 +222,7 @@ const AddressSelectionPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center">
-                        {selectedAddressId === address.id && (
+                        {selectedAddressId === address.id.toString() && (
                           <CheckCircle className="h-6 w-6 text-blue-600" />
                         )}
                       </div>
@@ -224,25 +235,25 @@ const AddressSelectionPage: React.FC = () => {
 
           {/* Order Summary */}
           <div className="space-y-6">
-            {shipmentData && (
+            {orderData && (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
-
+                
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Items:</span>
-                    <span className="font-medium">{shipmentData.items.length}</span>
+                    <span className="font-medium">{orderData.totalItems}</span>
                   </div>
-
+                  
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Weight:</span>
-                    <span className="font-medium">{(shipmentData.items.reduce((sum, item) => sum + item.weight * 1000, 0)) / 1000} kg</span>
+                    <span className="font-medium">{orderData.totalWeight.toFixed(2)} kg</span>
                   </div>
-
+                  
                   <div className="border-t pt-3">
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Total Amount:</span>
-                      <span className="text-blue-600">₹{shipmentData.destination.toLocaleString()}</span>
+                      <span className="text-blue-600">₹{orderData.totalPrice.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -253,11 +264,11 @@ const AddressSelectionPage: React.FC = () => {
             {selectedAddressId && (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Selected Address</h3>
-
+                
                 {(() => {
-                  const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
+                  const selectedAddress = addresses.find(addr => addr.id.toString() === selectedAddressId);
                   if (!selectedAddress) return null;
-
+                  
                   return (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                       <div className="flex items-center space-x-2 mb-2">

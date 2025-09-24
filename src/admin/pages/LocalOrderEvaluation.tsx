@@ -53,6 +53,17 @@ const LocalOrderEvaluation: React.FC = () => {
       setError('');
       const response = await adminApiService.getOrderDetails(orderId!);
       if (response.success) {
+        // Check if order has already been evaluated
+        const hasEvaluatedItems = response.data.items.some((item: LocalOrderItem) => 
+          item.status === 'accepted' || item.status === 'denied'
+        );
+        
+        if (hasEvaluatedItems) {
+          // Redirect to evaluation detail page instead
+          navigate(`/admin/evaluation-detail/${orderId}`);
+          return;
+        }
+        
         setOrderDetails(response.data);
 
         // Initialize evaluation data

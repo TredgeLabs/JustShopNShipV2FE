@@ -111,7 +111,7 @@ const EvaluationDetailPage: React.FC = () => {
               <h1 className="text-3xl font-bold text-gray-900">Evaluation Details</h1>
               <p className="text-gray-600">Order #{orderDetails.id} evaluation results</p>
             </div>
-            <StatusBadge status={orderDetails.order_status} type='local' />
+            <StatusBadge status={orderDetails.order_status} />
           </div>
         </div>
 
@@ -234,13 +234,13 @@ const EvaluationDetailPage: React.FC = () => {
                               <p>{formatCurrency(parseFloat(item.final_price || item.price) * item.quantity)}</p>
                             </div>
                           </div>
-
+                          
                           {item.color && (
                             <div className="mt-2 text-sm text-gray-600">
                               <span className="font-medium">Color:</span> {item.color}
                             </div>
                           )}
-
+                          
                           {item.size && (
                             <div className="text-sm text-gray-600">
                               <span className="font-medium">Size:</span> {item.size}
@@ -249,7 +249,7 @@ const EvaluationDetailPage: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col items-end space-y-2">
-                          <StatusBadge status={item.status} type='local_item' />
+                          <StatusBadge status={item.status} />
                           <a
                             href={item.product_link}
                             target="_blank"
@@ -265,16 +265,15 @@ const EvaluationDetailPage: React.FC = () => {
                       {/* Evaluation Decision */}
                       <div className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center space-x-3 mb-3">
-                          {item.status === 'denied' ? (
-                            <>
-                              <XCircle className="h-5 w-5 text-red-600" />
-                              <span className="font-medium text-red-900">Item Denied</span>
-
-                            </>
-                          ) : (
+                          {item.status === 'accepted' ? (
                             <>
                               <CheckCircle className="h-5 w-5 text-green-600" />
                               <span className="font-medium text-green-900">Item Approved</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="h-5 w-5 text-red-600" />
+                              <span className="font-medium text-red-900">Item Denied</span>
                             </>
                           )}
                         </div>
@@ -320,7 +319,7 @@ const EvaluationDetailPage: React.FC = () => {
         {/* Evaluation Summary */}
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Evaluation Summary</h3>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{orderDetails.items.length}</div>

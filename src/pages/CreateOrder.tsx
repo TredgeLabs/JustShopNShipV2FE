@@ -193,6 +193,15 @@ const CreateOrder: React.FC = () => {
     };
 
     localStorage.setItem('orderData', JSON.stringify(orderData));
+    navigate('/address-selection');
+      items: cart,
+      totalPrice: getTotalPrice(),
+      totalWeight: getTotalWeight(),
+      totalItems: getTotalItems(),
+      orderDate: new Date().toISOString()
+    };
+
+    localStorage.setItem('orderData', JSON.stringify(orderData));
     navigate('/order-confirmation');
   };
 

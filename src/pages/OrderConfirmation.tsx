@@ -121,11 +121,11 @@ const OrderConfirmation: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={handleBackToCart}
+            onClick={handleBackToAddressSelection}
             className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Cart</span>
+            <span>Back to Address Selection</span>
           </button>
 
           <div className="flex items-center space-x-3 mb-4">

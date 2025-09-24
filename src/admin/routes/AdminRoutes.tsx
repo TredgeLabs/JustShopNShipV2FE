@@ -10,6 +10,8 @@ import InventoryEntry from '../pages/InventoryEntry';
 import ContactSupport from '../pages/ContactSupport';
 import EvaluationDetailPage from '../pages/EvaluationDetailPage';
 import VaultSearchPage from '../pages/VaultSearchPage';
+import EvaluationDetailPage from '../pages/EvaluationDetailPage';
+import VaultSearchPage from '../pages/VaultSearchPage';
 
 const AdminRoutes: React.FC = () => {
   return (
@@ -27,6 +29,18 @@ const AdminRoutes: React.FC = () => {
       <Route path="/local-order-evaluation/:orderId" element={
         <ProtectedRoute>
           <LocalOrderEvaluation />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/evaluation-detail/:orderId" element={
+        <ProtectedRoute>
+          <EvaluationDetailPage />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/vault-search" element={
+        <ProtectedRoute>
+          <VaultSearchPage />
         </ProtectedRoute>
       } />
       

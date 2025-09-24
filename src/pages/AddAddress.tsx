@@ -199,6 +199,15 @@ const AddAddress: React.FC = () => {
           <button
             onClick={() => {
               if (returnTo) {
+                if (orderData) {
+                  localStorage.setItem('orderData', JSON.stringify(orderData));
+                }
+                navigate(returnTo);
+              } else {
+                navigate('/profile');
+              }
+            }}
+              if (returnTo) {
                 // if (orderData) {
                 //   localStorage.setItem('orderData', JSON.stringify(orderData));
                 // }

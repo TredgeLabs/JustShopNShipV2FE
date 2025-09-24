@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
+import StatusBadge from '../components/StatusBadge';
 import { adminApiService } from '../services/adminApiService';
 import { formatDate } from '../utils/adminHelpers';
 
@@ -307,9 +308,10 @@ const VaultSearchPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-medium ${item.validityDays < 0 ? 'text-red-600' :
+                        <span className={`text-sm font-medium ${
+                          item.validityDays < 0 ? 'text-red-600' : 
                           item.validityDays < 30 ? 'text-orange-600' : 'text-green-600'
-                          }`}>
+                        }`}>
                           {item.validityDays < 0 ? `${Math.abs(item.validityDays)} days overdue` : `${item.validityDays} days left`}
                         </span>
                       </td>
@@ -390,9 +392,10 @@ const VaultSearchPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Validity</label>
-                      <p className={`font-medium ${selectedItem.validityDays < 0 ? 'text-red-600' :
+                      <p className={`font-medium ${
+                        selectedItem.validityDays < 0 ? 'text-red-600' : 
                         selectedItem.validityDays < 30 ? 'text-orange-600' : 'text-green-600'
-                        }`}>
+                      }`}>
                         {selectedItem.validityDays < 0 ? `${Math.abs(selectedItem.validityDays)} days overdue` : `${selectedItem.validityDays} days left`}
                       </p>
                     </div>
