@@ -1,71 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Save, 
-  ExternalLink, 
-  Copy, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  Save,
+  ExternalLink,
+  Copy,
+  CheckCircle,
   XCircle,
   AlertCircle,
-  Calendar,
   DollarSign
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { adminApiService } from '../services/adminApiService';
+import { adminApiService, LocalOrderDetails, LocalOrderItem, BulkProcessRequest, VaultItemRequest } from '../services/adminApiService';
 import { formatDate, formatCurrency, copyToClipboard } from '../utils/adminHelpers';
 import { DENY_REASONS } from '../constants/adminConstants';
-
-interface OrderItem {
-  id: string;
-  name: string;
-  cost: number;
-  link: string;
-  size: string;
-  quantity: number;
-  color: string;
-  actualPrice: number;
-  status: string;
-}
-
-interface OrderDetails {
-  id: string;
-  orderDate: string;
-  userName: string;
-  userEmail: string;
-  userPhone: string;
-  vaultAddress: {
-    name: string;
-    vaultId: string;
-    street: string;
-    address: string;
-    city: string;
-    country: string;
-    phone: string;
-  };
-  items: OrderItem[];
-}
+import BulkProcessModal from '../components/BulkProcessModal';
+import AddToVaultModal from '../components/AddToVaultModal';
 
 interface EvaluationData {
-  [itemId: string]: {
+  [itemId: number]: {
     actualPrice: number;
-    decision: 'accept' | 'deny';
+    shipment_date: string | null;
+    decision: 'approve' | 'deny';
     denyReasons: string[];
-    shipmentDate: string;
   };
 }
 
 const LocalOrderEvaluation: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [orderDetails, setOrderDetails] = useState<LocalOrderDetails | null>(null);
   const [evaluationData, setEvaluationData] = useState<EvaluationData>({});
-  const [paymentReturnDone, setPaymentReturnDone] = useState(false);
+  const [adminNotes, setAdminNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showVaultModal, setShowVaultModal] = useState(false);
+  const [selectedVaultItem, setSelectedVaultItem] = useState<LocalOrderItem | null>(null);
 
   useEffect(() => {
     if (orderId) {
@@ -76,17 +50,30 @@ const LocalOrderEvaluation: React.FC = () => {
   const loadOrderDetails = async () => {
     try {
       setIsLoading(true);
+      setError('');
       const response = await adminApiService.getOrderDetails(orderId!);
       if (response.success) {
+        // Check if order has already been evaluated
+        const hasEvaluatedItems = response.data.items.some((item: LocalOrderItem) => 
+          item.status === 'accepted' || item.status === 'denied'
+        );
+        
+        if (hasEvaluatedItems) {
+          // Redirect to evaluation detail page instead
+          navigate(`/admin/evaluation-detail/${orderId}`);
+          return;
+        }
+        
         setOrderDetails(response.data);
+
         // Initialize evaluation data
         const initialEvaluation: EvaluationData = {};
-        response.data.items.forEach((item: OrderItem) => {
+        response.data.items.forEach((item: LocalOrderItem) => {
           initialEvaluation[item.id] = {
-            actualPrice: item.cost,
-            decision: 'accept',
-            denyReasons: [],
-            shipmentDate: new Date().toISOString().split('T')[0]
+            actualPrice: Number(item.price),
+            decision: 'approve',
+            shipment_date: null,
+            denyReasons: []
           };
         });
         setEvaluationData(initialEvaluation);
@@ -94,13 +81,16 @@ const LocalOrderEvaluation: React.FC = () => {
         setError('Failed to load order details');
       }
     } catch (err) {
-      setError('Error loading order details');
+      setError(
+        `Error loading order details: ${err instanceof Error ? err.message : 'Unknown error'
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleItemEvaluationChange = (itemId: string, field: string, value: any) => {
+  const handleItemEvaluationChange = (itemId: number, field: string, value: string) => {
     setEvaluationData(prev => ({
       ...prev,
       [itemId]: {
@@ -110,13 +100,13 @@ const LocalOrderEvaluation: React.FC = () => {
     }));
   };
 
-  const handleDenyReasonToggle = (itemId: string, reason: string) => {
+  const handleDenyReasonToggle = (itemId: number, reason: string) => {
     setEvaluationData(prev => {
       const currentReasons = prev[itemId]?.denyReasons || [];
       const newReasons = currentReasons.includes(reason)
         ? currentReasons.filter(r => r !== reason)
         : [...currentReasons, reason];
-      
+
       return {
         ...prev,
         [itemId]: {
@@ -129,19 +119,39 @@ const LocalOrderEvaluation: React.FC = () => {
 
   const handleCopyVaultAddress = async () => {
     if (!orderDetails) return;
-    
-    const address = `${orderDetails.vaultAddress.name}
-Vault ID: ${orderDetails.vaultAddress.vaultId}
-${orderDetails.vaultAddress.street}
-${orderDetails.vaultAddress.address}
-${orderDetails.vaultAddress.city}
-${orderDetails.vaultAddress.country}
-Phone: ${orderDetails.vaultAddress.phone}`;
+
+    const address = `${orderDetails.user.name}
+Vault ID: ${orderDetails.user.vault_id}
+JustShopAndShip Warehouse
+Plot No. 45, Sector 18, Gurgaon
+Gurgaon, Haryana 122001
+India
+Phone: +91 9876543210`;
 
     const copied = await copyToClipboard(address);
     if (copied) {
       setSuccess('Vault address copied to clipboard!');
       setTimeout(() => setSuccess(''), 3000);
+    }
+  };
+
+  const handleAddToVault = async (item: LocalOrderItem) => {
+    setSelectedVaultItem(item);
+    setShowVaultModal(true);
+  };
+
+  const handleVaultSubmit = async (vaultId: string, itemData: VaultItemRequest) => {
+    try {
+      const response = await adminApiService.addVaultItem(vaultId, itemData);
+
+      if (response.success) {
+        setSuccess(`Item "${itemData.name}" added to vault successfully!`);
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError('Failed to add item to vault');
+      }
+    } catch (err) {
+      setError(`Error adding item to vault: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -162,14 +172,28 @@ Phone: ${orderDetails.vaultAddress.phone}`;
       setIsSaving(true);
       setError('');
 
-      const submissionData = {
-        orderId: orderDetails.id,
-        evaluations: evaluationData,
-        paymentReturnDone
+      // Convert evaluation data to API format
+      const items = Object.entries(evaluationData).map(([itemId, evaluation]) => ({
+        item_id: parseInt(itemId),
+        action: evaluation.decision,
+        final_price: evaluation.actualPrice,
+        shipment_date: evaluation.shipment_date || null,
+        ...(evaluation.decision === 'deny' && {
+          deny_reasons: evaluation.denyReasons.map((reason: string) => {
+            // Map reason text to reason ID (you may need to adjust this mapping)
+            const reasonIndex = DENY_REASONS.indexOf(reason as any);
+            return reasonIndex >= 0 ? reasonIndex + 1 : 8; // Default to "Other"
+          })
+        })
+      }));
+
+      const submissionData: BulkProcessRequest = {
+        items,
+        admin_notes: adminNotes || `Bulk processed on ${new Date().toLocaleDateString()}`
       };
 
-      const response = await adminApiService.submitOrderEvaluation(orderDetails.id, submissionData);
-      
+      const response = await adminApiService.bulkProcessOrderItems(orderDetails.id.toString(), submissionData);
+
       if (response.success) {
         setSuccess('Order evaluation submitted successfully!');
         setTimeout(() => {
@@ -179,11 +203,13 @@ Phone: ${orderDetails.vaultAddress.phone}`;
         setError('Failed to submit evaluation');
       }
     } catch (err) {
-      setError('Error submitting evaluation');
+      setError(`Error submitting evaluation: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
   };
+
+  const handleBulkProcess = async () => { }
 
   if (isLoading) {
     return (
@@ -225,7 +251,7 @@ Phone: ${orderDetails.vaultAddress.phone}`;
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Orders</span>
           </button>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Order Evaluation</h1>
@@ -258,19 +284,19 @@ Phone: ${orderDetails.vaultAddress.phone}`;
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Name</label>
-                  <p className="text-gray-900">{orderDetails.userName}</p>
+                  <p className="text-gray-900">{orderDetails.user.name}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-gray-900">{orderDetails.userEmail}</p>
+                  <p className="text-gray-900">{orderDetails.user.email}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Phone</label>
-                  <p className="text-gray-900">{orderDetails.userPhone}</p>
+                  <p className="text-gray-900">{orderDetails.user.phone}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Order Date</label>
-                  <p className="text-gray-900">{formatDate(orderDetails.orderDate)}</p>
+                  <p className="text-gray-900">{formatDate(orderDetails.created_at)}</p>
                 </div>
               </div>
             </div>
@@ -289,31 +315,33 @@ Phone: ${orderDetails.vaultAddress.phone}`;
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="space-y-1 text-sm">
-                  <div className="font-semibold text-blue-900">{orderDetails.vaultAddress.name}</div>
-                  <div className="text-blue-800">Vault ID: {orderDetails.vaultAddress.vaultId}</div>
-                  <div className="text-blue-800">{orderDetails.vaultAddress.street}</div>
-                  <div className="text-blue-800">{orderDetails.vaultAddress.address}</div>
-                  <div className="text-blue-800">{orderDetails.vaultAddress.city}</div>
-                  <div className="text-blue-800">{orderDetails.vaultAddress.country}</div>
-                  <div className="text-blue-800">Phone: {orderDetails.vaultAddress.phone}</div>
+                  <div className="font-semibold text-blue-900">{orderDetails.user.name}</div>
+                  <div className="text-blue-800">Vault ID: {orderDetails.user.vault_id}</div>
+                  <div className="text-blue-800">JustShopAndShip Warehouse</div>
+                  <div className="text-blue-800">Plot No. 45, Sector 18, Gurgaon</div>
+                  <div className="text-blue-800">Gurgaon, Haryana 122001</div>
+                  <div className="text-blue-800">India</div>
+                  <div className="text-blue-800">Phone: +91 9876543210</div>
                 </div>
               </div>
             </div>
 
-            {/* Payment Return */}
+            {/* Admin Notes */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Status</h3>
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={paymentReturnDone}
-                  onChange={(e) => setPaymentReturnDone(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <span className="text-sm text-gray-700">
-                  Payment Return Done (for partial/full refund if required)
-                </span>
-              </label>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Admin Notes</h3>
+              <textarea
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Add notes about this evaluation..."
+              />
+              {orderDetails.admin_notes && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Previous notes:</p>
+                  <p className="text-sm text-gray-800">{orderDetails.admin_notes}</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -323,34 +351,34 @@ Phone: ${orderDetails.vaultAddress.phone}`;
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">Items Evaluation</h3>
               </div>
-              
+
               <div className="p-6 space-y-6">
                 {orderDetails.items.map((item) => (
                   <div key={item.id} className="border border-gray-200 rounded-lg p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">{item.name}</h4>
+                        <h4 className="text-lg font-medium text-gray-900 mb-2">{item.product_name}</h4>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div>
                             <span className="font-medium">Original Cost:</span>
-                            <p>{formatCurrency(item.cost)}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium">Size:</span>
-                            <p>{item.size}</p>
+                            <p>{formatCurrency(Number(item.price))}</p>
                           </div>
                           <div>
                             <span className="font-medium">Quantity:</span>
                             <p>{item.quantity}</p>
                           </div>
                           <div>
-                            <span className="font-medium">Color:</span>
-                            <p>{item.color}</p>
+                            <span className="font-medium">Status:</span>
+                            <p className="capitalize">{item.status}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium">Item ID:</span>
+                            <p>#{item.id}</p>
                           </div>
                         </div>
                       </div>
                       <a
-                        href={item.link}
+                        href={item.product_link}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 transition-colors"
@@ -360,7 +388,7 @@ Phone: ${orderDetails.vaultAddress.phone}`;
                       </a>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Actual Price */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -369,26 +397,25 @@ Phone: ${orderDetails.vaultAddress.phone}`;
                         </label>
                         <input
                           type="number"
-                          value={evaluationData[item.id]?.actualPrice || item.cost}
-                          onChange={(e) => handleItemEvaluationChange(item.id, 'actualPrice', parseFloat(e.target.value))}
+                          value={evaluationData[item.id]?.actualPrice || item.price}
+                          onChange={(e) => handleItemEvaluationChange(item.id, 'actualPrice', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Enter actual price"
                         />
                       </div>
-
                       {/* Shipment Date */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          <Calendar className="inline h-4 w-4 mr-1" />
                           Shipment Date
                         </label>
                         <input
                           type="date"
-                          value={evaluationData[item.id]?.shipmentDate || new Date().toISOString().split('T')[0]}
-                          onChange={(e) => handleItemEvaluationChange(item.id, 'shipmentDate', e.target.value)}
+                          value={evaluationData[item.id]?.shipment_date || ''}
+                          onChange={(e) => handleItemEvaluationChange(item.id, 'shipment_date', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
+
 
                       {/* Decision */}
                       <div>
@@ -398,8 +425,8 @@ Phone: ${orderDetails.vaultAddress.phone}`;
                             <input
                               type="radio"
                               name={`decision-${item.id}`}
-                              value="accept"
-                              checked={evaluationData[item.id]?.decision === 'accept'}
+                              value="approve"
+                              checked={evaluationData[item.id]?.decision === 'approve'}
                               onChange={(e) => handleItemEvaluationChange(item.id, 'decision', e.target.value)}
                               className="h-4 w-4 text-green-600 focus:ring-green-500"
                             />
@@ -452,6 +479,20 @@ Phone: ${orderDetails.vaultAddress.phone}`;
 
                 {/* Submit Button */}
                 <div className="pt-6 border-t border-gray-200">
+                  {/* Admin Notes */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Admin Notes (Optional)
+                    </label>
+                    <textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Add any notes about this evaluation..."
+                    />
+                  </div>
+
                   <button
                     onClick={handleSubmitEvaluation}
                     disabled={isSaving}
@@ -474,6 +515,28 @@ Phone: ${orderDetails.vaultAddress.phone}`;
             </div>
           </div>
         </div>
+
+        {/* Bulk Process Modal */}
+        <BulkProcessModal
+          isOpen={showBulkModal}
+          onClose={() => setShowBulkModal(false)}
+          items={orderDetails.items}
+          onSubmit={handleBulkProcess}
+        />
+
+        {/* Add to Vault Modal */}
+        {selectedVaultItem && (
+          <AddToVaultModal
+            isOpen={showVaultModal}
+            onClose={() => {
+              setShowVaultModal(false);
+              setSelectedVaultItem(null);
+            }}
+            item={selectedVaultItem}
+            vaultId={orderDetails.user.vault_id}
+            onSubmit={handleVaultSubmit}
+          />
+        )}
       </div>
     </AdminLayout>
   );

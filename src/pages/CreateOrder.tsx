@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { inventoryService } from '../api/services/inventoryService';
 import { productService, ProductDetailsResponse } from '../api/services/userService';
+import { orderService, CreateLocalOrderRequest } from '../api/services/orderService';
 
 interface Product {
   id: string;
@@ -48,6 +49,7 @@ const CreateOrder: React.FC = () => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Mock inventory data - replace with actual API call
   useEffect(() => {
@@ -167,15 +169,94 @@ const CreateOrder: React.FC = () => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
+  const getTotalWeight = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const getTotalItems = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
   const handleProceedToConfirmation = () => {
     if (cart.length === 0) {
       setError('Please add at least one product to your cart');
       return;
     }
 
-    // Store cart data in localStorage for order confirmation page
-    localStorage.setItem('orderCart', JSON.stringify(cart));
-    navigate('/order-confirmation');
+    // Navigate to address selection first
+    const orderData = {
+      items: cart,
+      totalPrice: getTotalPrice(),
+      totalWeight: getTotalWeight(),
+      totalItems: getTotalItems(),
+      orderDate: new Date().toISOString()
+    };
+
+    localStorage.setItem('orderData', JSON.stringify(orderData));
+    navigate('/address-selection');
+  };
+
+  const createLocalOrder = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+
+      const totalPrice = getTotalPrice();
+      const platformFee = Math.round(totalPrice * 0.05); // 5% platform fee
+
+      const orderRequest: CreateLocalOrderRequest = {
+        orderData: {
+          order_status: 'created',
+          payment_status: 'pending',
+          total_price: totalPrice,
+          platform_fee: platformFee,
+          admin_notes: `Order created on ${new Date().toLocaleDateString()} with ${cart.length} items`
+        },
+        items: cart.map(item => ({
+          source_type: 'manual_link',
+          product_name: item.name,
+          product_link: item.url,
+          color: item.color,
+          size: item.size,
+          quantity: item.quantity,
+          price: item.price,
+          final_price: item.price,
+          status: 'pending',
+          deny_reasons: [],
+          image_link: item.image
+        }))
+      };
+
+      const response = await orderService.createLocalOrder(orderRequest);
+
+      if (response.success) {
+        setSuccess('Order created successfully!');
+
+        // Store order data for confirmation page
+        const orderData = {
+          orderId: response.data.id,
+          items: cart,
+          totalPrice: totalPrice,
+          totalWeight: getTotalWeight(),
+          totalItems: getTotalItems(),
+          orderDate: new Date().toISOString()
+        };
+
+        localStorage.setItem('orderData', JSON.stringify(orderData));
+
+        // Clear cart
+        setCart([]);
+
+        // Navigate to confirmation
+        navigate('/order-confirmation');
+      } else {
+        setError('Failed to create order. Please try again.');
+      }
+    } catch (err) {
+      setError('Failed to create order. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -300,10 +381,19 @@ const CreateOrder: React.FC = () => {
                         <input
                           type="number"
                           min="0"
-                          value={scrapedProduct.price || 0}
-                          onChange={(e) => setScrapedProduct(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={scrapedProduct.price}
+                          onChange={(e) =>
+                            setScrapedProduct((prev) => ({
+                              ...prev,
+                              price: parseFloat(e.target.value), // fallback to 0 if empty
+                            }))
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+             [&::-webkit-outer-spin-button]:appearance-none 
+             [&::-webkit-inner-spin-button]:appearance-none 
+             [appearance:textfield]"
                         />
+
                       </div>
                     </div>
                     <button
@@ -379,10 +469,20 @@ const CreateOrder: React.FC = () => {
                 {/* Proceed Button */}
                 <button
                   onClick={handleProceedToConfirmation}
+                  disabled={isLoading}
                   className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
                 >
-                  <span>Proceed to Confirmation</span>
-                  <ArrowRight className="h-4 w-4" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Creating Order...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Order</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
               </div>
             )}

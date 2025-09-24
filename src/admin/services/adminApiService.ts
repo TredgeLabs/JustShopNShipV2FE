@@ -1,177 +1,303 @@
 import { ApiResponse } from '../../api/config';
 
-// Admin-specific API service
+// Admin API response types
+export interface AdminLoginRequest {
+  admin_code: string;
+}
+
+export interface AdminLoginResponse {
+  success: boolean;
+  token: string;
+  admin: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+export interface AdminOrder {
+  id: number;
+  orderDate: string;     // e.g., "2025-08-28"
+  userName: string;
+  userEmail: string;
+  location?: string;     // backend sometimes empty string
+  items: string;         // comma-separated names: "Kurta, Socks"
+  itemCount: number;
+  status: string;       // e.g., "pending", "processing", "completed"
+  totalAmount: number;   // note: string in API
+}
+
+export interface LocalOrderDetails {
+  id: number;
+  order_status: string;
+  payment_status: string;
+  total_price: string;      // note: string in API
+  platform_fee: string;     // note: string in API
+  admin_notes?: string;
+  created_at: string;
+  updated_at: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    vault_id: string;
+  };
+  items: LocalOrderItem[];
+}
+
+export interface LocalOrderItem {
+  id: number;
+  source_type: string;         // e.g., "manual_link"
+  product_name: string;
+  product_link: string;
+  image_link?: File;
+  color?: string;
+  size?: string;
+  quantity: number;
+  price: string;               // note: string in API
+  final_price?: string;        // note: string in API
+  status: string;              // e.g., "accepted" | "denied"
+  deny_reasons?: number[] | null;
+  // created_at / updated_at are NOT sent per item in current API
+}
+
+
+export interface BulkProcessRequest {
+  items: Array<{
+    item_id: number;
+    action: 'approve' | 'deny';
+    deny_reasons?: number[];
+  }>;
+  admin_notes?: string;
+}
+
+export interface VaultItemRequest {
+  vault_id: string;
+  name: string;
+  description: string;
+  source_type: string;
+  received_date: string;
+  weight_gm: number;
+  status: string;
+  is_returnable: boolean;
+  returnable_until?: string | null;
+  storage_days_free: number;
+  storage_fee_per_day: number;
+  is_ready_to_ship: boolean;
+  images: File[];
+}
+
+export interface ShipInternationalRequest {
+  tracking_id?: string;
+  tracking_link?: string;
+  shipping_status?: string;
+}
+
+// Admin API Service
 class AdminApiService {
-  private baseUrl = '/api/admin';
+  private baseUrl = 'http://localhost:4000/api/admin';
 
-  // Orders API
-  async getLocalOrders(): Promise<ApiResponse<any[]>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: [
-            {
-              id: 'LO-001',
-              orderDate: '2024-01-25',
-              userName: 'John Doe',
-              userEmail: 'john@example.com',
-              location: 'Mumbai, India',
-              items: 'Traditional Silk Saree, Ayurvedic Skincare Set',
-              status: 'pending',
-              totalAmount: 5600,
-              itemCount: 2
-            },
-            {
-              id: 'LO-002',
-              orderDate: '2024-01-24',
-              userName: 'Jane Smith',
-              userEmail: 'jane@example.com',
-              location: 'Delhi, India',
-              items: 'Handcrafted Jewelry, Organic Spices',
-              status: 'processing',
-              totalAmount: 9700,
-              itemCount: 2
-            }
-          ]
-        });
-      }, 1000);
-    });
+  private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('adminToken');
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
   }
 
-  async getInternationalOrders(): Promise<ApiResponse<any[]>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: [
-            {
-              id: 'IO-001',
-              orderDate: '2024-01-20',
-              userName: 'Mike Johnson',
-              userEmail: 'mike@example.com',
-              location: 'Toronto, Canada',
-              items: 'Silk Saree, Silver Jewelry',
-              shippingLink: 'https://tracking.dhl.com/TRK123456',
-              status: 'shipped',
-              totalAmount: 8500,
-              itemCount: 2
-            }
-          ]
-        });
-      }, 1000);
-    });
+  private getMultiPartAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('adminToken');
+    return {
+      'Accept': 'application/json',
+      // 'Content-Type': 'multipart/form-data',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
   }
 
-  async getOrderDetails(orderId: string): Promise<ApiResponse<any>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: {
-            id: orderId,
-            orderDate: '2024-01-25',
-            userName: 'John Doe',
-            userEmail: 'john@example.com',
-            userPhone: '+1-555-123-4567',
-            vaultAddress: {
-              name: 'John Doe',
-              vaultId: 'JSS-UD-2024-001',
-              street: 'JustShopAndShip Warehouse',
-              address: 'Plot No. 45, Sector 18, Gurgaon',
-              city: 'Gurgaon, Haryana 122001',
-              country: 'India',
-              phone: '+91 9876543210'
-            },
-            items: [
-              {
-                id: 'item-1',
-                name: 'Traditional Silk Saree - Royal Blue',
-                cost: 3500,
-                link: 'https://example.com/saree',
-                size: 'Free Size',
-                quantity: 1,
-                color: 'Royal Blue',
-                actualPrice: 3500,
-                status: 'pending'
-              },
-              {
-                id: 'item-2',
-                name: 'Ayurvedic Skincare Gift Set',
-                cost: 2100,
-                link: 'https://example.com/skincare',
-                size: 'Standard',
-                quantity: 1,
-                color: 'Natural',
-                actualPrice: 2100,
-                status: 'pending'
-              }
-            ]
-          }
-        });
-      }, 1000);
-    });
+  private async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminSession');
+        window.location.href = '/admin/login';
+        throw new Error('Authentication failed');
+      }
+
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
-  async submitOrderEvaluation(orderId: string, evaluationData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('Submitting evaluation for order:', orderId, evaluationData);
-        resolve({
-          success: true,
-          data: undefined,
-          message: 'Order evaluation submitted successfully'
-        });
-      }, 1500);
-    });
+  // 1. Admin Login
+  async login(adminCode: string): Promise<AdminLoginResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ admin_code: adminCode }),
+      });
+
+      const data = await this.handleResponse<AdminLoginResponse>(response);
+
+      if (data.success && data.token) {
+        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminSession', JSON.stringify({
+          authenticated: true,
+          timestamp: new Date().toISOString(),
+          admin: data.admin
+        }));
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error during admin login:', error);
+      throw error;
+    }
   }
 
-  // Vault Entry API
+  // 2. Get Orders List
+  async getLocalOrders(): Promise<ApiResponse<AdminOrder[]>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/orders?type=local`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse<ApiResponse<AdminOrder[]>>(response);
+    } catch (error) {
+      console.error('Error fetching local orders:', error);
+      throw error;
+    }
+  }
+
+  async getInternationalOrders(): Promise<ApiResponse<AdminOrder[]>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/orders?type=international`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      return await this.handleResponse<ApiResponse<AdminOrder[]>>(response);
+    } catch (error) {
+      console.error('Error fetching international orders:', error);
+      throw error;
+    }
+  }
+
+  // 3. Get Local Order Details
+  async getOrderDetails(orderId: string): Promise<ApiResponse<LocalOrderDetails>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/local-orders/${orderId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse<ApiResponse<LocalOrderDetails>>(response);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      throw error;
+    }
+  }
+
+  // 4. Bulk Approve/Deny Order Items
+  async bulkProcessOrderItems(orderId: string, processData: BulkProcessRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/local-orders/${orderId}/bulk-process`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(processData),
+      });
+
+      await this.handleResponse<void>(response);
+      return {
+        success: true,
+        data: undefined,
+        message: 'Order items processed successfully'
+      };
+    } catch (error) {
+      console.error('Error processing order items:', error);
+      throw error;
+    }
+  }
+
+  // 5. Add Vault Item from Order
+  async addVaultItem(vaultId: string, itemData: any): Promise<any> {
+    const formData = new FormData();
+
+    // Append normal fields
+    Object.keys(itemData).forEach((key) => {
+      if (key !== 'images' && itemData[key] !== undefined && itemData[key] !== null) {
+        formData.append(key, itemData[key]);
+      }
+    });
+
+    // ✅ Append images if provided
+    if (itemData.images && Array.isArray(itemData.images)) {
+      itemData.images.forEach((file: File) => {
+        formData.append('images', file);
+      });
+    }
+
+    const response = await fetch(`${this.baseUrl}/vaults/${vaultId}/items`, {
+      method: 'POST',
+      headers: {
+        ...this.getMultiPartAuthHeaders(),
+      },
+      body: formData,
+    });
+    const data = await this.handleResponse<any>(response);
+    return {
+      success: !!data.success,
+      data: undefined,
+      message: data.success ? 'Vault item created successfully' : (data.message || 'Failed to create vault item')
+    };
+  }
+
+
+  // 6. Ship International Order
+  async shipInternationalOrder(orderId: string, shippingData: ShipInternationalRequest): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/international-orders/${orderId}/ship`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(shippingData),
+      });
+
+      await this.handleResponse<void>(response);
+      return {
+        success: true,
+        data: undefined,
+        message: 'International order shipped successfully'
+      };
+    } catch (error) {
+      console.error('Error shipping international order:', error);
+      throw error;
+    }
+  }
+
+  // Legacy methods for backward compatibility (now using real API)
   async validateVaultId(vaultId: string): Promise<ApiResponse<any>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const isValid = vaultId.startsWith('JSS-UD-');
-        if (isValid) {
-          resolve({
-            success: true,
-            data: {
-              vaultId,
-              userName: 'John Doe',
-              userEmail: 'john@example.com',
-              userPhone: '+1-555-123-4567',
-              transitItems: [
-                {
-                  id: 'transit-1',
-                  name: 'Traditional Silk Saree',
-                  orderId: 'LO-001',
-                  expectedQuantity: 1,
-                  color: 'Royal Blue',
-                  size: 'Free Size'
-                }
-              ]
-            }
-          });
-        } else {
-          resolve({
-            success: false,
-            data: null,
-            error: 'Invalid Vault ID'
-          });
-        }
-      }, 1000);
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/accepted-items/${vaultId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse<any>(response);
+    } catch (error) {
+      console.error('Error fetching shipping order details:', error);
+      throw error;
+    }
   }
 
   async enterVaultItem(vaultId: string, itemData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
+    // This would use the addVaultItem method above
     return new Promise((resolve) => {
       setTimeout(() => {
-        console.log('Entering vault item:', vaultId, itemData);
         resolve({
           success: true,
           data: undefined,
@@ -181,120 +307,75 @@ class AdminApiService {
     });
   }
 
-  // Shipping Order Update API
   async getShippingOrderDetails(shippingOrderId: string): Promise<ApiResponse<any>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: {
-            id: shippingOrderId,
-            userName: 'Mike Johnson',
-            userEmail: 'mike@example.com',
-            selectedAddress: {
-              name: 'Mike Johnson',
-              line1: '123 Main Street',
-              line2: 'Apt 4B',
-              city: 'Toronto',
-              state: 'ON',
-              zipCode: 'M5V 3A8',
-              country: 'Canada',
-              phone: '+1-416-555-0123'
-            },
-            vaultItems: [
-              {
-                id: 'vault-1',
-                name: 'Traditional Silk Saree',
-                image: 'https://images.pexels.com/photos/8148579/pexels-photo-8148579.jpeg?auto=compress&cs=tinysrgb&w=200',
-                vaultItemId: 'VI-001',
-                weight: 0.8
-              },
-              {
-                id: 'vault-2',
-                name: 'Silver Jewelry Set',
-                image: 'https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=200',
-                vaultItemId: 'VI-002',
-                weight: 0.3
-              }
-            ],
-            totalWeight: 1.1,
-            currentShippingLink: '',
-            currentShippingId: ''
-          }
-        });
-      }, 1000);
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/international-orders/${shippingOrderId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse<any>(response);
+    } catch (error) {
+      console.error('Error fetching shipping order details:', error);
+      throw error;
+    }
   }
 
   async updateShippingOrder(shippingOrderId: string, updateData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('Updating shipping order:', shippingOrderId, updateData);
-        resolve({
-          success: true,
-          data: undefined,
-          message: 'Shipping order updated successfully'
-        });
-      }, 1500);
-    });
+    // This would use the shipInternationalOrder method above
+    return this.shipInternationalOrder(shippingOrderId, updateData);
   }
 
-  // Inventory API
   async createInventoryItem(itemData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('Creating inventory item:', itemData);
-        resolve({
-          success: true,
-          data: undefined,
-          message: 'Inventory item created successfully'
-        });
-      }, 1500);
-    });
+    // itemData should include all fields and images as File or File[]
+    const formData = new FormData();
+    formData.append('sub_category', itemData.subCategory || '');
+    for (const key in itemData) {
+      if (key === 'images' && Array.isArray(itemData.images)) {
+        itemData.images.forEach((file: File) => formData.append('images', file));
+      } else if (key === 'images' && itemData.images instanceof File) {
+        formData.append('images', itemData.images);
+      } else {
+        formData.append(key, itemData[key]);
+      }
+    }
+    try {
+      const response = await fetch('http://localhost:4000/api/v1/inventory', {
+        method: 'POST',
+        headers: {
+          ...this.getMultiPartAuthHeaders(),
+          // Let browser set Content-Type for FormData
+          // Remove Content-Type if present
+        },
+        body: formData,
+      });
+      const data = await this.handleResponse<any>(response);
+      return {
+        success: !!data.success,
+        data: undefined,
+        message: data.success ? 'Inventory item created successfully' : (data.message || 'Failed to create inventory item')
+      };
+    } catch (error) {
+      console.error('Error creating inventory item:', error);
+      throw error;
+    }
   }
 
-  // Contact Support API
   async getSupportQueries(): Promise<ApiResponse<any[]>> {
-    // Mock implementation - replace with actual API call
+    // Mock implementation - replace with actual API call when endpoint is available
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
           success: true,
-          data: [
-            {
-              id: 'query-1',
-              userName: 'Alice Brown',
-              userEmail: 'alice@example.com',
-              subject: 'Shipping Delay Inquiry',
-              message: 'My order has been delayed for over a week. Can you please provide an update?',
-              priority: 'high',
-              status: 'pending',
-              submittedAt: '2024-01-25T10:30:00Z'
-            },
-            {
-              id: 'query-2',
-              userName: 'Bob Wilson',
-              userEmail: 'bob@example.com',
-              subject: 'Product Quality Issue',
-              message: 'The item I received is not as described. I would like to return it.',
-              priority: 'medium',
-              status: 'pending',
-              submittedAt: '2024-01-24T15:45:00Z'
-            }
-          ]
+          data: []
         });
       }, 1000);
     });
   }
 
   async replyToSupportQuery(queryId: string, replyData: any): Promise<ApiResponse<void>> {
-    // Mock implementation - replace with actual API call
+    // Mock implementation - replace with actual API call when endpoint is available
     return new Promise((resolve) => {
       setTimeout(() => {
-        console.log('Replying to support query:', queryId, replyData);
         resolve({
           success: true,
           data: undefined,

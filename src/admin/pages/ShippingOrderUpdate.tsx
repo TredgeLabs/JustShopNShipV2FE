@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Save, 
-  User, 
-  MapPin, 
-  Package, 
-  Scale, 
+import {
+  ArrowLeft,
+  Save,
+  User,
+  MapPin,
+  Package,
+  Scale,
   ExternalLink,
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { adminApiService } from '../services/adminApiService';
+import { adminApiService, ShipInternationalRequest } from '../services/adminApiService';
 
 interface VaultItem {
   id: string;
@@ -43,6 +43,7 @@ interface ShippingOrderDetails {
   totalWeight: number;
   currentShippingLink: string;
   currentShippingId: string;
+  shipping_status: string;
 }
 
 const ShippingOrderUpdate: React.FC = () => {
@@ -80,6 +81,33 @@ const ShippingOrderUpdate: React.FC = () => {
     }
   };
 
+  const handleMarkDelivered = async () => {
+    if (!orderDetails) return;
+    try {
+      setIsSaving(true);
+      setError('');
+
+      const updateData: ShipInternationalRequest = {
+        shipping_status: 'delivered',
+      };
+
+      const response = await adminApiService.shipInternationalOrder(orderDetails.id, updateData);
+
+      if (response.success) {
+        setSuccess('Shipping order delivered successfully!');
+        setTimeout(() => {
+          navigate('/admin/orders');
+        }, 2000);
+      } else {
+        setError('Failed to update delivery status');
+      }
+    } catch (err) {
+      setError(`Error updating delivery status: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleUpdateOrder = async () => {
     if (!orderDetails) return;
 
@@ -88,17 +116,25 @@ const ShippingOrderUpdate: React.FC = () => {
       return;
     }
 
+    // Validate URL format
+    try {
+      new URL(shippingLink);
+    } catch {
+      setError('Please enter a valid tracking URL');
+      return;
+    }
     try {
       setIsSaving(true);
       setError('');
 
-      const updateData = {
-        shippingLink: shippingLink.trim(),
-        shippingId: shippingId.trim()
+      const updateData: ShipInternationalRequest = {
+        tracking_link: shippingLink.trim(),
+        tracking_id: shippingId.trim(),
+        shipping_status: 'shipped'
       };
 
-      const response = await adminApiService.updateShippingOrder(orderDetails.id, updateData);
-      
+      const response = await adminApiService.shipInternationalOrder(orderDetails.id, updateData);
+
       if (response.success) {
         setSuccess('Shipping order updated successfully!');
         setTimeout(() => {
@@ -108,7 +144,7 @@ const ShippingOrderUpdate: React.FC = () => {
         setError('Failed to update shipping order');
       }
     } catch (err) {
-      setError('Error updating shipping order');
+      setError(`Error updating shipping order: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
@@ -154,11 +190,37 @@ const ShippingOrderUpdate: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Orders</span>
           </button>
-          
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Update Shipping Order</h1>
-            <p className="text-gray-600">Update shipping information for order #{orderDetails.id}</p>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Update Shipping Order</h1>
+              <p className="text-gray-600">
+                Update shipping information for order #{orderDetails.id}
+              </p>
+            </div>
+
+            {/* ✅ Mark Delivered Button (only visible if tracking info is present) */}
+            {orderDetails.currentShippingLink && orderDetails.currentShippingId && (
+              <button
+                onClick={handleMarkDelivered}
+                disabled={isSaving || orderDetails.shipping_status === 'delivered'}
+                className="mt-3 flex items-center justify-center space-x-2 py-3 px-8 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+              >
+                {orderDetails.shipping_status === 'delivered' ? (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Delivered</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Mark Delivered</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
+
         </div>
 
         {/* Success/Error Messages */}
@@ -246,7 +308,7 @@ const ShippingOrderUpdate: React.FC = () => {
                 <Package className="h-5 w-5 mr-2 text-orange-600" />
                 Vault Items
               </h3>
-              
+
               <div className="space-y-4">
                 {orderDetails.vaultItems.map((item) => (
                   <div key={item.id} className="border border-gray-200 rounded-lg p-4">
@@ -278,7 +340,7 @@ const ShippingOrderUpdate: React.FC = () => {
             {/* Shipping Information Update */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Update Shipping Information</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

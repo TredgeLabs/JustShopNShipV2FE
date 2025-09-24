@@ -83,7 +83,7 @@ const ChangePassword: React.FC = () => {
 
     try {
       // Call the real API for changing password
-      var response = await userService.changePassword({
+      const response = await userService.changePassword({
         old_password: formData.currentPassword,
         new_password: formData.newPassword
       });

@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
-import { Copy, MapPin, User, Package, CheckCircle } from 'lucide-react';
+import { Copy, MapPin, Package, CheckCircle } from 'lucide-react';
+import { UserSummary } from '../api/services/userService';
 
-const EnhancedVaultInfo: React.FC = () => {
+interface Props {
+  userSummary: UserSummary | null;
+}
+
+const EnhancedVaultInfo: React.FC<Props> = ({ userSummary }) => {
   const [copied, setCopied] = useState<string | null>(null);
 
   const vaultAddress = {
-    name: "John Doe",
-    street: "JustShopAndShip Warehouse",
-    address: "Plot No. 45, Sector 18, Gurgaon",
-    city: "Gurgaon, Haryana 122001",
-    country: "India",
-    phone: "+91 9876543210",
-    vaultId: "JSS-UD-2024-001"
+    name: userSummary?.userFullName,
+    street: userSummary?.street,
+    address: userSummary?.address,
+    city: userSummary?.city,
+    country: userSummary?.country,
+    phone: userSummary?.mobileNumber || '',
+    vaultId: userSummary?.vaultCode
   };
 
   const copyFullAddress = () => {
@@ -55,7 +60,7 @@ Phone: ${vaultAddress.phone}`;
           <MapPin className="h-5 w-5 text-blue-600" />
           <span className="font-medium text-blue-900">Use this address for all your Indian purchases:</span>
         </div>
-        
+
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>

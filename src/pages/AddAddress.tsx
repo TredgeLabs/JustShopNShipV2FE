@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { userService } from '../api/services/userService';
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
+import { countries } from '../constants/countries';
 
 interface AddressFormData {
   title: string;
@@ -28,6 +29,10 @@ interface AddressFormData {
 
 const AddAddress: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const totalAddress = location.state?.totalAddress ?? 0;
+  const returnTo = location.state?.returnTo;
+  // const orderData = location.state?.orderData;
   const [formData, setFormData] = useState<AddressFormData>({
     title: 'Home',
     firstName: '',
@@ -49,19 +54,6 @@ const AddAddress: React.FC = () => {
     { value: 'Home', label: 'Home' },
     { value: 'Office', label: 'Office' },
     { value: 'Other', label: 'Other' }
-  ];
-
-  const countries = [
-    { code: 'US', name: 'United States', phoneCode: '+1' },
-    { code: 'CA', name: 'Canada', phoneCode: '+1' },
-    { code: 'GB', name: 'United Kingdom', phoneCode: '+44' },
-    { code: 'AU', name: 'Australia', phoneCode: '+61' },
-    { code: 'DE', name: 'Germany', phoneCode: '+49' },
-    { code: 'AE', name: 'United Arab Emirates', phoneCode: '+971' },
-    { code: 'SG', name: 'Singapore', phoneCode: '+65' },
-    { code: 'FR', name: 'France', phoneCode: '+33' },
-    { code: 'JP', name: 'Japan', phoneCode: '+81' },
-    { code: 'IN', name: 'India', phoneCode: '+91' }
   ];
 
   const validateForm = () => {
@@ -142,12 +134,20 @@ const AddAddress: React.FC = () => {
         zip_code: formData.zipCode,
         phone_country_code: formData.countryCode,
         phone_number: formData.phone,
-        is_default: false,
+        is_default: totalAddress === 0
       };
       await userService.addAddress(payload);
       setSuccess(true);
       setTimeout(() => {
-        navigate('/profile');
+        if (returnTo) {
+          // If we came from address selection, go back there
+          // if (orderData) {
+          //   localStorage.setItem('orderData', JSON.stringify(orderData));
+          // }
+          navigate(returnTo);
+        } else {
+          navigate('/profile');
+        }
       }, 2000);
     } catch (err) {
       setErrors({ general: 'Failed to save address. Please try again.' });
@@ -171,10 +171,19 @@ const AddAddress: React.FC = () => {
             </p>
 
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => {
+                if (returnTo) {
+                  // if (orderData) {
+                  //   localStorage.setItem('orderData', JSON.stringify(orderData));
+                  // }
+                  navigate(returnTo);
+                } else {
+                  navigate('/profile');
+                }
+              }}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
             >
-              Go to Profile
+              {returnTo ? 'Continue with Order' : 'Go to Profile'}
             </button>
           </div>
         </div>
@@ -188,11 +197,20 @@ const AddAddress: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/profile')}
+            onClick={() => {
+              if (returnTo) {
+                // if (orderData) {
+                //   localStorage.setItem('orderData', JSON.stringify(orderData));
+                // }
+                navigate(returnTo);
+              } else {
+                navigate('/profile');
+              }
+            }}
             className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors mb-4"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span>Back to Profile</span>
+            <span>{returnTo ? 'Back to Address Selection' : 'Back to Profile'}</span>
           </button>
 
           <div className="text-center">

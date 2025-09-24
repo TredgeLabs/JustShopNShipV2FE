@@ -101,7 +101,7 @@ const Inventory: React.FC = () => {
 
   // Filter and sort items
   useEffect(() => {
-    let filtered = items.filter(item => {
+    const filtered = items.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.brand.toLowerCase().includes(searchTerm.toLowerCase());

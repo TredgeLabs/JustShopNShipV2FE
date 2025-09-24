@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Package, 
-  Eye, 
-  ExternalLink, 
-  Scale, 
-  Clock, 
-  DollarSign, 
-  CheckSquare, 
-  Square, 
-  RotateCcw, 
+import { useNavigate } from 'react-router-dom';
+import { vaultService, VaultItemApi } from '../api/services/userService';
+import { getStatusConfig } from '../components/orders/OrderStatusBadge';
+import {
+  Package,
+  Eye,
+  ExternalLink,
+  Scale,
+  DollarSign,
+  CheckSquare,
+  Square,
+  RotateCcw,
   Truck,
-  AlertCircle,
   Loader2,
   X,
   ChevronLeft,
@@ -24,7 +25,7 @@ interface VaultItem {
   productLink: string;
   price: number;
   weight: number;
-  status: 'in-transit' | 'received' | 'inventory-check' | 'processing';
+  status: string;
   receivedDate: string;
   validityDays: number;
   storageCost: number;
@@ -41,125 +42,52 @@ const MyVault: React.FC = () => {
   const [selectedImageModal, setSelectedImageModal] = useState<{ item: VaultItem; imageIndex: number } | null>(null);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+  const [vaultCode, setVaultCode] = useState("");
+  const navigate = useNavigate();
 
-  // Mock data - replace with actual API call
   useEffect(() => {
     const loadVaultItems = async () => {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockItems: VaultItem[] = [
-        {
-          id: 'VI-001',
-          name: 'Traditional Silk Saree - Royal Blue',
-          images: [
-            'https://images.pexels.com/photos/8148579/pexels-photo-8148579.jpeg?auto=compress&cs=tinysrgb&w=400',
-            'https://images.pexels.com/photos/8148580/pexels-photo-8148580.jpeg?auto=compress&cs=tinysrgb&w=400',
-            'https://images.pexels.com/photos/8148581/pexels-photo-8148581.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          productLink: 'https://example.com/saree-royal-blue',
-          price: 3500,
-          weight: 0.8,
-          status: 'received',
-          receivedDate: '2024-01-20',
-          validityDays: 75,
-          storageCost: 0,
-          isReturnable: true,
-          isSelected: false,
-          color: 'Royal Blue',
-          size: 'Free Size',
-          quantity: 1
-        },
-        {
-          id: 'VI-002',
-          name: 'Ayurvedic Skincare Gift Set',
-          images: [
-            'https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          productLink: 'https://example.com/ayurvedic-skincare',
-          price: 2100,
-          weight: 1.2,
-          status: 'received',
-          receivedDate: '2024-01-15',
-          validityDays: 70,
-          storageCost: 0,
-          isReturnable: false,
-          isSelected: true,
-          color: 'Natural',
-          size: 'Standard',
-          quantity: 1
-        },
-        {
-          id: 'VI-003',
-          name: 'Handcrafted Silver Jewelry Set',
-          images: [
-            'https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=400',
-            'https://images.pexels.com/photos/1454172/pexels-photo-1454172.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          productLink: 'https://example.com/silver-jewelry',
-          price: 8500,
-          weight: 0.3,
-          status: 'in-transit',
-          receivedDate: '2024-01-25',
-          validityDays: 85,
-          storageCost: 0,
-          isReturnable: true,
-          isSelected: false,
-          color: 'Silver',
-          size: 'Adjustable',
-          quantity: 1
-        },
-        {
-          id: 'VI-004',
-          name: 'Organic Spice Collection',
-          images: [
-            'https://images.pexels.com/photos/4198015/pexels-photo-4198015.jpeg?auto=compress&cs=tinysrgb&w=400'
-          ],
-          productLink: 'https://example.com/organic-spices',
-          price: 1200,
-          weight: 2.5,
-          status: 'inventory-check',
-          receivedDate: '2023-11-15',
-          validityDays: -5,
-          storageCost: 25,
-          isReturnable: false,
-          isSelected: false,
-          color: 'Mixed',
-          size: '500g Pack',
-          quantity: 1
+      try {
+        const response = await vaultService.getVaultItems();
+        if (response.success && response.items) {
+          const now = new Date();
+          const mappedItems: VaultItem[] = response.items.map((item: VaultItemApi) => {
+            // Calculate validity days
+            const receivedDate = new Date(item.received_date);
+            const freeDays = item.storage_days_free;
+            const validityDays = freeDays - Math.floor((now.getTime() - receivedDate.getTime()) / (1000 * 60 * 60 * 24));
+            return {
+              id: `VI-${item.id}`,
+              name: item.name,
+              images: item.image_urls.map((url: string) => url.startsWith('http') ? url : `http://localhost:4000${url}`),
+              productLink: '#', // No product link in API, set to # or use item.description if needed
+              price: 0, // No price in API, set to 0 or use item.description if needed
+              weight: item.weight_gm ? item.weight_gm / 1000 : 0,
+              status: (item.status) as VaultItem['status'],
+              receivedDate: item.received_date,
+              validityDays,
+              storageCost: 0, // No storage cost in API, set to 0 or calculate if needed
+              isReturnable: item.is_returnable,
+              isSelected: false,
+              color: '',
+              size: '',
+              quantity: 1
+            };
+          });
+          setVaultCode(response.vaultCode);
+          setVaultItems(mappedItems);
         }
-      ];
-      
-      setVaultItems(mockItems);
+      } catch (err) {
+        // Optionally handle error
+      }
       setIsLoading(false);
     };
-
     loadVaultItems();
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'received': return 'bg-green-100 text-green-800';
-      case 'in-transit': return 'bg-blue-100 text-blue-800';
-      case 'inventory-check': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'received': return 'Received';
-      case 'in-transit': return 'In Transit';
-      case 'inventory-check': return 'Inventory Check';
-      case 'processing': return 'Processing';
-      default: return 'Unknown';
-    }
-  };
-
   const handleItemSelection = (itemId: string) => {
-    setVaultItems(prev => prev.map(item => 
+    setVaultItems(prev => prev.map(item =>
       item.id === itemId ? { ...item, isSelected: !item.isSelected } : item
     ));
   };
@@ -173,36 +101,69 @@ const MyVault: React.FC = () => {
     setIsCalculatingShipping(true);
     // Simulate API call for shipping calculation
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     const selectedItems = vaultItems.filter(item => item.isSelected);
     const totalWeight = selectedItems.reduce((sum, item) => sum + item.weight, 0);
     const baseRate = 15; // USD per kg
     const calculatedCost = totalWeight * baseRate;
-    
+
     setShippingCost(calculatedCost);
     setIsCalculatingShipping(false);
   };
 
   const handleShipItems = () => {
     const selectedItems = vaultItems.filter(item => item.isSelected);
-    
+
     if (selectedItems.length === 0) {
       alert('Please select at least one item to ship');
       return;
     }
 
-    // Prepare shipment data for confirmation page
-    const shipmentData = {
-      items: selectedItems,
-      destination: 'United States', // This would come from user's profile
-      shippingService: 'Standard International'
-    };
+    // Create international order directly
+    createInternationalOrder(selectedItems);
+  };
 
-    // Store shipment data for confirmation page
-    localStorage.setItem('shipmentData', JSON.stringify(shipmentData));
-    
-    // Navigate to shipment confirmation page
-    window.location.href = '/shipment-confirmation';
+  const createInternationalOrder = async (selectedItems: VaultItem[]) => {
+    try {
+      setIsCalculatingShipping(true);
+
+      // Calculate totals
+      const totalWeight = selectedItems.reduce((sum, item) => sum + item.weight * 1000, 0); // Convert to grams
+      const shippingCost = totalWeight * 0.02; // Mock calculation
+      const storageCost = selectedItems.reduce((sum, item) => sum + item.storageCost, 0);
+      const platformFee = (shippingCost + storageCost) * 0.05;
+      const totalCost = shippingCost + storageCost + platformFee;
+
+      const orderRequest = {
+        orderData: {
+          vault_id: vaultCode, // This should come from user's vault
+          shipping_address_id: '', // This should come from user's default address
+          shipment_weight_gm: totalWeight,
+          shipping_cost: shippingCost,
+          storage_cost: storageCost,
+          platform_fee: platformFee,
+          total_cost: totalCost,
+          shipping_status: 'pending'
+        },
+        vaultItemIds: selectedItems.map(item => parseInt(item.id.replace('VI-', ''))) // Extract numeric IDs
+      };
+
+      // For now, just show confirmation - in production, call the API
+      const shipmentData = {
+        items: selectedItems,
+        destination: 'United States',
+        shippingService: 'Standard International',
+        orderRequest
+      };
+
+      localStorage.setItem('shipmentData', JSON.stringify(shipmentData));
+      navigate('/address-selection');
+
+    } catch (err) {
+      alert('Failed to create international order. Please try again.');
+    } finally {
+      setIsCalculatingShipping(false);
+    }
   };
 
   const handleReturnItem = (itemId: string) => {
@@ -221,12 +182,12 @@ const MyVault: React.FC = () => {
 
   const navigateImage = (direction: 'prev' | 'next') => {
     if (!selectedImageModal) return;
-    
+
     const { item, imageIndex } = selectedImageModal;
-    const newIndex = direction === 'prev' 
+    const newIndex = direction === 'prev'
       ? (imageIndex - 1 + item.images.length) % item.images.length
       : (imageIndex + 1) % item.images.length;
-    
+
     setSelectedImageModal({ item, imageIndex: newIndex });
   };
 
@@ -270,7 +231,7 @@ const MyVault: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <Scale className="h-8 w-8 text-green-600" />
@@ -280,7 +241,7 @@ const MyVault: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <DollarSign className="h-8 w-8 text-orange-600" />
@@ -290,7 +251,7 @@ const MyVault: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <CheckSquare className="h-8 w-8 text-purple-600" />
@@ -319,7 +280,7 @@ const MyVault: React.FC = () => {
                   {vaultItems.every(item => item.isSelected) ? 'Deselect All' : 'Select All'}
                 </span>
               </button>
-              
+
               <div className="text-sm text-gray-600">
                 {selectedItems.length} of {vaultItems.length} items selected
               </div>
@@ -364,7 +325,7 @@ const MyVault: React.FC = () => {
               {/* Item Header */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                  <button
+                  {(item.status !== 'in_transit') && <button
                     onClick={() => handleItemSelection(item.id)}
                     className="flex items-center space-x-2"
                   >
@@ -373,13 +334,13 @@ const MyVault: React.FC = () => {
                     ) : (
                       <Square className="h-5 w-5 text-gray-400" />
                     )}
-                  </button>
-                  
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
-                    {getStatusText(item.status)}
+                  </button>}
+
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusConfig(item.status, 'vault_item').color}`}>
+                    {getStatusConfig(item.status, 'vault_item').text}
                   </span>
                 </div>
-                
+
                 <h3 className="font-semibold text-gray-900 text-sm leading-tight">{item.name}</h3>
               </div>
 
@@ -408,19 +369,19 @@ const MyVault: React.FC = () => {
                   <span className="text-sm text-gray-600">Price:</span>
                   <span className="font-semibold text-gray-900">₹{item.price.toLocaleString()}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Weight:</span>
                   <span className="font-medium text-gray-900">{item.weight} kg</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Validity:</span>
                   <span className={`font-medium ${item.validityDays < 0 ? 'text-red-600' : item.validityDays < 30 ? 'text-orange-600' : 'text-green-600'}`}>
                     {item.validityDays < 0 ? `${Math.abs(item.validityDays)} days overdue` : `${item.validityDays} days left`}
                   </span>
                 </div>
-                
+
                 {item.storageCost > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Storage Cost:</span>
@@ -439,7 +400,7 @@ const MyVault: React.FC = () => {
                     <ExternalLink className="h-4 w-4" />
                     <span>View Product</span>
                   </a>
-                  
+
                   {item.isReturnable && (
                     <button
                       onClick={() => handleReturnItem(item.id)}
@@ -473,13 +434,13 @@ const MyVault: React.FC = () => {
               >
                 <X className="h-6 w-6" />
               </button>
-              
+
               <img
                 src={selectedImageModal.item.images[selectedImageModal.imageIndex]}
                 alt={selectedImageModal.item.name}
                 className="max-w-full max-h-full object-contain"
               />
-              
+
               {selectedImageModal.item.images.length > 1 && (
                 <>
                   <button
@@ -494,7 +455,7 @@ const MyVault: React.FC = () => {
                   >
                     <ChevronRight className="h-8 w-8" />
                   </button>
-                  
+
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm">
                     {selectedImageModal.imageIndex + 1} of {selectedImageModal.item.images.length}
                   </div>

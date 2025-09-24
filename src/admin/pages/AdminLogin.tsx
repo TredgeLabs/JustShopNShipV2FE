@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Shield, 
-  Lock, 
-  AlertCircle, 
+import {
+  Shield,
+  Lock,
+  AlertCircle,
   Loader2,
   Settings
 } from 'lucide-react';
+import { adminApiService } from '../services/adminApiService';
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -14,12 +15,9 @@ const AdminLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Hardcoded passkey for temporary validation
-  const ADMIN_PASSKEY = '12345678';
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!passkey.trim()) {
       setError('Please enter the admin passkey');
       return;
@@ -34,25 +32,18 @@ const AdminLogin: React.FC = () => {
     setError('');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (passkey === ADMIN_PASSKEY) {
-        // Create admin session
-        localStorage.setItem('adminSession', JSON.stringify({
-          authenticated: true,
-          timestamp: new Date().toISOString(),
-          passkey: passkey // In production, don't store the actual passkey
-        }));
-        
+      const response = await adminApiService.login(passkey);
+
+      if (response.success) {
         // Redirect to admin dashboard
         navigate('/admin/orders');
       } else {
-        setError('Invalid passkey. Please try again.');
+        setError('Invalid admin code. Please try again.');
         setPasskey('');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      setPasskey('');
     } finally {
       setIsLoading(false);
     }

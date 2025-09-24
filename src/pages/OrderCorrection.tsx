@@ -1,46 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  AlertTriangle, 
-  Edit3, 
-  Save, 
-  X, 
-  Plus, 
-  Trash2, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  AlertTriangle,
+  CheckCircle,
   DollarSign,
-  Package,
-  Loader2
+  Loader2,
 } from 'lucide-react';
-
-interface OrderItem {
-  id: string;
-  name: string;
-  color: string;
-  size: string;
-  quantity: number;
-  price: number;
-  paidPrice: number;
-  currentPrice: number;
-  url: string;
-  image?: string;
-  hasError: boolean;
-  errorMessage?: string;
-  isEditing?: boolean;
-}
-
-interface OrderCorrectionData {
-  orderId: string;
-  totalPaidAmount: number;
-  currentTotalAmount: number;
-  items: OrderItem[];
-}
+import { orderService, LocalOrder, LocalOrderItem } from '../api/services/orderService';
+import { DENY_REASONS } from '../admin/constants/adminConstants';
 
 const OrderCorrection: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const [orderData, setOrderData] = useState<OrderCorrectionData | null>(null);
+  const [orderData, setOrderData] = useState<LocalOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [newItem, setNewItem] = useState({
@@ -49,160 +22,119 @@ const OrderCorrection: React.FC = () => {
     size: '',
     quantity: 1,
     price: 0,
-    url: ''
+    url: '',
   });
   const [showAddItem, setShowAddItem] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Mock data - replace with actual API call
+  // Load order details
   useEffect(() => {
     const loadOrderCorrectionData = async () => {
       if (!orderId) return;
-      
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockData: OrderCorrectionData = {
-        orderId: orderId,
-        totalPaidAmount: 15200,
-        currentTotalAmount: 16800,
-        items: [
-          {
-            id: 'item-1',
-            name: 'Traditional Silk Saree - Royal Blue',
-            color: 'Royal Blue',
-            size: 'Free Size',
-            quantity: 1,
-            price: 3500,
-            paidPrice: 3500,
-            currentPrice: 4200,
-            url: 'https://example.com/saree',
-            image: 'https://images.pexels.com/photos/8148579/pexels-photo-8148579.jpeg?auto=compress&cs=tinysrgb&w=200',
-            hasError: true,
-            errorMessage: 'Price has increased from ₹3,500 to ₹4,200',
-            isEditing: false
-          },
-          {
-            id: 'item-2',
-            name: 'Ayurvedic Skincare Gift Set',
-            color: 'Natural',
-            size: 'Standard',
-            quantity: 1,
-            price: 2100,
-            paidPrice: 2100,
-            currentPrice: 2100,
-            url: 'https://example.com/skincare',
-            image: 'https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=200',
-            hasError: false,
-            isEditing: false
-          },
-          {
-            id: 'item-3',
-            name: 'Handcrafted Silver Jewelry Set',
-            color: 'Silver',
-            size: 'Medium',
-            quantity: 2,
-            price: 8500,
-            paidPrice: 9600,
-            currentPrice: 8500,
-            url: 'https://example.com/jewelry',
-            image: 'https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=200',
-            hasError: true,
-            errorMessage: 'Requested quantity (2) not available. Only 1 piece in stock.',
-            isEditing: false
-          }
-        ]
-      };
-      
-      setOrderData(mockData);
+      const response = await orderService.getLocalOrderDetails(orderId);
+      setOrderData(response.order);
       setIsLoading(false);
     };
 
     loadOrderCorrectionData();
   }, [orderId]);
 
-  const handleItemEdit = (itemId: string, field: string, value: string | number) => {
+  /** -----------------------------
+   * Editing and Deleting
+   * ----------------------------- */
+  const handleItemEdit = (itemId: number, field: string, value: string | number) => {
     if (!orderData) return;
-    
+
     setOrderData(prev => ({
       ...prev!,
-      items: prev!.items.map(item => 
-        item.id === itemId 
-          ? { ...item, [field]: value }
-          : item
-      )
+      local_order_items: (prev!.local_order_items ?? []).map(item =>
+        item.id === itemId ? { ...item, [field]: value } : item
+      ),
     }));
   };
 
-  const toggleItemEdit = (itemId: string) => {
+  const toggleItemEdit = (itemId: number) => {
     if (!orderData) return;
-    
+
     setOrderData(prev => ({
       ...prev!,
-      items: prev!.items.map(item => 
-        item.id === itemId 
-          ? { ...item, isEditing: !item.isEditing }
-          : item
-      )
+      local_order_items: (prev!.local_order_items ?? []).map(item =>
+        item.id === itemId ? { ...item, isEditing: !item.isEditing } : item
+      ),
     }));
   };
 
-  const deleteItem = (itemId: string) => {
+  const deleteItem = (itemId: number) => {
     if (!orderData) return;
-    
+
     const confirmed = window.confirm('Are you sure you want to remove this item from your order?');
     if (confirmed) {
       setOrderData(prev => ({
         ...prev!,
-        items: prev!.items.filter(item => item.id !== itemId)
+        local_order_items: (prev!.local_order_items ?? []).filter(item => item.id !== itemId),
       }));
     }
   };
 
+  /** -----------------------------
+   * Add New Item
+   * ----------------------------- */
   const handleAddNewItem = () => {
     if (!newItem.name || !newItem.url || newItem.price <= 0) {
       setError('Please fill in all required fields for the new item');
       return;
     }
 
-    const newItemData: OrderItem = {
-      id: `new-item-${Date.now()}`,
-      ...newItem,
-      paidPrice: 0,
-      currentPrice: newItem.price,
-      hasError: false,
-      isEditing: false
+    const newItemData: LocalOrderItem = {
+      id: Date.now(), // temporary ID
+      local_order_id: orderData?.id ?? 0,
+      source_type: 'user_added',
+      product_name: newItem.name,
+      product_link: newItem.url,
+      color: newItem.color,
+      size: newItem.size,
+      quantity: newItem.quantity,
+      price: newItem.price,
+      final_price: newItem.price,
+      status: 'new',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      deny_reasons: [],
+      image_link: '',
+      isEditing: false,
     };
 
     setOrderData(prev => ({
       ...prev!,
-      items: [...prev!.items, newItemData]
+      local_order_items: [...(prev!.local_order_items ?? []), newItemData],
     }));
 
-    setNewItem({
-      name: '',
-      color: '',
-      size: '',
-      quantity: 1,
-      price: 0,
-      url: ''
-    });
+    setNewItem({ name: '', color: '', size: '', quantity: 1, price: 0, url: '' });
     setShowAddItem(false);
     setError('');
   };
 
+  /** -----------------------------
+   * Price Calculations
+   * ----------------------------- */
   const calculateCurrentTotal = () => {
     if (!orderData) return 0;
-    return orderData.items.reduce((total, item) => total + (item.currentPrice * item.quantity), 0);
+    return (orderData.local_order_items ?? []).reduce(
+      (total, item) => total + item.final_price * item.quantity,
+      0
+    );
   };
 
   const calculatePriceDifference = () => {
     const currentTotal = calculateCurrentTotal();
-    return currentTotal - orderData!.totalPaidAmount;
+    return currentTotal - orderData!.total_price;
   };
 
+  /** -----------------------------
+   * Confirm Correction
+   * ----------------------------- */
   const handleConfirmCorrection = async () => {
     if (!orderData) return;
 
@@ -210,17 +142,13 @@ const OrderCorrection: React.FC = () => {
       setIsSaving(true);
       setError('');
 
-      // Mock API call - replace with actual service call
+      // Replace with actual service call:
+      // await orderService.submitOrderCorrection(orderId, orderData);
+
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // In production, use:
-      // const response = await orderService.submitOrderCorrection(orderId, orderData);
-      
+
       setSuccess('Order correction submitted successfully!');
-      
-      setTimeout(() => {
-        navigate('/domestic-orders');
-      }, 2000);
+      setTimeout(() => navigate('/domestic-orders'), 2000);
     } catch (err) {
       setError('Failed to submit order correction. Please try again.');
     } finally {
@@ -228,13 +156,14 @@ const OrderCorrection: React.FC = () => {
     }
   };
 
+  /** -----------------------------
+   * Loading / Error states
+   * ----------------------------- */
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading order correction details...</p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <p className="ml-3 text-gray-600">Loading order correction details...</p>
       </div>
     );
   }
@@ -245,7 +174,6 @@ const OrderCorrection: React.FC = () => {
         <div className="text-center">
           <AlertTriangle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Order not found</h3>
-          <p className="text-gray-600 mb-4">The order correction data could not be loaded.</p>
           <button
             onClick={() => navigate('/domestic-orders')}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -266,357 +194,286 @@ const OrderCorrection: React.FC = () => {
         <div className="mb-8">
           <button
             onClick={() => navigate('/domestic-orders')}
-            className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors mb-4"
+            className="flex items-center text-gray-600 hover:text-blue-600 mb-4"
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Orders</span>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Orders
           </button>
-          
-          <div className="flex items-center space-x-3 mb-4">
+          <div className="flex items-center space-x-3 mb-2">
             <AlertTriangle className="h-8 w-8 text-orange-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Order Correction Required</h1>
+            <h1 className="text-2xl font-bold">Order Correction Required</h1>
           </div>
           <p className="text-gray-600">
             Please review and correct the issues identified in your order before we can proceed.
           </p>
         </div>
 
-        {/* Success/Error Messages */}
+        {/* Success/Error */}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2">
-            <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center">
+            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
             <span className="text-green-700">{success}</span>
           </div>
         )}
-
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+            <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
             <span className="text-red-700">{error}</span>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Items List */}
+          {/* Items */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Order Items</h2>
-                <div className="text-sm text-gray-600">
-                  Order ID: <span className="font-medium">{orderData.orderId}</span>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                {orderData.items.map((item) => (
-                  <div key={item.id} className={`border rounded-lg p-4 ${
-                    item.hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'
-                  }`}>
-                    <div className="flex items-start space-x-4">
-                      {/* Item Image */}
-                      {item.image && (
+            <div className="bg-white rounded-lg shadow p-6 space-y-6">
+              {(orderData.local_order_items ?? []).map(item => {
+                const hasErrors = item.deny_reasons && item.deny_reasons.length > 0;
+                return (
+                  <div
+                    key={item.id}
+                    className={`p-6 rounded-lg border ${hasErrors ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'
+                      }`}
+                  >
+                    <div className="flex items-start space-x-6">
+                      {item.image_link && (
                         <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                          src={item.image_link}
+                          alt={item.product_name}
+                          className="w-24 h-24 rounded-lg border"
                         />
                       )}
-                      
-                      {/* Item Details */}
-                      <div className="flex-1">
-                        {/* Error Message */}
-                        {item.hasError && item.errorMessage && (
-                          <div className="mb-3 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-800">
-                            <AlertTriangle className="h-4 w-4 inline mr-1" />
-                            {item.errorMessage}
+                      <div className="flex-1 space-y-4">
+                        {hasErrors && (
+                          <div className="p-3 bg-red-100 border border-red-200 rounded text-sm text-red-800 space-y-1">
+                            {item.deny_reasons?.map((reasonIndex, idx) => (
+                              <div key={idx} className="flex items-center">
+                                <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />
+                                {DENY_REASONS[reasonIndex - 1] || 'Unknown reason'}
+                              </div>
+                            ))}
                           </div>
                         )}
-
-                        {/* Item Name */}
-                        <h3 className="font-medium text-gray-900 mb-3">{item.name}</h3>
-                        
-                        {/* Editable Fields */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <h3 className="font-semibold">{item.product_name}</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
-                            {item.isEditing && item.hasError ? (
+                            <label className="text-xs text-gray-500">Color</label>
+                            {item.isEditing ? (
                               <input
                                 type="text"
-                                value={item.color}
-                                onChange={(e) => handleItemEdit(item.id, 'color', e.target.value)}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                value={item.color || ''}
+                                onChange={e => handleItemEdit(item.id, 'color', e.target.value)}
+                                className="w-full px-2 py-1 border rounded"
                               />
                             ) : (
-                              <p className="text-sm text-gray-900">{item.color}</p>
+                              <p>{item.color}</p>
                             )}
                           </div>
-                          
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Size</label>
-                            {item.isEditing && item.hasError ? (
+                            <label className="text-xs text-gray-500">Size</label>
+                            {item.isEditing ? (
                               <input
                                 type="text"
-                                value={item.size}
-                                onChange={(e) => handleItemEdit(item.id, 'size', e.target.value)}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                value={item.size || ''}
+                                onChange={e => handleItemEdit(item.id, 'size', e.target.value)}
+                                className="w-full px-2 py-1 border rounded"
                               />
                             ) : (
-                              <p className="text-sm text-gray-900">{item.size}</p>
+                              <p>{item.size}</p>
                             )}
                           </div>
-                          
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
-                            {item.isEditing && item.hasError ? (
+                            <label className="text-xs text-gray-500">Quantity</label>
+                            {item.isEditing ? (
                               <input
                                 type="number"
-                                min="1"
+                                min={1}
                                 value={item.quantity}
-                                onChange={(e) => handleItemEdit(item.id, 'quantity', parseInt(e.target.value))}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                onChange={e =>
+                                  handleItemEdit(item.id, 'quantity', parseInt(e.target.value))
+                                }
+                                className="w-full px-2 py-1 border rounded"
                               />
                             ) : (
-                              <p className="text-sm text-gray-900">{item.quantity}</p>
+                              <p>{item.quantity}</p>
                             )}
                           </div>
-                          
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Current Price</label>
-                            <p className="text-sm font-semibold text-gray-900">₹{item.currentPrice.toLocaleString()}</p>
-                          </div>
                         </div>
-
-                        {/* Price Information */}
-                        <div className="grid grid-cols-3 gap-4 text-sm mb-4">
+                        <div className="grid grid-cols-3 gap-4 text-sm">
                           <div>
-                            <span className="text-gray-600">Paid Price:</span>
-                            <p className="font-medium">₹{item.paidPrice.toLocaleString()}</p>
+                            <span className="text-gray-500">Paid:</span>
+                            <p>₹{(item.price * item.quantity).toLocaleString()}</p>
                           </div>
                           <div>
-                            <span className="text-gray-600">Current Price:</span>
-                            <p className="font-medium">₹{(item.currentPrice * item.quantity).toLocaleString()}</p>
+                            <span className="text-gray-500">Current:</span>
+                            <p>₹{(item.final_price * item.quantity).toLocaleString()}</p>
                           </div>
                           <div>
-                            <span className="text-gray-600">Difference:</span>
-                            <p className={`font-medium ${
-                              (item.currentPrice * item.quantity) - item.paidPrice > 0 ? 'text-red-600' : 'text-green-600'
-                            }`}>
-                              {(item.currentPrice * item.quantity) - item.paidPrice > 0 ? '+' : ''}
-                              ₹{((item.currentPrice * item.quantity) - item.paidPrice).toLocaleString()}
+                            <span className="text-gray-500">Difference:</span>
+                            <p
+                              className={
+                                (item.final_price * item.quantity) - (item.price * item.quantity) >
+                                  0
+                                  ? 'text-red-600'
+                                  : 'text-green-600'
+                              }
+                            >
+                              {(item.final_price * item.quantity) -
+                                (item.price * item.quantity) >
+                                0
+                                ? '+'
+                                : ''}
+                              ₹
+                              {(
+                                (item.final_price * item.quantity) -
+                                (item.price * item.quantity)
+                              ).toLocaleString()}
                             </p>
                           </div>
                         </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center space-x-3">
-                          {item.hasError && (
-                            <button
-                              onClick={() => toggleItemEdit(item.id)}
-                              className="flex items-center space-x-1 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm transition-colors"
-                            >
-                              {item.isEditing ? (
-                                <>
-                                  <Save className="h-3 w-3" />
-                                  <span>Save</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Edit3 className="h-3 w-3" />
-                                  <span>Edit</span>
-                                </>
-                              )}
-                            </button>
-                          )}
-                          
+                        <div className="flex space-x-3">
+                          <button
+                            onClick={() => toggleItemEdit(item.id)}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
+                          >
+                            {item.isEditing ? 'Save' : 'Edit'}
+                          </button>
                           <button
                             onClick={() => deleteItem(item.id)}
-                            className="flex items-center space-x-1 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm transition-colors"
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded"
                           >
-                            <Trash2 className="h-3 w-3" />
-                            <span>Remove</span>
+                            Remove
                           </button>
                         </div>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
+            </div>
 
-              {/* Add New Item */}
-              <div className="mt-6 border-t pt-6">
-                {!showAddItem ? (
-                  <button
-                    onClick={() => setShowAddItem(true)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Add New Item</span>
-                  </button>
+            {/* Add new item */}
+            <div className="mt-6">
+              {!showAddItem ? (
+                <button
+                  onClick={() => setShowAddItem(true)}
+                  className="px-4 py-2 bg-green-100 text-green-700 rounded"
+                >
+                  + Add New Item
+                </button>
+              ) : (
+                <div className="bg-white border rounded-lg p-4 space-y-4">
+                  <h3 className="font-medium">Add New Item</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      placeholder="Product Name *"
+                      value={newItem.name}
+                      onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))}
+                      className="border rounded px-2 py-1"
+                    />
+                    <input
+                      type="url"
+                      placeholder="Product URL *"
+                      value={newItem.url}
+                      onChange={e => setNewItem(p => ({ ...p, url: e.target.value }))}
+                      className="border rounded px-2 py-1"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Color"
+                      value={newItem.color}
+                      onChange={e => setNewItem(p => ({ ...p, color: e.target.value }))}
+                      className="border rounded px-2 py-1"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Size"
+                      value={newItem.size}
+                      onChange={e => setNewItem(p => ({ ...p, size: e.target.value }))}
+                      className="border rounded px-2 py-1"
+                    />
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Quantity"
+                      value={newItem.quantity}
+                      onChange={e =>
+                        setNewItem(p => ({ ...p, quantity: parseInt(e.target.value) }))
+                      }
+                      className="border rounded px-2 py-1"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="Price (₹) *"
+                      value={newItem.price}
+                      onChange={e =>
+                        setNewItem(p => ({ ...p, price: parseFloat(e.target.value) }))
+                      }
+                      className="border rounded px-2 py-1"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleAddNewItem}
+                      className="px-4 py-2 bg-green-600 text-white rounded"
+                    >
+                      Add Item
+                    </button>
+                    <button
+                      onClick={() => setShowAddItem(false)}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="flex items-center font-semibold mb-4">
+                <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+                Price Summary
+              </h2>
+              <div className="flex justify-between">
+                <span>Amount Paid:</span>
+                <span>₹{orderData.total_price.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Current Total:</span>
+                <span>₹{calculateCurrentTotal().toLocaleString()}</span>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                {priceDifference > 0 ? (
+                  <div className="text-red-600 flex justify-between">
+                    <span>Amount to Pay:</span>
+                    <span>₹{priceDifference.toLocaleString()}</span>
+                  </div>
+                ) : priceDifference < 0 ? (
+                  <div className="text-green-600 flex justify-between">
+                    <span>Amount to Receive:</span>
+                    <span>₹{Math.abs(priceDifference).toLocaleString()}</span>
+                  </div>
                 ) : (
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-900 mb-4">Add New Item</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
-                        <input
-                          type="text"
-                          value={newItem.name}
-                          onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter product name"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Product URL *</label>
-                        <input
-                          type="url"
-                          value={newItem.url}
-                          onChange={(e) => setNewItem(prev => ({ ...prev, url: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter product URL"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
-                        <input
-                          type="text"
-                          value={newItem.color}
-                          onChange={(e) => setNewItem(prev => ({ ...prev, color: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter color"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
-                        <input
-                          type="text"
-                          value={newItem.size}
-                          onChange={(e) => setNewItem(prev => ({ ...prev, size: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter size"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={newItem.quantity}
-                          onChange={(e) => setNewItem(prev => ({ ...prev, quantity: parseInt(e.target.value) }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={newItem.price}
-                          onChange={(e) => setNewItem(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter price"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={handleAddNewItem}
-                        className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add Item</span>
-                      </button>
-                      <button
-                        onClick={() => setShowAddItem(false)}
-                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                  <div className="flex justify-between">
+                    <span>No Additional Payment:</span>
+                    <span>₹0</span>
                   </div>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Order Summary */}
-          <div className="space-y-6">
-            {/* Price Summary */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-                Price Summary
-              </h2>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Amount Paid:</span>
-                  <span className="font-semibold text-gray-900">₹{orderData.totalPaidAmount.toLocaleString()}</span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Current Total:</span>
-                  <span className="font-semibold text-gray-900">₹{calculateCurrentTotal().toLocaleString()}</span>
-                </div>
-                
-                <div className="border-t pt-4">
-                  {priceDifference > 0 ? (
-                    <div className="flex justify-between text-red-600">
-                      <span className="font-medium">Amount to Pay:</span>
-                      <span className="font-bold text-lg">₹{priceDifference.toLocaleString()}</span>
-                    </div>
-                  ) : priceDifference < 0 ? (
-                    <div className="flex justify-between text-green-600">
-                      <span className="font-medium">Amount to Receive:</span>
-                      <span className="font-bold text-lg">₹{Math.abs(priceDifference).toLocaleString()}</span>
-                    </div>
-                  ) : (
-                    <div className="flex justify-between text-gray-600">
-                      <span className="font-medium">No Additional Payment:</span>
-                      <span className="font-bold text-lg">₹0</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Confirm Button */}
             <button
               onClick={handleConfirmCorrection}
               disabled={isSaving}
-              className="w-full flex items-center justify-center space-x-2 py-4 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+              className="w-full py-3 bg-blue-600 text-white rounded disabled:bg-gray-400"
             >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Submitting Correction...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-5 w-5" />
-                  <span>Confirm Order Correction</span>
-                </>
-              )}
+              {isSaving ? 'Submitting...' : 'Confirm Order Correction'}
             </button>
-
-            {/* Important Notes */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-medium text-yellow-900 mb-2">Important Notes:</h4>
-              <ul className="text-sm text-yellow-800 space-y-1">
-                <li>• Only items with errors can be edited</li>
-                <li>• Price differences will be calculated automatically</li>
-                <li>• Additional payment may be required if total increases</li>
-                <li>• Refunds will be processed if total decreases</li>
-                <li>• Order will be re-evaluated after correction</li>
-              </ul>
-            </div>
           </div>
         </div>
       </div>

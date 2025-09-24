@@ -11,16 +11,19 @@ const EnhancedNavigation: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (isLoggedIn) {
-      userService.logout();
-      navigate('/login');
+      await userService.logout();
+      navigate('/login', { replace: true });
     }
   };
 
   const handleCreateOrder = () => {
-    // Navigate to create order page
-    window.location.href = '/create-order';
+    if (isLoggedIn) {
+      navigate('/create-order');
+    } else {
+      navigate('/login');
+    }
   };
 
   return (
@@ -38,21 +41,31 @@ const EnhancedNavigation: React.FC = () => {
             <Link
               to="/"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
               Home
             </Link>
-            <Link
-              to="/dashboard"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
+            {isLoggedIn ? (
+              <Link
+                to="/dashboard"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
-            >
-              Dashboard
-            </Link>
+                  }`}
+              >
+                Dashboard
+              </Link>) : (
+              <Link
+                to="/signup"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                  }`}
+              >
+                Sign Up
+              </Link>)}
             <div className="flex items-center space-x-4">
               {isLoggedIn ? (
                 <button
@@ -99,8 +112,8 @@ const EnhancedNavigation: React.FC = () => {
               <Link
                 to="/"
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/')
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                   }`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -109,8 +122,8 @@ const EnhancedNavigation: React.FC = () => {
               <Link
                 to="/dashboard"
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/dashboard')
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                   }`}
                 onClick={() => setIsMenuOpen(false)}
               >

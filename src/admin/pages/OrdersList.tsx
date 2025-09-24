@@ -1,49 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, 
-  Eye, 
-  CheckCircle, 
-  ExternalLink, 
-  Users, 
+import {
+  ShoppingCart,
+  Eye,
+  CheckCircle,
+  Users,
   Package,
   AlertCircle
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { adminApiService } from '../services/adminApiService';
+import { adminApiService, AdminOrder } from '../services/adminApiService';
 import { formatDate, formatCurrency } from '../utils/adminHelpers';
-
-interface LocalOrder {
-  id: string;
-  orderDate: string;
-  userName: string;
-  userEmail: string;
-  location: string;
-  items: string;
-  status: string;
-  totalAmount: number;
-  itemCount: number;
-}
-
-interface InternationalOrder {
-  id: string;
-  orderDate: string;
-  userName: string;
-  userEmail: string;
-  location: string;
-  items: string;
-  shippingLink: string;
-  status: string;
-  totalAmount: number;
-  itemCount: number;
-}
 
 const OrdersList: React.FC = () => {
   const navigate = useNavigate();
-  const [localOrders, setLocalOrders] = useState<LocalOrder[]>([]);
-  const [internationalOrders, setInternationalOrders] = useState<InternationalOrder[]>([]);
+  const [localOrders, setLocalOrders] = useState<AdminOrder[]>([]);
+  const [internationalOrders, setInternationalOrders] = useState<AdminOrder[]>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [isLoadingInternational, setIsLoadingInternational] = useState(true);
   const [error, setError] = useState('');
@@ -56,14 +30,15 @@ const OrdersList: React.FC = () => {
   const loadLocalOrders = async () => {
     try {
       setIsLoadingLocal(true);
+      setError('');
       const response = await adminApiService.getLocalOrders();
-      if (response.success) {
+      if (response.success && Array.isArray(response.data)) {
         setLocalOrders(response.data);
       } else {
         setError('Failed to load local orders');
       }
     } catch (err) {
-      setError('Error loading local orders');
+      setError(`Error loading local orders: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoadingLocal(false);
     }
@@ -72,29 +47,38 @@ const OrdersList: React.FC = () => {
   const loadInternationalOrders = async () => {
     try {
       setIsLoadingInternational(true);
+      setError('');
       const response = await adminApiService.getInternationalOrders();
-      if (response.success) {
+      if (response.success && Array.isArray(response.data)) {
         setInternationalOrders(response.data);
       } else {
         setError('Failed to load international orders');
       }
     } catch (err) {
-      setError('Error loading international orders');
+      setError(`Error loading international orders: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoadingInternational(false);
     }
   };
 
-  const handleEvaluateOrder = (orderId: string) => {
-    navigate(`/admin/local-order-evaluation/${orderId}`);
+  const handleEvaluateOrder = (orderId: string, status: string) => {
+    if (status === 'accepted') {
+      navigate(`/admin/evaluation-detail/${orderId}`);
+    } else {
+      navigate(`/admin/local-order-evaluation/${orderId}`);
+    }
   };
 
   const handleCompleteOrder = async (orderId: string) => {
     const confirmed = window.confirm('Are you sure you want to mark this order as completed?');
     if (confirmed) {
-      // TODO: Implement order completion API call
-      alert(`Order ${orderId} marked as completed`);
-      loadInternationalOrders(); // Refresh the list
+      try {
+        // TODO: Implement order completion API call when endpoint is available
+        alert(`Order ${orderId} marked as completed`);
+        loadInternationalOrders(); // Refresh the list
+      } catch (err) {
+        setError(`Error completing order: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
     }
   };
 
@@ -135,7 +119,7 @@ const OrdersList: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <ShoppingCart className="h-8 w-8 text-green-600" />
@@ -145,19 +129,19 @@ const OrdersList: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <Users className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Pending Evaluations</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {localOrders.filter(order => order.status === 'pending').length}
+                  {localOrders.filter(order => order.status === 'pending' || order.status === 'processing').length}
                 </p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-orange-600" />
@@ -179,7 +163,7 @@ const OrdersList: React.FC = () => {
               Local Orders (Domestic India)
             </h2>
           </div>
-          
+
           <div className="p-6">
             {isLoadingLocal ? (
               <LoadingSpinner text="Loading local orders..." />
@@ -217,7 +201,7 @@ const OrdersList: React.FC = () => {
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
                             <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order.totalAmount)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.totalAmount || 0)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -229,22 +213,22 @@ const OrdersList: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
-                            {order.items}
+                            Order Items
                           </div>
                           <div className="text-sm text-gray-500">
                             {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={order.status} />
+                          <StatusBadge status={order?.status || ''} type='local' />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
-                            onClick={() => handleEvaluateOrder(order.id)}
+                            onClick={() => handleEvaluateOrder(order.id.toString(), order?.status || '')}
                             className="flex items-center space-x-1 text-blue-600 hover:text-blue-900 transition-colors"
                           >
                             <Eye className="h-4 w-4" />
-                            <span>Evaluate</span>
+                            <span>{order?.status === 'accepted' || order?.status === 'delivered' ? 'Details' : 'Evaluate'}</span>
                           </button>
                         </td>
                       </tr>
@@ -264,7 +248,7 @@ const OrdersList: React.FC = () => {
               International Orders (Shipping)
             </h2>
           </div>
-          
+
           <div className="p-6">
             {isLoadingInternational ? (
               <LoadingSpinner text="Loading international orders..." />
@@ -302,7 +286,7 @@ const OrdersList: React.FC = () => {
                           <div>
                             <div className="text-sm font-medium text-gray-900">#{order.id}</div>
                             <div className="text-sm text-gray-500">{formatDate(order.orderDate)}</div>
-                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order.totalAmount)}</div>
+                            <div className="text-sm font-semibold text-gray-900">{formatCurrency(order?.totalAmount || 0)}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -314,7 +298,7 @@ const OrdersList: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
-                            {order.items}
+                            Order Items
                           </div>
                           <div className="text-sm text-gray-500">
                             {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
@@ -322,30 +306,20 @@ const OrdersList: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
-                            <StatusBadge status={order.status} />
-                            {order.shippingLink && (
-                              <a
-                                href={order.shippingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            )}
+                            <StatusBadge status={order?.status || ''} type='international' />
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleUpdateShippingOrder(order.id)}
+                              onClick={() => handleUpdateShippingOrder(order.id.toString())}
                               className="flex items-center space-x-1 text-blue-600 hover:text-blue-900 transition-colors"
                             >
                               <Eye className="h-4 w-4" />
                               <span>Update</span>
                             </button>
                             <button
-                              onClick={() => handleCompleteOrder(order.id)}
+                              onClick={() => handleCompleteOrder(order.id.toString())}
                               className="flex items-center space-x-1 text-green-600 hover:text-green-900 transition-colors"
                             >
                               <CheckCircle className="h-4 w-4" />

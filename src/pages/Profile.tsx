@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { userService } from '../api/services/userService';
 import { ApiClientError } from '../api/apiClient';
+import { countries } from '../constants/countries';
 
 interface UserProfile {
   id: string;
@@ -29,7 +30,7 @@ interface UserProfile {
   email: string;
   phone: string;
   country: string;
-  membershipTier: string;
+  countryCode: string
   isVerified: boolean;
   createdAt: string;
 }
@@ -84,19 +85,6 @@ const Profile: React.FC = () => {
     country: ''
   });
 
-  const countries = [
-    { code: 'US', name: 'United States' },
-    { code: 'CA', name: 'Canada' },
-    { code: 'GB', name: 'United Kingdom' },
-    { code: 'AU', name: 'Australia' },
-    { code: 'DE', name: 'Germany' },
-    { code: 'AE', name: 'United Arab Emirates' },
-    { code: 'SG', name: 'Singapore' },
-    { code: 'FR', name: 'France' },
-    { code: 'JP', name: 'Japan' },
-    { code: 'OTHER', name: 'Other' }
-  ];
-
   useEffect(() => {
     loadProfile();
     loadAddresses();
@@ -105,9 +93,9 @@ const Profile: React.FC = () => {
   const loadProfile = async () => {
     try {
       setIsLoading(true);
-      const apiUser = await userService.getProfile();
-      const user = apiUser && (apiUser as any).user ? (apiUser as any).user : apiUser;
-      if (user) {
+      const response = await userService.getProfile();
+      if (response.success && response.data) {
+        const user = response.data
         const mappedProfile: UserProfile = {
           id: String(user.id),
           firstName: user.first_name || '',
@@ -115,9 +103,9 @@ const Profile: React.FC = () => {
           email: user.email || '',
           phone: user.phone_number || '',
           country: user.country || '',
-          membershipTier: 'basic', // or map from user if available
+          countryCode: user.phone_country_code || '',
           isVerified: true, // or map from user if available
-          createdAt: user.createdAt || user.created_at || user.updatedAt || '',
+          createdAt: user.createdAt || '',
         };
         setProfile(mappedProfile);
         setEditData({
@@ -345,9 +333,9 @@ const Profile: React.FC = () => {
                   <div>
                     <h2 className="text-2xl font-bold">{profile.firstName} {profile.lastName}</h2>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getMembershipColor(profile.membershipTier)}`}>
+                      {/* <span className={`px-3 py-1 rounded-full text-xs font-medium ${getMembershipColor(profile.membershipTier)}`}>
                         {profile.membershipTier} Member
-                      </span>
+                      </span> */}
                       {profile.isVerified && (
                         <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
                           Verified
@@ -442,14 +430,14 @@ const Profile: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     ) : (
-                      <p className="text-gray-900">{profile.phone}</p>
+                      <p className="text-gray-900">{profile.countryCode}-{profile.phone}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {(isEditing || profile.country) && (<label className="block text-sm font-medium text-gray-700 mb-2">
                       <MapPin className="inline h-4 w-4 mr-2" />
                       Country
-                    </label>
+                    </label>)}
                     {isEditing ? (
                       <select
                         name="country"
@@ -571,7 +559,11 @@ const Profile: React.FC = () => {
                   Shipping Addresses
                 </h3>
                 <button
-                  onClick={() => navigate('/add-address')}
+                  onClick={() => navigate('/add-address', {
+                    state: {
+                      totalAddress: addresses.length
+                    }
+                  })}
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   <Plus className="h-4 w-4" />

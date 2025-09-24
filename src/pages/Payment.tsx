@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  CreditCard, 
-  ArrowLeft, 
-  Shield, 
-  CheckCircle, 
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  CreditCard,
+  ArrowLeft,
+  Shield,
   AlertCircle,
   Loader2,
   Lock
 } from 'lucide-react';
+
+import { orderService, CreateLocalOrderRequest } from '../api/services/orderService';
+import { ShipmentData } from './ShipmentConfirmation';
 
 interface OrderData {
   items: any[];
@@ -20,19 +22,39 @@ interface OrderData {
 
 const Payment: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'razorpay' | 'paypal' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
+  const type = location.state?.type ?? 'local';
+  const selectedAddressId = location.state?.selectedAddressId ?? '';
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
+  const totalItems = type === 'international' ? shipmentData?.items.length : orderData?.totalItems || 0;
 
   useEffect(() => {
-    // Load order data from localStorage
-    const savedOrderData = localStorage.getItem('orderData');
-    if (savedOrderData) {
-      setOrderData(JSON.parse(savedOrderData));
+    if (type === 'international') {
+      // Load internation data from localStorage
+      const savedShipmentData = localStorage.getItem('shipmentData');
+      if (savedShipmentData) {
+        setShipmentData(JSON.parse(savedShipmentData));
+      } else {
+        // No shipment data, redirect back to vault
+        navigate('/my-vault');
+        return;
+      }
     } else {
-      // No order data, redirect back to create order
-      navigate('/create-order');
+      // Load order data from localStorage
+      const savedOrderData = localStorage.getItem('orderData');
+      if (savedOrderData) {
+        setTotalPrice(JSON.parse(savedOrderData).totalPrice);
+        setOrderData(JSON.parse(savedOrderData));
+        console.log('Loaded order data:', orderData?.items.length);
+      } else {
+        // No order data, redirect back to create order
+        navigate('/create-order');
+      }
     }
   }, [navigate]);
 
@@ -47,7 +69,7 @@ const Payment: React.FC = () => {
       return;
     }
 
-    if (!orderData) {
+    if (!orderData && type === 'local' || !shipmentData && type === 'international') {
       setError('Order data not found');
       return;
     }
@@ -56,32 +78,65 @@ const Payment: React.FC = () => {
     setError('');
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Mock payment success/failure (80% success rate)
-      const isSuccess = Math.random() > 0.2;
-      
-      if (isSuccess) {
+      let response;
+      if (type === 'international') {
+        if (!shipmentData || !shipmentData.orderRequest) {
+          setError('Shipment data not found');
+          setIsProcessing(false);
+          return;
+        }
+        shipmentData.orderRequest.orderData.shipping_address_id = selectedAddressId;
+        response = await orderService.createInternationalOrder(shipmentData.orderRequest);
+      } else {
+        const platformFee = Math.round(totalPrice * 0.05);
+        const orderRequest: CreateLocalOrderRequest = {
+          orderData: {
+            order_status: 'created',
+            payment_status: 'pending',
+            total_price: totalPrice,
+            platform_fee: platformFee,
+            admin_notes: `Order created on ${new Date().toLocaleDateString()} with ${orderData.items.length} items`
+          },
+          items: orderData.items.map(item => ({
+            source_type: 'manual_link',
+            product_name: item.name,
+            product_link: item.url,
+            color: item.color,
+            size: item.size,
+            quantity: item.quantity,
+            price: item.price,
+            final_price: item.price,
+            status: 'pending',
+            deny_reasons: [],
+            image_link: item.image
+          }))
+        };
+        response = await orderService.createLocalOrder(orderRequest);
+      }
+
+      if (response.success) {
         // Generate mock transaction ID
         const transactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
-        
+
         // Store payment result
         const paymentResult = {
           success: true,
           transactionId,
           orderId: `ORD${Date.now()}`,
-          amount: orderData.totalPrice,
+          amount: totalPrice,
           paymentMethod: selectedPaymentMethod,
           timestamp: new Date().toISOString()
         };
-        
+
         localStorage.setItem('paymentResult', JSON.stringify(paymentResult));
-        
+
         // Clear order data
-        localStorage.removeItem('orderCart');
-        localStorage.removeItem('orderData');
-        
+        if (type === 'international') {
+          localStorage.removeItem('shipmentData');
+        } else {
+          localStorage.removeItem('orderData');
+        }
+
         // Redirect to success page
         navigate('/payment-result?status=success');
       } else {
@@ -92,7 +147,7 @@ const Payment: React.FC = () => {
           paymentMethod: selectedPaymentMethod,
           timestamp: new Date().toISOString()
         };
-        
+
         localStorage.setItem('paymentResult', JSON.stringify(paymentResult));
         navigate('/payment-result?status=failure');
       }
@@ -107,7 +162,7 @@ const Payment: React.FC = () => {
     navigate('/order-confirmation');
   };
 
-  if (!orderData) {
+  if (!orderData && type === 'local' || !shipmentData && type === 'international') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -130,7 +185,7 @@ const Payment: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Order Confirmation</span>
           </button>
-          
+
           <div className="flex items-center space-x-3 mb-4">
             <CreditCard className="h-8 w-8 text-blue-600" />
             <h1 className="text-3xl font-bold text-gray-900">Payment</h1>
@@ -152,27 +207,27 @@ const Payment: React.FC = () => {
           {/* Order Summary */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-            
+
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Items ({orderData.totalItems}):</span>
-                <span className="font-medium">₹{orderData.totalPrice.toLocaleString()}</span>
+                <span className="text-gray-600">Items ({totalItems}):</span>
+                <span className="font-medium">₹{totalPrice}</span>
               </div>
-              
+
               <div className="flex justify-between">
                 <span className="text-gray-600">Processing Fee:</span>
                 <span className="font-medium">₹0</span>
               </div>
-              
+
               <div className="flex justify-between">
                 <span className="text-gray-600">Payment Gateway Fee:</span>
-                <span className="font-medium">₹{Math.round(orderData.totalPrice * 0.02).toLocaleString()}</span>
+                <span className="font-medium">₹{Math.round(totalPrice * 0.02).toLocaleString()}</span>
               </div>
-              
+
               <div className="border-t pt-3">
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total Amount:</span>
-                  <span className="text-blue-600">₹{(orderData.totalPrice + Math.round(orderData.totalPrice * 0.02)).toLocaleString()}</span>
+                  <span className="text-blue-600">₹{(totalPrice + Math.round(totalPrice * 0.02)).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -181,15 +236,14 @@ const Payment: React.FC = () => {
           {/* Payment Methods */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-6">Select Payment Method</h2>
-            
+
             <div className="space-y-4">
               {/* Razorpay Option */}
               <label className="block cursor-pointer">
-                <div className={`border-2 rounded-lg p-4 transition-all ${
-                  selectedPaymentMethod === 'razorpay' 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <div className={`border-2 rounded-lg p-4 transition-all ${selectedPaymentMethod === 'razorpay'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <div className="flex items-center space-x-3">
                     <input
                       type="radio"
@@ -220,11 +274,10 @@ const Payment: React.FC = () => {
 
               {/* PayPal Option */}
               <label className="block cursor-pointer">
-                <div className={`border-2 rounded-lg p-4 transition-all ${
-                  selectedPaymentMethod === 'paypal' 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <div className={`border-2 rounded-lg p-4 transition-all ${selectedPaymentMethod === 'paypal'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <div className="flex items-center space-x-3">
                     <input
                       type="radio"
@@ -283,7 +336,7 @@ const Payment: React.FC = () => {
             ) : (
               <>
                 <Lock className="h-5 w-5" />
-                <span>Pay ₹{(orderData.totalPrice + Math.round(orderData.totalPrice * 0.02)).toLocaleString()}</span>
+                <span>Pay ₹{(totalPrice + Math.round(totalPrice * 0.02)).toLocaleString()}</span>
               </>
             )}
           </button>

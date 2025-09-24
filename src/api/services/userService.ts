@@ -1,3 +1,43 @@
+// Vault items API response type
+export interface VaultItemApi {
+  id: number;
+  vault_id: number;
+  order_item_id: number | null;
+  name: string;
+  description: string;
+  source_type: string;
+  received_date: string;
+  weight_gm: number;
+  status: string;
+  is_returnable: boolean;
+  returnable_until: string | null;
+  storage_days_free: number;
+  storage_fee_per_day: string;
+  image_urls: string[];
+  is_ready_to_ship: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VaultItemsApiResponse {
+  success: boolean;
+  vaultCode: string;
+  items: VaultItemApi[];
+}
+
+class VaultService {
+  async getVaultItems(): Promise<VaultItemsApiResponse> {
+    try {
+      const response = await apiClient.get<VaultItemsApiResponse>("vault/items");
+      return (response as any).data || response;
+    } catch (error) {
+      console.error('Error fetching vault items:', error);
+      throw error;
+    }
+  }
+}
+
+export const vaultService = new VaultService();
 // Product details scraping API response type
 export interface ProductDetailsResponse {
   success: boolean;
@@ -79,6 +119,25 @@ export interface AddressApi {
   updatedAt: string;
 }
 
+export interface UserSummary {
+  userName: string;
+  userFullName: string;
+  totalActiveOrders: number;
+  vaultWeight: number;
+  estimatedShippingCost: number;
+  vaultCode: string | null;
+  street: string;
+  address: string;
+  city: string;
+  country: string;
+  mobileNumber: string;
+}
+
+export interface UserSummaryResponse {
+  success: boolean;
+  data: UserSummary;
+}
+
 import apiClient from '../apiClient';
 import { ENDPOINTS } from '../endpoints';
 import { ApiResponse } from '../config';
@@ -95,6 +154,26 @@ export interface User {
   isVerified: boolean;
   membershipTier: 'basic' | 'silver' | 'gold' | 'platinum';
 }
+
+export interface Profile {
+  id: number;
+  vault_id: string;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  email: string;
+  phone_country_code: string;
+  phone_number: string;
+  google_id: string | null;
+  referral_code: string | null;
+  referred_by: string | null;
+  country: string | null;
+  virtual_address_id: number;
+  is_admin: boolean;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
+
 
 // Vault information interface
 export interface VaultInfo {
@@ -206,6 +285,11 @@ class UserService {
       console.error('Error updating address:', error);
       throw error;
     }
+  }
+ 
+  async getUserSummary(): Promise<UserSummaryResponse> {
+    const response = await apiClient.get<UserSummaryResponse>(ENDPOINTS.USER.SUMMARY);
+    return response.data;
   }
 
   /**
@@ -358,10 +442,10 @@ class UserService {
   /**
    * Get user profile
    */
-  async getProfile(): Promise<ApiResponse<User>> {
+  async getProfile(): Promise<ApiResponse<Profile>> {
     try {
-      const response = await apiClient.get<User>(ENDPOINTS.USER.PROFILE);
-      return response;
+      const response = await apiClient.get<ApiResponse<Profile>>(ENDPOINTS.USER.PROFILE);
+      return response.data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       throw error;

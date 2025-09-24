@@ -1,8 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ShoppingCart, Package, Star } from 'lucide-react';
+import { User, ShoppingCart, Package, Truck } from 'lucide-react';
+import { UserSummary } from '../api/services/userService';
 
-const Welcome: React.FC = () => {
+interface Props {
+  userSummary: UserSummary | null;
+}
+
+const Welcome: React.FC<Props> = ({ userSummary }) => {
   const navigate = useNavigate();
 
   const handleCreateOrder = () => {
@@ -17,7 +22,7 @@ const Welcome: React.FC = () => {
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-8 mb-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Welcome back, John!</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome back, {userSummary?.userName}!</h1>
           <p className="text-blue-100 text-lg">Ready to shop from your favorite Indian stores?</p>
         </div>
         <div className="hidden md:flex items-center space-x-8">
@@ -25,19 +30,24 @@ const Welcome: React.FC = () => {
             <div className="flex items-center justify-center w-12 h-12 bg-white bg-opacity-20 rounded-lg mb-2">
               <ShoppingCart className="h-6 w-6" />
             </div>
-            <p className="text-sm text-blue-100">4 Active Orders</p>
+            <p className="text-sm text-blue-100">{userSummary?.totalActiveOrders} Active Orders</p>
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center w-12 h-12 bg-white bg-opacity-20 rounded-lg mb-2">
-              <Package className="h-6 w-6" />
+              <Package className="h-6 w-6 text-yellow-300" /> {/* 📦 Vault Weight */}
             </div>
-            <p className="text-sm text-blue-100">₹15,300 Saved</p>
+            <p className="text-sm text-blue-100 font-medium">
+              {(userSummary?.vaultWeight ?? 0) / 1000} kg in vault
+            </p>
           </div>
+
           <div className="text-center">
             <div className="flex items-center justify-center w-12 h-12 bg-white bg-opacity-20 rounded-lg mb-2">
-              <Star className="h-6 w-6" />
+              <Truck className="h-6 w-6 text-green-300" /> {/* 🚚 Shipping Cost */}
             </div>
-            <p className="text-sm text-blue-100">Gold Member</p>
+            <p className="text-sm text-blue-100 font-medium">
+              ₹{userSummary?.estimatedShippingCost?.toLocaleString() ?? 0} shipping
+            </p>
           </div>
         </div>
       </div>

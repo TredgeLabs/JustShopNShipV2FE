@@ -27,7 +27,10 @@ import PaymentResult from './pages/PaymentResult';
 import ShipmentConfirmation from './pages/ShipmentConfirmation';
 import LocalOrderDetailsPage from './pages/LocalOrderDetailsPage';
 import InternationalOrderDetailsPage from './pages/InternationalOrderDetailsPage';
+import AddressSelectionPage from './pages/AddressSelectionPage';
+import AddressSelectionPage from './pages/AddressSelectionPage';
 import EnhancedNavigation from './components/EnhancedNavigation';
+import ProtectedRoute from '../src/components/auth/ProtectedRoute';
 
 // Footer Pages
 import PersonalShopping from './pages/PersonalShopping';
@@ -50,7 +53,7 @@ function App() {
         <Routes>
           {/* Admin Routes - Completely isolated */}
           <Route path="/admin/*" element={<AdminRoutes />} />
-          
+
           {/* Public routes without navigation */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -58,9 +61,10 @@ function App() {
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/add-address" element={<AddAddress />} />
-          
+
           {/* Order creation and payment flow */}
-          <Route path="/create-order" element={<CreateOrder />} />
+          <Route path="/address-selection" element={<AddressSelectionPage />} />
+          <Route path="/address-selection" element={<AddressSelectionPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/order-correction/:orderId" element={<OrderCorrection />} />
           <Route path="/payment" element={<Payment />} />
@@ -68,7 +72,7 @@ function App() {
           <Route path="/shipment-confirmation" element={<ShipmentConfirmation />} />
           <Route path="/local-order/:orderId" element={<LocalOrderDetailsPage />} />
           <Route path="/international-order/:orderId" element={<InternationalOrderDetailsPage />} />
-          
+
           {/* Footer Pages */}
           <Route path="/personal-shopping" element={<PersonalShopping />} />
           <Route path="/package-consolidation" element={<PackageConsolidation />} />
@@ -79,14 +83,15 @@ function App() {
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/pricing" element={<Pricing />} />
-          
+
           {/* Routes with navigation */}
           <Route path="/*" element={
             <>
               <EnhancedNavigation />
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/create-order" element={<CreateOrder />} />
                 <Route path="/my-vault" element={<MyVault />} />
                 <Route path="/domestic-orders" element={<DomesticOrders />} />
                 <Route path="/international-orders" element={<InternationalOrders />} />

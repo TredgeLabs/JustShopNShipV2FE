@@ -21,16 +21,17 @@ export const ENDPOINTS = {
     UPDATE_PASSWORD: 'users/update-password',
     ADDRESSES: 'users/addresses',
     SET_DEFAULT_ADDRESSES: 'users/addresses/set-default',
+    SUMMARY: 'users/summary',
   },
 
   // Orders
   ORDERS: {
-    CREATE: '/orders',
-    LIST: '/orders',
-    DETAILS: (id: string) => `/orders/${id}`,
-    UPDATE: (id: string) => `/orders/${id}`,
-    CANCEL: (id: string) => `/orders/${id}/cancel`,
-    TRACK: (id: string) => `/orders/${id}/track`,
+    LOCAL_ORDERS: 'local-orders',
+    INTERNATIONAL_ORDERS: 'international-orders',
+    LOCAL_ORDER_DETAILS: (id: string) => `local-orders/${id}`,
+    INTERNATIONAL_ORDER_DETAILS: (id: string) => `international-orders/${id}`,
+    UPDATE: (id: string) => `local-orders/${id}`,
+    CANCEL: (id: string) => `local-orders/${id}/cancel`,
   },
 
   // Shipping

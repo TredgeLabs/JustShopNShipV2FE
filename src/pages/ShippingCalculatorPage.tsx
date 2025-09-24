@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  Calculator, 
-  Package, 
-  MapPin, 
-  Truck, 
-  DollarSign, 
-  Info, 
+import {
+  Calculator,
+  Package,
+  MapPin,
+  Truck,
+  DollarSign,
+  Info,
   Zap,
   Clock,
   Shield
 } from 'lucide-react';
+import { countries } from '../constants/countries';
 
 interface ShippingRate {
   service: string;
@@ -31,19 +32,6 @@ const ShippingCalculatorPage: React.FC = () => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
-  const countries = [
-    { code: 'US', name: 'United States', flag: '🇺🇸' },
-    { code: 'CA', name: 'Canada', flag: '🇨🇦' },
-    { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
-    { code: 'AU', name: 'Australia', flag: '🇦🇺' },
-    { code: 'DE', name: 'Germany', flag: '🇩🇪' },
-    { code: 'AE', name: 'United Arab Emirates', flag: '🇦🇪' },
-    { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
-    { code: 'FR', name: 'France', flag: '🇫🇷' },
-    { code: 'JP', name: 'Japan', flag: '🇯🇵' },
-    { code: 'NL', name: 'Netherlands', flag: '🇳🇱' }
-  ];
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -59,13 +47,13 @@ const ShippingCalculatorPage: React.FC = () => {
     }
 
     setIsCalculating(true);
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     const weight = parseFloat(formData.weight);
     const value = parseFloat(formData.value) || 100;
-    
+
     // Mock calculation logic
     const baseRates = {
       'US': 18,
@@ -79,9 +67,9 @@ const ShippingCalculatorPage: React.FC = () => {
       'JP': 24,
       'NL': 20
     };
-    
+
     const baseRate = baseRates[formData.destination as keyof typeof baseRates] || 20;
-    
+
     const mockRates: ShippingRate[] = [
       {
         service: 'Express Shipping',
@@ -102,7 +90,7 @@ const ShippingCalculatorPage: React.FC = () => {
         features: ['Basic tracking', 'Cost-effective', 'Longer transit time']
       }
     ];
-    
+
     setShippingRates(mockRates);
     setShowResults(true);
     setIsCalculating(false);
@@ -110,11 +98,11 @@ const ShippingCalculatorPage: React.FC = () => {
 
   const getDimensionalWeight = () => {
     if (!formData.length || !formData.width || !formData.height) return null;
-    
+
     const length = parseFloat(formData.length);
     const width = parseFloat(formData.width);
     const height = parseFloat(formData.height);
-    
+
     // Dimensional weight formula: (L × W × H) / 5000
     return Math.round((length * width * height / 5000) * 100) / 100;
   };
@@ -135,7 +123,7 @@ const ShippingCalculatorPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">Shipping Calculator</h1>
           </div>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Get instant shipping cost estimates for your international packages. 
+            Get instant shipping cost estimates for your international packages.
             Enter your package details below to see available shipping options and pricing.
           </p>
         </div>
@@ -144,7 +132,7 @@ const ShippingCalculatorPage: React.FC = () => {
           {/* Calculator Form */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Package Details</h2>
-            
+
             <div className="space-y-6">
               {/* Weight */}
               <div>
@@ -291,7 +279,7 @@ const ShippingCalculatorPage: React.FC = () => {
           {/* Results */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Shipping Options</h2>
-            
+
             {!showResults ? (
               <div className="text-center py-12">
                 <Calculator className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -313,7 +301,7 @@ const ShippingCalculatorPage: React.FC = () => {
                         <div className="text-sm text-gray-600">{rate.deliveryTime}</div>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-1">
                       {rate.features.map((feature, featureIndex) => (
                         <div key={featureIndex} className="flex items-center space-x-2 text-sm text-gray-600">
@@ -322,7 +310,7 @@ const ShippingCalculatorPage: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    
+
                     <button className="w-full mt-4 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors">
                       Select This Option
                     </button>
@@ -341,29 +329,29 @@ const ShippingCalculatorPage: React.FC = () => {
               <h3 className="font-semibold text-gray-900">How It Works</h3>
             </div>
             <p className="text-sm text-gray-600">
-              Shipping costs are calculated based on weight, dimensions, destination, and service level. 
+              Shipping costs are calculated based on weight, dimensions, destination, and service level.
               We use dimensional weight pricing to ensure fair and accurate pricing.
             </p>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center space-x-3 mb-3">
               <Shield className="h-6 w-6 text-green-600" />
               <h3 className="font-semibold text-gray-900">Insurance Included</h3>
             </div>
             <p className="text-sm text-gray-600">
-              All shipments include basic insurance coverage. Higher value items can be insured 
+              All shipments include basic insurance coverage. Higher value items can be insured
               for their full declared value for additional peace of mind.
             </p>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center space-x-3 mb-3">
               <Package className="h-6 w-6 text-purple-600" />
               <h3 className="font-semibold text-gray-900">Consolidation Savings</h3>
             </div>
             <p className="text-sm text-gray-600">
-              Save up to 70% by consolidating multiple packages into one shipment. 
+              Save up to 70% by consolidating multiple packages into one shipment.
               The more items you combine, the greater your savings!
             </p>
           </div>

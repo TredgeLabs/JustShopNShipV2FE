@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink, Eye } from 'lucide-react';
+import { getStatusConfig } from '../../components/orders/OrderStatusBadge';
 
 interface OrderItem {
   id: string;
@@ -22,11 +23,11 @@ interface OrderItemCardProps {
   className?: string;
 }
 
-const OrderItemCard: React.FC<OrderItemCardProps> = ({ 
-  item, 
-  showWeight = false, 
-  showStatus = false, 
-  className = '' 
+const OrderItemCard: React.FC<OrderItemCardProps> = ({
+  item,
+  showWeight = false,
+  showStatus = false,
+  className = ''
 }) => {
   return (
     <div className={`bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ${className}`}>
@@ -36,12 +37,12 @@ const OrderItemCard: React.FC<OrderItemCardProps> = ({
           alt={item.name}
           className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
         />
-        
+
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-gray-900 text-sm leading-tight mb-2">
             {item.name}
           </h3>
-          
+
           <div className="space-y-1 text-xs text-gray-600">
             <div className="flex justify-between">
               <span>Color:</span>
@@ -68,11 +69,11 @@ const OrderItemCard: React.FC<OrderItemCardProps> = ({
             {showStatus && item.status && (
               <div className="flex justify-between">
                 <span>Status:</span>
-                <span className="font-medium capitalize">{item.status}</span>
+                <span className={`px-2 py-1 text-xs font-medium capitalize ${getStatusConfig(item.status, 'local_item').color}`}> {getStatusConfig(item.status, 'local_item').text}</span>
               </div>
             )}
           </div>
-          
+
           <div className="flex space-x-2 mt-3">
             {item.inventoryLink && (
               <a
@@ -97,7 +98,7 @@ const OrderItemCard: React.FC<OrderItemCardProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

@@ -1,53 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  ExternalLink, 
-  Loader2, 
-  AlertCircle, 
-  RefreshCw, 
-  MapPin, 
-  Truck, 
-  Calendar,
+import { orderService, InternationalOrder } from '../api/services/orderService';
+import {
+  ArrowLeft,
+  ExternalLink,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  Truck,
   Package,
-  Plane
 } from 'lucide-react';
 import OrderStatusBadge from '../components/orders/OrderStatusBadge';
 import OrderItemCard from '../components/orders/OrderItemCard';
-import OrderSummaryCard from '../components/orders/OrderSummaryCard';
 
-interface InternationalOrderItem {
-  id: string;
-  name: string;
-  images: string[];
-  weight: number;
-  orderDetailsLink: string;
-  originalPrice: number;
-  color: string;
-  size: string;
-  quantity: number;
-}
-
-interface InternationalOrder {
-  id: string;
-  transitId: string;
-  customerName: string;
-  status: 'processing' | 'shipped' | 'in-transit' | 'customs' | 'delivered' | 'exception';
-  trackingLink: string;
-  totalShippingPrice: number;
-  shippingDate: string;
-  estimatedDelivery: string;
-  actualDelivery?: string;
-  destination: string;
-  carrier: string;
-  items: InternationalOrderItem[];
-  notes?: string;
-  customsInfo?: {
-    declarationNumber: string;
-    customsValue: number;
-    dutyPaid: number;
-  };
-}
 
 const InternationalOrderDetailsPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -59,65 +24,18 @@ const InternationalOrderDetailsPage: React.FC = () => {
   useEffect(() => {
     const loadOrderDetails = async () => {
       if (!orderId) return;
-      
+
       setIsLoading(true);
       setError(null);
-      
+
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Mock order data - replace with actual API call
-        const mockOrder: InternationalOrder = {
-          id: orderId,
-          transitId: 'JSS-INT-2024-001',
-          customerName: 'John Doe',
-          status: 'delivered',
-          trackingLink: 'https://tracking.example.com/JSS-INT-2024-001',
-          totalShippingPrice: 125.50,
-          shippingDate: '2024-01-15',
-          estimatedDelivery: '2024-01-25',
-          actualDelivery: '2024-01-24',
-          destination: 'Toronto, Canada',
-          carrier: 'DHL Express',
-          notes: 'Express delivery requested for urgent delivery.',
-          customsInfo: {
-            declarationNumber: 'CD-2024-001234',
-            customsValue: 5600,
-            dutyPaid: 280
-          },
-          items: [
-            {
-              id: 'SI-001',
-              name: 'Traditional Silk Saree - Royal Blue',
-              images: [
-                'https://images.pexels.com/photos/8148579/pexels-photo-8148579.jpeg?auto=compress&cs=tinysrgb&w=200',
-                'https://images.pexels.com/photos/8148580/pexels-photo-8148580.jpeg?auto=compress&cs=tinysrgb&w=200'
-              ],
-              weight: 0.8,
-              orderDetailsLink: '/local-order/DO-001',
-              originalPrice: 3500,
-              color: 'Royal Blue',
-              size: 'Free Size',
-              quantity: 1
-            },
-            {
-              id: 'SI-002',
-              name: 'Ayurvedic Skincare Gift Set',
-              images: [
-                'https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=200'
-              ],
-              weight: 1.2,
-              orderDetailsLink: '/local-order/DO-001',
-              originalPrice: 2100,
-              color: 'Natural',
-              size: 'Standard',
-              quantity: 1
-            }
-          ]
-        };
-        
-        setOrder(mockOrder);
+        const response = await orderService.getInternationalOrderDetails(orderId);
+
+        if (response.success && response.data) {
+          setOrder(response.data);
+        } else {
+          setError('International order not found');
+        }
       } catch (err) {
         setError('Failed to load order details. Please try again.');
         console.error('Error loading order:', err);
@@ -135,11 +53,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
   };
 
   const getTotalWeight = () => {
-    return order?.items.reduce((sum, item) => sum + item.weight * item.quantity, 0) || 0;
-  };
-
-  const getTotalValue = () => {
-    return order?.items.reduce((sum, item) => sum + item.originalPrice * item.quantity, 0) || 0;
+    return order ? order.shipment_weight_gm : 0; // Convert grams to kg
   };
 
   if (isLoading) {
@@ -184,7 +98,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
               <span>Back to International Orders</span>
             </button>
-            
+
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleRefreshOrder}
@@ -193,10 +107,10 @@ const InternationalOrderDetailsPage: React.FC = () => {
                 <RefreshCw className="h-4 w-4" />
                 <span>Refresh</span>
               </button>
-              
-              {order.trackingLink && (
+
+              {order.tracking_link && (
                 <a
-                  href={order.trackingLink}
+                  href={order.tracking_link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -207,13 +121,13 @@ const InternationalOrderDetailsPage: React.FC = () => {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Transit ID: {order.transitId}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">International Order #{order.id}</h1>
               <p className="text-gray-600 mt-1">International shipping order details</p>
             </div>
-            <OrderStatusBadge status={order.status} type="international" />
+            <OrderStatusBadge status={order.shipping_status} type="international" />
           </div>
         </div>
 
@@ -221,19 +135,47 @@ const InternationalOrderDetailsPage: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Order Summary */}
-            <OrderSummaryCard
-              orderId={order.transitId}
-              customerName={order.customerName}
-              orderDate={order.shippingDate}
-              totalItems={order.items.length}
-              totalAmount={order.totalShippingPrice}
-              status={order.status}
-              destination={order.destination}
-              carrier={order.carrier}
-              trackingNumber={order.transitId}
-              estimatedDelivery={order.estimatedDelivery}
-              type="international"
-            />
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Order ID</p>
+                    <p className="font-semibold text-gray-900">#{order.id}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600">Created Date</p>
+                    <p className="font-semibold text-gray-900">{new Date(order.createdAt).toLocaleDateString()}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600">Total Cost</p>
+                    <p className="font-semibold text-gray-900">₹{parseFloat(order.total_cost).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Vault Items</p>
+                    <p className="font-semibold text-gray-900">{order.international_order_items?.length || 0}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600">Total Weight</p>
+                    <p className="font-semibold text-gray-900">{getTotalWeight().toFixed(1)} kg</p>
+                  </div>
+
+                  {order.tracking_id && (
+                    <div>
+                      <p className="text-sm text-gray-600">Tracking ID</p>
+                      <p className="font-semibold text-gray-900">{order.tracking_id}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* Shipped Items */}
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -243,68 +185,92 @@ const InternationalOrderDetailsPage: React.FC = () => {
                   Total Weight: {getTotalWeight().toFixed(1)} kg
                 </span>
               </div>
-              
-              <div className="space-y-4">
-                {order.items.map((item) => (
-                  <OrderItemCard
-                    key={item.id}
-                    item={{
-                      ...item,
-                      image: item.images[0],
-                      price: item.originalPrice,
-                      url: item.orderDetailsLink
-                    }}
-                    showWeight={true}
-                  />
-                ))}
-              </div>
+
+              {order.international_order_items && order.international_order_items.length > 0 ? (
+                <div className="space-y-4">
+                  {order.international_order_items.map((item) => (
+                    // <OrderItemCard
+                    //   key={item.id}
+                    //   item={{
+                    //     id: item.id.toString(),
+                    //     name: item.name,
+                    //     image: item.imageUrls?.[0] || '',
+                    //     color: item.color || 'N/A',
+                    //     size: item.size || 'N/A',
+                    //     quantity: item.quantity || 0,
+                    //     price: parseFloat(item?.price?.toLocaleString()),
+                    //     status: item.status || '',
+                    //     url: item.product_link || ''
+                    //   }}
+                    //   showStatus={true}
+                    // />
+                    <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h5 className="font-medium text-gray-900">Vault Item #{item.id}</h5>
+                          <p className="text-sm text-gray-600">{item.name}</p>
+                          <p className="text-sm text-gray-600">Added on {new Date(item.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <button
+                          onClick={() => navigate(`/vault-item/${item.id}`)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          View Details →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No items found in this shipment</p>
+                </div>
+              )}
             </div>
 
             {/* Shipping Timeline */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Shipping Timeline</h2>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">Order Processed</p>
-                    <p className="text-sm text-gray-600">{new Date(order.shippingDate).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 rounded-full ${
-                    ['shipped', 'in-transit', 'customs', 'delivered'].includes(order.status) 
-                      ? 'bg-green-500' 
-                      : 'bg-gray-300'
-                  }`}></div>
+                  <div className={`w-3 h-3 rounded-full ${['shipped', 'in_transit', 'delivered'].includes(order.shipping_status)
+                    ? 'bg-green-500'
+                    : 'bg-gray-300'
+                    }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">Shipped</p>
-                    {['shipped', 'in-transit', 'customs', 'delivered'].includes(order.status) && (
-                      <p className="text-sm text-gray-600">{new Date(order.shippingDate).toLocaleDateString()}</p>
+                    {['shipped', 'in_transit', 'delivered'].includes(order.shipping_status) && (
+                      <p className="text-sm text-gray-600">{new Date(order.updatedAt).toLocaleDateString()}</p>
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 rounded-full ${
-                    ['in-transit', 'customs', 'delivered'].includes(order.status) 
-                      ? 'bg-green-500' 
-                      : 'bg-gray-300'
-                  }`}></div>
+                  <div className={`w-3 h-3 rounded-full ${['in_transit', 'delivered'].includes(order.shipping_status)
+                    ? 'bg-green-500'
+                    : 'bg-gray-300'
+                    }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">In Transit</p>
-                    {['in-transit', 'customs', 'delivered'].includes(order.status) && (
+                    {['in_transit', 'customs', 'delivered'].includes(order.shipping_status) && (
                       <p className="text-sm text-gray-600">Package in transit</p>
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                  <div className={`w-3 h-3 rounded-full ${
-                    order.status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
-                  }`}></div>
+                  <div className={`w-3 h-3 rounded-full ${order.shipping_status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
+                    }`}></div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">Delivered</p>
                     {order.actualDelivery ? (
@@ -323,24 +289,18 @@ const InternationalOrderDetailsPage: React.FC = () => {
             {/* Shipping Information */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Information</h3>
-              
+
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <MapPin className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Destination</p>
-                    <p className="font-medium">{order.destination}</p>
-                  </div>
+                <div>
+                  <p className="text-sm text-gray-600">Vault ID</p>
+                  <p className="font-medium">{order.vault_id}</p>
                 </div>
-                
-                <div className="flex items-center space-x-3">
-                  <Truck className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Carrier</p>
-                    <p className="font-medium">{order.carrier}</p>
-                  </div>
+
+                <div>
+                  <p className="text-sm text-gray-600">Shipping Address ID</p>
+                  <p className="font-medium">{order.shipping_address_id}</p>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
                   <Package className="h-5 w-5 text-purple-600" />
                   <div>
@@ -348,73 +308,56 @@ const InternationalOrderDetailsPage: React.FC = () => {
                     <p className="font-medium">{getTotalWeight().toFixed(1)} kg</p>
                   </div>
                 </div>
-                
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-5 w-5 text-orange-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Estimated Delivery</p>
-                    <p className="font-medium">{new Date(order.estimatedDelivery).toLocaleDateString()}</p>
+
+                {order.tracking_id && (
+                  <div className="flex items-center space-x-3">
+                    <Truck className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Tracking ID</p>
+                      <p className="font-medium">{order.tracking_id}</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
             {/* Pricing Breakdown */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Costs</h3>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping Fee:</span>
-                  <span className="font-medium">${(order.totalShippingPrice * 0.8).toFixed(2)}</span>
+                  <span className="font-medium">₹{parseFloat(order.shipping_cost).toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Insurance & Handling:</span>
-                  <span className="font-medium">${(order.totalShippingPrice * 0.2).toFixed(2)}</span>
+                  <span className="text-gray-600">Storage Cost:</span>
+                  <span className="font-medium">₹{parseFloat(order.storage_cost).toFixed(2)}</span>
                 </div>
-                
+
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Platform Fee:</span>
+                  <span className="font-medium">₹{parseFloat(order.platform_fee).toFixed(2)}</span>
+                </div>
+
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold text-lg">
-                    <span>Total Shipping:</span>
-                    <span>${order.totalShippingPrice.toFixed(2)}</span>
+                    <span>Total Cost:</span>
+                    <span>₹{parseFloat(order.total_cost).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Customs Information */}
-            {order.customsInfo && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Customs Information</h3>
-                
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-600">Declaration Number</p>
-                    <p className="font-medium">{order.customsInfo.declarationNumber}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-gray-600">Declared Value</p>
-                    <p className="font-medium">₹{order.customsInfo.customsValue.toLocaleString()}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-gray-600">Duty Paid</p>
-                    <p className="font-medium">₹{order.customsInfo.dutyPaid.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              
+
               <div className="space-y-3">
-                {order.trackingLink && (
+                {order.tracking_link && (
                   <a
-                    href={order.trackingLink}
+                    href={order.tracking_link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
@@ -423,7 +366,7 @@ const InternationalOrderDetailsPage: React.FC = () => {
                     <span>Track Package</span>
                   </a>
                 )}
-                
+
                 <a
                   href="/contact-support"
                   className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
