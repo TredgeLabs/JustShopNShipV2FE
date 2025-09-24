@@ -46,36 +46,6 @@ const DomesticOrders: React.FC = () => {
     loadDomesticOrders();
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'created': return 'bg-blue-100 text-blue-800';
-      case 'accepted': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-blue-100 text-blue-800';
-      case 'processing': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'denied': return 'bg-red-100 text-red-800';
-      case 'in_vault': return 'bg-purple-100 text-purple-800'; // ✅ NEW
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'created': return 'Created';
-      case 'accepted': return 'Accepted';
-      case 'pending': return 'Pending';
-      case 'processing': return 'Processing';
-      case 'completed': return 'Completed';
-      case 'cancelled': return 'Cancelled';
-      case 'denied': return 'Denied';
-      case 'in_vault': return 'In Vault'; // ✅ NEW
-      default: return 'Unknown';
-    }
-  };
-
-
-
   const toggleOrderExpansion = (orderId: string) => {
     setExpandedOrders(prev => {
       const newSet = new Set(prev);
@@ -215,8 +185,8 @@ const DomesticOrders: React.FC = () => {
                       <h3 className="text-lg font-semibold text-gray-900">Order #{order.id}</h3>
                       <p className="text-sm text-gray-600">Placed on {formatDate(order.createdAt)}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.order_status)}`}>
-                      {getStatusText(order.order_status)}
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusConfig(order.order_status, 'local').color}`}>
+                      {getStatusConfig(order.order_status, 'local').text}
                     </span>
                   </div>
 

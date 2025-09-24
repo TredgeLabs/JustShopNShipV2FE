@@ -62,7 +62,6 @@ function App() {
           <Route path="/add-address" element={<AddAddress />} />
 
           {/* Order creation and payment flow */}
-          <Route path="/create-order" element={<CreateOrder />} />
           <Route path="/address-selection" element={<AddressSelectionPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/order-correction/:orderId" element={<OrderCorrection />} />
@@ -90,6 +89,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/create-order" element={<CreateOrder />} />
                 <Route path="/my-vault" element={<MyVault />} />
                 <Route path="/domestic-orders" element={<DomesticOrders />} />
                 <Route path="/international-orders" element={<InternationalOrders />} />

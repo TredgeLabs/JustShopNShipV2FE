@@ -12,6 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { orderService, LocalOrder, LocalOrderItem } from '../api/services/orderService';
+import { DENY_REASONS } from '../admin/constants/adminConstants';
 
 // interface OrderItem {
 //   id: string;
@@ -58,9 +59,8 @@ const OrderCorrection: React.FC = () => {
   useEffect(() => {
     const loadOrderCorrectionData = async () => {
       if (!orderId) return;
-      const response = await orderService.getLocalOrderDetails(orderId);
       setIsLoading(true);
-
+      const response = await orderService.getLocalOrderDetails(orderId);
       setOrderData(response.order);
       setIsLoading(false);
     };
@@ -259,137 +259,177 @@ const OrderCorrection: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {orderData.local_order_items?.map((item) => (
-                  <div key={item.id} className={`border rounded-lg p-4 ${item.hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'
-                    }`}>
-                    <div className="flex items-start space-x-4">
-                      {/* Item Image */}
-                      {item.image_link && (
-                        <img
-                          src={item.image_link}
-                          alt={item.product_name}
-                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                        />
-                      )}
 
-                      {/* Item Details */}
-                      <div className="flex-1">
-                        {/* Error Message */}
-                        {item.hasError && item.errorMessage && (
-                          <div className="mb-3 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-800">
-                            <AlertTriangle className="h-4 w-4 inline mr-1" />
-                            {item.errorMessage}
-                          </div>
+              <div className="space-y-6">
+                {orderData.local_order_items?.map((item) => {
+                  const hasErrors = item.deny_reasons && item.deny_reasons.length > 0;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`rounded-xl shadow-sm p-6 transition-all ${hasErrors
+                        ? 'border border-red-300 bg-red-50'
+                        : 'border border-gray-200 bg-white'
+                        }`}
+                    >
+                      <div className="flex items-start space-x-6">
+                        {/* Item Image */}
+                        {item.image_link && (
+                          <img
+                            src={item.image_link}
+                            alt={item.product_name}
+                            className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                          />
                         )}
 
-                        {/* Item Name */}
-                        <h3 className="font-medium text-gray-900 mb-3">{item.product_name}</h3>
-
-                        {/* Editable Fields */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
-                            {item.isEditing && item.hasError ? (
-                              <input
-                                type="text"
-                                value={item.color}
-                                onChange={(e) => handleItemEdit(item.id, 'color', e.target.value)}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                              />
-                            ) : (
-                              <p className="text-sm text-gray-900">{item.color}</p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Size</label>
-                            {item.isEditing && item.hasError ? (
-                              <input
-                                type="text"
-                                value={item.size}
-                                onChange={(e) => handleItemEdit(item.id, 'size', e.target.value)}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                              />
-                            ) : (
-                              <p className="text-sm text-gray-900">{item.size}</p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
-                            {item.isEditing && item.hasError ? (
-                              <input
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => handleItemEdit(item.id, 'quantity', parseInt(e.target.value))}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                              />
-                            ) : (
-                              <p className="text-sm text-gray-900">{item.quantity}</p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Current Price</label>
-                            <p className="text-sm font-semibold text-gray-900">₹{item.final_price.toLocaleString()}</p>
-                          </div>
-                        </div>
-
-                        {/* Price Information */}
-                        <div className="grid grid-cols-3 gap-4 text-sm mb-4">
-                          <div>
-                            <span className="text-gray-600">Paid Price:</span>
-                            <p className="font-medium">₹{item.price.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">Current Price:</span>
-                            <p className="font-medium">₹{(item.final_price * item.quantity).toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">Difference:</span>
-                            <p className={`font-medium ${(item.final_price * item.quantity) - item.price > 0 ? 'text-red-600' : 'text-green-600'
-                              }`}>
-                              {(item.final_price * item.quantity) - item.price > 0 ? '+' : ''}
-                              ₹{((item.final_price * item.quantity) - item.price).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center space-x-3">
-                          {item.hasError && (
-                            <button
-                              onClick={() => toggleItemEdit(item.id)}
-                              className="flex items-center space-x-1 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm transition-colors"
-                            >
-                              {item.isEditing ? (
-                                <>
-                                  <Save className="h-3 w-3" />
-                                  <span>Save</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Edit3 className="h-3 w-3" />
-                                  <span>Edit</span>
-                                </>
-                              )}
-                            </button>
+                        {/* Item Details */}
+                        <div className="flex-1 space-y-4">
+                          {/* Error Messages */}
+                          {hasErrors && (
+                            <div className="p-3 bg-red-100 border border-red-200 rounded-lg text-sm text-red-800 space-y-1">
+                              {item.deny_reasons?.map((reasonIndex, idx) => (
+                                <div key={idx} className="flex items-center">
+                                  <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />
+                                  {DENY_REASONS[reasonIndex - 1] || 'Unknown reason'}
+                                </div>
+                              ))}
+                            </div>
                           )}
 
-                          <button
-                            onClick={() => deleteItem(item.id)}
-                            className="flex items-center space-x-1 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm transition-colors"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            <span>Remove</span>
-                          </button>
+                          {/* Item Name */}
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {item.product_name}
+                          </h3>
+
+                          {/* Editable Fields */}
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1">
+                                Color
+                              </label>
+                              {item.isEditing && hasErrors ? (
+                                <input
+                                  type="text"
+                                  value={item.color}
+                                  onChange={(e) =>
+                                    handleItemEdit(item.id, 'color', e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                />
+                              ) : (
+                                <p className="text-sm text-gray-900">{item.color}</p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1">
+                                Size
+                              </label>
+                              {item.isEditing && hasErrors ? (
+                                <input
+                                  type="text"
+                                  value={item.size}
+                                  onChange={(e) =>
+                                    handleItemEdit(item.id, 'size', e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                />
+                              ) : (
+                                <p className="text-sm text-gray-900">{item.size}</p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1">
+                                Quantity
+                              </label>
+                              {item.isEditing && hasErrors ? (
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantity}
+                                  onChange={(e) =>
+                                    handleItemEdit(item.id, 'quantity', parseInt(e.target.value))
+                                  }
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                />
+                              ) : (
+                                <p className="text-sm text-gray-900">{item.quantity}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Price Information */}
+                          <div className="grid grid-cols-3 gap-6 text-sm">
+                            <div>
+                              <span className="text-gray-500">Paid Price:</span>
+                              <p className="font-medium text-gray-900">
+                                ₹{(item.price * item.quantity).toLocaleString()}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Current Price:</span>
+                              <p className="font-medium text-gray-900">
+                                ₹{(item.final_price * item.quantity).toLocaleString()}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Difference:</span>
+                              <p
+                                className={`font-medium ${(item.final_price * item.quantity) -
+                                  (item.price * item.quantity) >
+                                  0
+                                  ? 'text-red-600'
+                                  : 'text-green-600'
+                                  }`}
+                              >
+                                {(item.final_price * item.quantity) -
+                                  (item.price * item.quantity) >
+                                  0
+                                  ? '+'
+                                  : ''}
+                                ₹{(
+                                  (item.final_price * item.quantity) -
+                                  (item.price * item.quantity)
+                                ).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center space-x-4 pt-2">
+                            {hasErrors && (
+                              <button
+                                onClick={() => toggleItemEdit(item.id)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm transition-colors"
+                              >
+                                {item.isEditing ? (
+                                  <>
+                                    <Save className="h-4 w-4" />
+                                    <span>Save</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Edit3 className="h-4 w-4" />
+                                    <span>Edit</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => deleteItem(item.id)}
+                              className="flex items-center space-x-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Remove</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Add New Item */}

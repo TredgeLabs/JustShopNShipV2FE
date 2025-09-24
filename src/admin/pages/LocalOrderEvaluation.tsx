@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { adminApiService, LocalOrderDetails, LocalOrderItem, BulkProcessRequest } from '../services/adminApiService';
+import { adminApiService, LocalOrderDetails, LocalOrderItem, BulkProcessRequest, VaultItemRequest } from '../services/adminApiService';
 import { formatDate, formatCurrency, copyToClipboard } from '../utils/adminHelpers';
 import { DENY_REASONS } from '../constants/adminConstants';
 import BulkProcessModal from '../components/BulkProcessModal';
@@ -21,6 +21,7 @@ import AddToVaultModal from '../components/AddToVaultModal';
 interface EvaluationData {
   [itemId: number]: {
     actualPrice: number;
+    shipment_date: string | null;
     decision: 'approve' | 'deny';
     denyReasons: string[];
   };
@@ -60,6 +61,7 @@ const LocalOrderEvaluation: React.FC = () => {
           initialEvaluation[item.id] = {
             actualPrice: Number(item.price),
             decision: 'approve',
+            shipment_date: null,
             denyReasons: []
           };
         });
@@ -127,7 +129,7 @@ Phone: +91 9876543210`;
     setShowVaultModal(true);
   };
 
-  const handleVaultSubmit = async (vaultId: string, itemData: string) => {
+  const handleVaultSubmit = async (vaultId: string, itemData: VaultItemRequest) => {
     try {
       const response = await adminApiService.addVaultItem(vaultId, itemData);
 
@@ -163,6 +165,8 @@ Phone: +91 9876543210`;
       const items = Object.entries(evaluationData).map(([itemId, evaluation]) => ({
         item_id: parseInt(itemId),
         action: evaluation.decision,
+        final_price: evaluation.actualPrice,
+        shipment_date: evaluation.shipment_date || null,
         ...(evaluation.decision === 'deny' && {
           deny_reasons: evaluation.denyReasons.map((reason: string) => {
             // Map reason text to reason ID (you may need to adjust this mapping)
@@ -383,11 +387,24 @@ Phone: +91 9876543210`;
                         <input
                           type="number"
                           value={evaluationData[item.id]?.actualPrice || item.price}
-                          onChange={(e) => handleItemEvaluationChange(item.id, 'actualPrice', parseFloat(e.target.value))}
+                          onChange={(e) => handleItemEvaluationChange(item.id, 'actualPrice', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Enter actual price"
                         />
                       </div>
+                      {/* Shipment Date */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Shipment Date
+                        </label>
+                        <input
+                          type="date"
+                          value={evaluationData[item.id]?.shipment_date || ''}
+                          onChange={(e) => handleItemEvaluationChange(item.id, 'shipment_date', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
 
                       {/* Decision */}
                       <div>
