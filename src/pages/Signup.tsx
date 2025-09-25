@@ -237,26 +237,8 @@ const Signup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call for resending OTP
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock API call - replace with actual API
-      const response = await fetch('/api/auth/resend-signup-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          countryCode: formData.selectedCountry,
-          phone: formData.phone
-        })
-      }).catch(() => {
-        // Mock successful response for demo
-        return { ok: true, json: () => Promise.resolve({ success: true }) };
-      });
-
-      if (response.ok) {
+      const response = await userService.forgotPassword({ phone_country_code: formData.selectedCountry, phone_number: formData.phone });
+      if (response.success) {
         setSuccess('OTP resent successfully to your mobile number');
         setOtpTimer(30);
         setCanResendOtp(false);

@@ -167,25 +167,8 @@ const ForgotPassword: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call for resending OTP
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock API call - replace with actual API
-      const response = await fetch('/api/forgot-password/resend-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          countryCode: selectedCountry,
-          mobileNumber: mobileNumber
-        })
-      }).catch(() => {
-        // Mock successful response for demo
-        return { ok: true, json: () => Promise.resolve({ success: true }) };
-      });
-
-      if (response.ok) {
+      const response = await userService.forgotPassword({ phone_country_code: selectedCountry, phone_number: mobileNumber });
+      if (response.success) {
         setSuccess('OTP resent successfully');
         setOtpTimer(30);
         setCanResendOtp(false);
