@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { 
-  CheckCircle, 
-  XCircle, 
-  ArrowRight, 
-  RotateCcw, 
-  MessageCircle, 
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  CheckCircle,
+  XCircle,
+  RotateCcw,
+  MessageCircle,
   Download,
   Home,
   Package,
@@ -23,12 +22,11 @@ interface PaymentResult {
 }
 
 const PaymentResult: React.FC = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const status = searchParams.get('status');
+  const type = location.state?.type ?? 'local';
 
   useEffect(() => {
     // Load payment result from localStorage
@@ -62,7 +60,12 @@ const PaymentResult: React.FC = () => {
   const handleViewOrders = () => {
     // Clear payment result
     localStorage.removeItem('paymentResult');
-    navigate('/domestic-orders');
+    if (type === 'international') {
+      navigate('/international-orders');
+    }
+    else {
+      navigate('/domestic-orders');
+    }
   };
 
   const handleDownloadReceipt = () => {

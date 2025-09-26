@@ -1,13 +1,12 @@
 import React from 'react';
-import { 
-  Zap, 
-  Clock, 
-  Shield, 
-  CheckCircle, 
+import {
+  Zap,
+  Clock,
+  Shield,
+  CheckCircle,
   Plane,
   ArrowRight,
   Package,
-  Globe,
   Star,
   Truck
 } from 'lucide-react';

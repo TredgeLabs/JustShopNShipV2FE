@@ -47,7 +47,6 @@ const Signup: React.FC = () => {
   // OTP state
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [otpTimer, setOtpTimer] = useState(30);
-  const [canResendOtp, setCanResendOtp] = useState(false);
 
   const countryCodes: CountryCode[] = [
     { code: '+91', country: 'India', flag: '🇮🇳' },

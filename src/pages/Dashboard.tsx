@@ -40,7 +40,7 @@ const Dashboard: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <EnhancedVaultInfo userSummary={userSummary} />
-            <EnhancedOrderManagement />
+            <EnhancedOrderManagement userSummary={userSummary} />
           </div>
         </div>
       </div>

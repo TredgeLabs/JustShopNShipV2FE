@@ -9,7 +9,7 @@ import {
   Lock
 } from 'lucide-react';
 
-import { orderService, CreateLocalOrderRequest } from '../api/services/orderService';
+import { orderService, CreateLocalOrderRequest, ORDER_STATUSES } from '../api/services/orderService';
 import { ShipmentData } from './ShipmentConfirmation';
 
 interface OrderData {
@@ -91,8 +91,8 @@ const Payment: React.FC = () => {
         const platformFee = Math.round(totalPrice * 0.05);
         const orderRequest: CreateLocalOrderRequest = {
           orderData: {
-            order_status: 'created',
-            payment_status: 'pending',
+            order_status: ORDER_STATUSES.created,
+            payment_status: ORDER_STATUSES.pending,
             total_price: totalPrice,
             platform_fee: platformFee,
             admin_notes: `Order created on ${new Date().toLocaleDateString()} with ${orderData.items.length} items`
@@ -106,7 +106,7 @@ const Payment: React.FC = () => {
             quantity: item.quantity,
             price: item.price,
             final_price: item.price,
-            status: 'pending',
+            status: ORDER_STATUSES.pending,
             deny_reasons: [],
             image_link: item.image
           }))
@@ -138,7 +138,7 @@ const Payment: React.FC = () => {
         }
 
         // Redirect to success page
-        navigate('/payment-result?status=success');
+        navigate('/payment-result?status=success', { state: { type } });
       } else {
         // Payment failed
         const paymentResult = {
@@ -159,7 +159,11 @@ const Payment: React.FC = () => {
   };
 
   const handleBackToConfirmation = () => {
-    navigate('/order-confirmation');
+    if (type === 'international') {
+      navigate('/shipment-confirmation', { state: { type, selectedAddressId } });
+    } else {
+      navigate('/order-confirmation', { state: { type } });
+    }
   };
 
   if (!orderData && type === 'local' || !shipmentData && type === 'international') {

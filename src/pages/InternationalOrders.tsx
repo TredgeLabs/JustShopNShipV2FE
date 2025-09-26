@@ -4,18 +4,15 @@ import { orderService, InternationalOrder } from '../api/services/orderService';
 import { getStatusConfig } from '../components/orders/OrderStatusBadge';
 import {
   Plane,
-  Package,
   ExternalLink,
   Truck,
   Eye,
-  MapPin,
   Calendar,
   DollarSign,
   Loader2,
   ChevronDown,
   ChevronUp,
   CheckCircle,
-  Clock,
   AlertTriangle
 } from 'lucide-react';
 
@@ -261,7 +258,7 @@ const InternationalOrders: React.FC = () => {
                       with a total weight of {getTotalWeight(order).toFixed(1)} kg.
                     </p>
                     <div className="mt-2 space-y-1">
-                      {order.international_order_items.map((item, index) => (
+                      {order.international_order_items.map((item) => (
                         <div key={item.id} className="text-xs text-blue-700">
                           Vault Item ID: {item.vault_item_id}
                         </div>

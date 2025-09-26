@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { ORDER_STATUSES } from '../api/services/orderService';
 
 interface VaultItem {
   id: string;
@@ -143,7 +144,7 @@ const MyVault: React.FC = () => {
           storage_cost: storageCost,
           platform_fee: platformFee,
           total_cost: totalCost,
-          shipping_status: 'pending'
+          shipping_status: ORDER_STATUSES.pending
         },
         vaultItemIds: selectedItems.map(item => parseInt(item.id.replace('VI-', ''))) // Extract numeric IDs
       };
@@ -325,7 +326,7 @@ const MyVault: React.FC = () => {
               {/* Item Header */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                  {(item.status !== 'in_transit') && <button
+                  {(item.status !== ORDER_STATUSES.in_transit) && <button
                     onClick={() => handleItemSelection(item.id)}
                     className="flex items-center space-x-2"
                   >

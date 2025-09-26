@@ -23,7 +23,6 @@ interface OrderData {
 
 const AddressSelectionPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [addresses, setAddresses] = useState<AddressApi[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number>();
   const [isLoading, setIsLoading] = useState(true);
@@ -97,7 +96,7 @@ const AddressSelectionPage: React.FC = () => {
   };
 
   const handleBackToCart = () => {
-    navigate('/create-order');
+    navigate('/my-vault');
   };
 
   const getAddressIcon = (title: string) => {
@@ -140,7 +139,7 @@ const AddressSelectionPage: React.FC = () => {
             className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Cart</span>
+            <span>Back to My Vault</span>
           </button>
 
           <div className="flex items-center space-x-3 mb-4">

@@ -117,7 +117,7 @@ const VaultEntry: React.FC = () => {
     }));
   };
 
-  const handleItemDetailsChange = (field: keyof VaultItemDetails, value: any) => {
+  const handleItemDetailsChange = (field: keyof VaultItemDetails, value: string) => {
     setVaultItemDetails(prev => ({
       ...prev,
       [field]: value
@@ -173,8 +173,8 @@ const VaultEntry: React.FC = () => {
           images: []
         });
         setSelectedTransitItem(null);
-
-        setTimeout(() => setSuccess(''), 5000);
+        alert("Item entered in vault successfully!");
+        handleVaultIdSubmit();
       } else {
         setError('Failed to enter item in vault');
       }

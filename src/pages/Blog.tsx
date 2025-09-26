@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BookOpen, 
-  Calendar, 
-  User, 
-  Clock, 
-  ArrowRight, 
-  Search, 
-  Tag,
+import {
+  BookOpen,
+  Calendar,
+  User,
+  Clock,
+  ArrowRight,
+  Search,
   Loader2,
   Eye
 } from 'lucide-react';
@@ -295,8 +294,8 @@ Ready to start? Create your account today and join thousands of satisfied custom
 
   const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -312,7 +311,7 @@ Ready to start? Create your account today and join thousands of satisfied custom
   };
 
   const formatCategoryName = (category: string) => {
-    return category.split('-').map(word => 
+    return category.split('-').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };

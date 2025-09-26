@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  Map, 
-  CheckCircle, 
-  ArrowRight, 
-  User, 
-  ShoppingCart, 
-  Package, 
-  Plane, 
+import {
+  Map,
+  CheckCircle,
+  User,
+  ShoppingCart,
+  Package,
+  Plane,
   CreditCard,
   AlertCircle,
   Info,
@@ -134,8 +133,8 @@ const Guide: React.FC = () => {
   ]);
 
   const toggleStep = (stepId: string) => {
-    setSteps(prev => prev.map(step => 
-      step.id === stepId 
+    setSteps(prev => prev.map(step =>
+      step.id === stepId
         ? { ...step, isExpanded: !step.isExpanded }
         : step
     ));
@@ -159,7 +158,7 @@ const Guide: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">Your Complete Guide</h1>
           </div>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Follow this step-by-step guide to master international shopping with JustShopAndShip. 
+            Follow this step-by-step guide to master international shopping with JustShopAndShip.
             From account creation to receiving your packages, we'll walk you through everything.
           </p>
         </div>
@@ -307,7 +306,7 @@ const Guide: React.FC = () => {
         <div className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-white text-center">
           <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
           <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-            Join thousands of satisfied customers who are already saving money on international shipping. 
+            Join thousands of satisfied customers who are already saving money on international shipping.
             Create your account today and get your personal vault address in minutes!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

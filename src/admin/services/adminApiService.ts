@@ -294,19 +294,6 @@ class AdminApiService {
     }
   }
 
-  async enterVaultItem(vaultId: string, itemData: any): Promise<ApiResponse<void>> {
-    // This would use the addVaultItem method above
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: undefined,
-          message: 'Item entered in vault successfully'
-        });
-      }, 1500);
-    });
-  }
-
   async getShippingOrderDetails(shippingOrderId: string): Promise<ApiResponse<any>> {
     try {
       const response = await fetch(`${this.baseUrl}/international-orders/${shippingOrderId}`, {

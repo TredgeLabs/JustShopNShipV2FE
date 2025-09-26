@@ -5,8 +5,6 @@ import {
   CheckCircle,
   XCircle,
   User,
-  Calendar,
-  DollarSign,
   Package,
   AlertCircle,
   ExternalLink,

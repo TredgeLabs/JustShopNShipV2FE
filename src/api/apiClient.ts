@@ -1,4 +1,4 @@
-import { API_CONFIG, DEFAULT_HEADERS, getAuthHeaders, ApiResponse, ApiError } from './config';
+import { API_CONFIG, getAuthHeaders, ApiResponse } from './config';
 
 // Custom error class for API errors
 export class ApiClientError extends Error {
@@ -131,7 +131,7 @@ class ApiClient {
         );
       }
 
-     return { success: true, data: responseData };
+      return { success: true, data: responseData };
     } catch (error) {
       if (error instanceof ApiClientError) {
         throw error;

@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  DollarSign, 
-  Package, 
-  Zap, 
-  Shield, 
-  CheckCircle, 
+import {
+  Package,
+  Zap,
+  CheckCircle,
   Calculator,
   Truck,
   Globe,
-  Clock,
-  Star
 } from 'lucide-react';
 
 const Pricing: React.FC = () => {
@@ -231,11 +227,10 @@ const Pricing: React.FC = () => {
                       ))}
                     </ul>
 
-                    <button className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
-                      service.popular 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                    }`}>
+                    <button className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${service.popular
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      }`}>
                       Select {service.name}
                     </button>
                   </div>

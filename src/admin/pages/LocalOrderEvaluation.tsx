@@ -124,11 +124,6 @@ Phone: +91 9876543210`;
     }
   };
 
-  const handleAddToVault = async (item: LocalOrderItem) => {
-    setSelectedVaultItem(item);
-    setShowVaultModal(true);
-  };
-
   const handleVaultSubmit = async (vaultId: string, itemData: VaultItemRequest) => {
     try {
       const response = await adminApiService.addVaultItem(vaultId, itemData);

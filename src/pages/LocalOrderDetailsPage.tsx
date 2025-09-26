@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit3, ExternalLink, Loader2, AlertCircle, RefreshCw, User, Calendar, DollarSign } from 'lucide-react';
-import { orderService, LocalOrder } from '../api/services/orderService';
+import { orderService, LocalOrder, ORDER_STATUSES } from '../api/services/orderService';
 import OrderStatusBadge from '../components/orders/OrderStatusBadge';
 import OrderItemCard from '../components/orders/OrderItemCard';
 
@@ -49,7 +49,7 @@ const LocalOrderDetailsPage: React.FC = () => {
   };
 
   const getDeliveredItemsCount = () => {
-    return order?.local_order_items?.filter(item => item.status !== 'denied' && item.status !== 'pending').length || 0;
+    return order?.local_order_items?.filter(item => item.status !== ORDER_STATUSES.denied && item.status !== ORDER_STATUSES.pending).length || 0;
   };
 
   const getTotalItemsCount = () => {
@@ -107,7 +107,7 @@ const LocalOrderDetailsPage: React.FC = () => {
                 <span>Refresh</span>
               </button>
 
-              {(order.order_status === 'denied') && <button
+              {(order.order_status === ORDER_STATUSES.denied) && <button
                 onClick={handleCorrectOrder}
                 className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
               >
@@ -228,7 +228,7 @@ const LocalOrderDetailsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {order.order_status !== 'created' && (
+                {order.order_status !== ORDER_STATUSES.created && (
                   <div className="flex items-center space-x-4">
                     <div className={`w-3 h-3 rounded-full ${order.order_status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'
                       }`}></div>
@@ -302,7 +302,7 @@ const LocalOrderDetailsPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
 
               <div className="space-y-3">
-                {(order.order_status === 'denied') && <button
+                {(order.order_status === ORDER_STATUSES.denied) && <button
                   onClick={handleCorrectOrder}
                   className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-colors"
                 >

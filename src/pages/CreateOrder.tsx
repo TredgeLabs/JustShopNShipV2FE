@@ -5,7 +5,6 @@ import {
   Plus,
   Minus,
   X,
-  ExternalLink,
   Package,
   Edit3,
   Save,
@@ -16,7 +15,6 @@ import {
 } from 'lucide-react';
 import { inventoryService } from '../api/services/inventoryService';
 import { productService, ProductDetailsResponse } from '../api/services/userService';
-import { orderService, CreateLocalOrderRequest } from '../api/services/orderService';
 
 interface Product {
   id: string;
@@ -50,6 +48,9 @@ const CreateOrder: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
+  const [touched, setTouched] = useState(false);
+  const isInvalid = touched && (!scrapedProduct?.price || scrapedProduct.price === 0);
 
   // Mock inventory data - replace with actual API call
   useEffect(() => {
@@ -68,6 +69,10 @@ const CreateOrder: React.FC = () => {
             inStock: item.is_active && item.quantity > 0
           }));
           setInventoryItems(items);
+          const savedOrderData = localStorage.getItem('orderData');
+          if (savedOrderData) {
+            setCart(JSON.parse(savedOrderData).items || []);
+          }
         }
       } catch (err) {
         setError(`Failed to load inventory items. ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -113,6 +118,10 @@ const CreateOrder: React.FC = () => {
 
   const addScrapedToCart = () => {
     if (!scrapedProduct) return;
+    if (scrapedProduct.price === undefined || !scrapedProduct?.price || scrapedProduct.price === 0) {
+      setTouched(true);
+      return;
+    }
 
     const newProduct: Product = {
       id: Date.now().toString(),
@@ -160,6 +169,8 @@ const CreateOrder: React.FC = () => {
   };
 
   const toggleEdit = (id: string) => {
+    const currentItem = cart.find(item => item.id === id);
+    setIsEditing(!!currentItem?.isEditing);
     setCart(prev => prev.map(item =>
       item.id === id ? { ...item, isEditing: !item.isEditing } : item
     ));
@@ -194,69 +205,6 @@ const CreateOrder: React.FC = () => {
 
     localStorage.setItem('orderData', JSON.stringify(orderData));
     navigate('/order-confirmation');
-  };
-
-  const createLocalOrder = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-
-      const totalPrice = getTotalPrice();
-      const platformFee = Math.round(totalPrice * 0.05); // 5% platform fee
-
-      const orderRequest: CreateLocalOrderRequest = {
-        orderData: {
-          order_status: 'created',
-          payment_status: 'pending',
-          total_price: totalPrice,
-          platform_fee: platformFee,
-          admin_notes: `Order created on ${new Date().toLocaleDateString()} with ${cart.length} items`
-        },
-        items: cart.map(item => ({
-          source_type: 'manual_link',
-          product_name: item.name,
-          product_link: item.url,
-          color: item.color,
-          size: item.size,
-          quantity: item.quantity,
-          price: item.price,
-          final_price: item.price,
-          status: 'pending',
-          deny_reasons: [],
-          image_link: item.image
-        }))
-      };
-
-      const response = await orderService.createLocalOrder(orderRequest);
-
-      if (response.success) {
-        setSuccess('Order created successfully!');
-
-        // Store order data for confirmation page
-        const orderData = {
-          orderId: response.data.id,
-          items: cart,
-          totalPrice: totalPrice,
-          totalWeight: getTotalWeight(),
-          totalItems: getTotalItems(),
-          orderDate: new Date().toISOString()
-        };
-
-        localStorage.setItem('orderData', JSON.stringify(orderData));
-
-        // Clear cart
-        setCart([]);
-
-        // Navigate to confirmation
-        navigate('/order-confirmation');
-      } else {
-        setError('Failed to create order. Please try again.');
-      }
-    } catch (err) {
-      setError('Failed to create order. Please check your connection and try again.');
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -377,23 +325,35 @@ const CreateOrder: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Price (₹)
+                        </label>
                         <input
                           type="number"
                           min="0"
-                          value={scrapedProduct.price}
-                          onChange={(e) =>
+                          value={scrapedProduct.price ?? ""}
+                          onChange={(e) => {
+                            setTouched(true); // mark as interacted
+                            const value = e.target.value;
                             setScrapedProduct((prev) => ({
                               ...prev,
-                              price: parseFloat(e.target.value), // fallback to 0 if empty
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-             [&::-webkit-outer-spin-button]:appearance-none 
-             [&::-webkit-inner-spin-button]:appearance-none 
-             [appearance:textfield]"
+                              price: parseFloat(value),
+                            }));
+                          }}
+                          onBlur={() => setTouched(true)} // mark touched on blur too
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          [&::-webkit-outer-spin-button]:appearance-none 
+          [&::-webkit-inner-spin-button]:appearance-none 
+          [appearance:textfield] 
+          ${isInvalid ? "border-red-500" : "border-gray-300"}`}
                         />
 
+                        {/* ✅ Inline error only if touched */}
+                        {isInvalid && (
+                          <p className="mt-1 text-sm text-red-600">
+                            Price must be greater than 0
+                          </p>
+                        )}
                       </div>
                     </div>
                     <button
@@ -467,7 +427,7 @@ const CreateOrder: React.FC = () => {
                 </div>
 
                 {/* Proceed Button */}
-                <button
+                {isEditing && <button
                   onClick={handleProceedToConfirmation}
                   disabled={isLoading}
                   className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
@@ -483,7 +443,7 @@ const CreateOrder: React.FC = () => {
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
-                </button>
+                </button>}
               </div>
             )}
           </div>

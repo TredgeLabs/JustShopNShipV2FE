@@ -2,7 +2,7 @@ import apiClient from '../apiClient';
 import { ApiResponse } from '../config';
 
 // Order status enum
-export type OrderStatus = 'created' | 'pending' | 'processing' | 'completed' | 'shipped' | 'delivered' | 'cancelled' | 'denied';
+export const ORDER_STATUSES = { created: 'created', under_review: 'under_review', accepted: 'accepted', denied: 'denied', cancelled: 'cancelled', delivered: 'delivered', pending: 'pending', in_transit: 'in_transit', in_vault: 'in_vault', received: 'received', damaged: 'damaged', returned: 'returned', ready_to_ship: 'ready_to_ship', shipped: 'shipped' } as const;
 
 // Local Order Item interface (matching backend structure)
 export interface LocalOrderItem {

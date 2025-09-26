@@ -66,9 +66,9 @@ const VaultSearchPage: React.FC = () => {
         // Mock vault user data based on response
         const mockVaultUser: VaultUser = {
           vaultId: response.data.vaultId || searchTerm,
-          userName: response.data.userName || 'John Doe',
-          userEmail: response.data.userEmail || 'john@example.com',
-          userPhone: response.data.userPhone || '+91 9876543210',
+          userName: response.data.userName || '',
+          userEmail: response.data.userEmail || '',
+          userPhone: response.data.userPhone || '',
           totalItems: response.data.transitItems?.length || 0,
           totalWeight: response.data.transitItems?.reduce((sum: number, item: any) => sum + (item.weight || 0.5), 0) || 0
         };

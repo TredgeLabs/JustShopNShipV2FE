@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Package, Truck, Plane, CheckCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import { getStatusConfig } from '../components/orders/OrderStatusBadge';
-import { orderService, LocalOrder, InternationalOrder } from '../api/services/orderService';
+import { orderService, LocalOrder, InternationalOrder, ORDER_STATUSES } from '../api/services/orderService';
+import { UserSummary } from '../api/services/userService';
 
-const EnhancedOrderManagement: React.FC = () => {
+interface Props {
+  userSummary: UserSummary | null;
+}
+
+const EnhancedOrderManagement: React.FC<Props> = ({ userSummary }) => {
   const navigate = useNavigate();
   const [localOrders, setLocalOrders] = useState<LocalOrder[]>([]);
   const [internationalOrders, setInternationalOrders] = useState<InternationalOrder[]>([]);
@@ -40,9 +45,9 @@ const EnhancedOrderManagement: React.FC = () => {
   };
 
   const handleStatusClick = (status: string) => {
-    if (status === 'created' || status === 'pending' || status === 'received') {
+    if (status === ORDER_STATUSES.created || status === ORDER_STATUSES.pending || status === ORDER_STATUSES.received) {
       navigate('/domestic-orders');
-    } else if (status === 'shipped' || status === 'delivered') {
+    } else if (status === ORDER_STATUSES.shipped || status === ORDER_STATUSES.delivered) {
       navigate('/international-orders');
     }
   };
@@ -61,19 +66,17 @@ const EnhancedOrderManagement: React.FC = () => {
 
   const getOrderCounts = () => {
     const pendingLocal = localOrders.filter(order =>
-      order.order_status === 'created' || order.order_status === 'pending' || order.order_status === 'denied' || order.order_status === 'accepted'
+      order.order_status === ORDER_STATUSES.created || order.order_status === ORDER_STATUSES.pending || order.order_status === ORDER_STATUSES.denied || order.order_status === ORDER_STATUSES.accepted
     ).length;
 
-    const receivedLocal = localOrders.filter(order =>
-      order.local_order_items?.some(item => item.status === 'in_vault')
-    ).length;
+    const receivedLocal = userSummary?.vaultCount
 
     const shippedInternational = internationalOrders.filter(order =>
-      order.shipping_status === 'shipped' || order.shipping_status === 'in_transit'
+      order.shipping_status === ORDER_STATUSES.shipped || order.shipping_status === ORDER_STATUSES.in_transit
     ).length;
 
     const deliveredInternational = internationalOrders.filter(order =>
-      order.shipping_status === 'delivered'
+      order.shipping_status === ORDER_STATUSES.delivered
     ).length;
 
     return { pendingLocal, receivedLocal, shippedInternational, deliveredInternational };

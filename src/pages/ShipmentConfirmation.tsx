@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { orderService, CreateInternationalOrderRequest } from '../api/services/orderService';
+import { CreateInternationalOrderRequest } from '../api/services/orderService';
 import {
   Package,
   ArrowLeft,
@@ -45,7 +45,6 @@ const ShipmentConfirmation: React.FC = () => {
   // Shipping calculation constants
   const SHIPPING_RATE_PER_KG = 18; // USD per kg
   const PLATFORM_FEE_PERCENTAGE = 0.05; // 5%
-  const INSURANCE_RATE = 0.02; // 2% of item value
   const OVER_STORAGE_RATE_PER_DAY = 2; // USD per day per item
 
   useEffect(() => {
@@ -76,10 +75,10 @@ const ShipmentConfirmation: React.FC = () => {
     return Math.round(weight * SHIPPING_RATE_PER_KG * 100) / 100;
   };
 
-  const getInsuranceCost = () => {
-    const value = getTotalValue();
-    return Math.round(value * INSURANCE_RATE * 100) / 100;
-  };
+  // const getInsuranceCost = () => {
+  //   const value = getTotalValue();
+  //   return Math.round(value * INSURANCE_RATE * 100) / 100;
+  // };
 
   const getPlatformFee = () => {
     const shippingCost = getShippingCost();
@@ -98,7 +97,7 @@ const ShipmentConfirmation: React.FC = () => {
   };
 
   const getTotalCost = () => {
-    return getShippingCost() + getInsuranceCost() + getPlatformFee() + getOverStorageCost();
+    return getShippingCost() + getPlatformFee() + getOverStorageCost();
   };
 
   const handleProceedToPay = () => {
@@ -112,7 +111,7 @@ const ShipmentConfirmation: React.FC = () => {
   };
 
   const handleBackToVault = () => {
-    navigate('/my-vault');
+    navigate('/address-selection');
   };
 
   const formatCurrency = (amount: number, currency: string = 'INR') => {
@@ -162,7 +161,7 @@ const ShipmentConfirmation: React.FC = () => {
             className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to My Vault</span>
+            <span>Back to Address Selection</span>
           </button>
 
           <div className="flex items-center space-x-3 mb-4">
@@ -282,13 +281,13 @@ const ShipmentConfirmation: React.FC = () => {
                 </div>
 
                 {/* Insurance */}
-                <div className="flex justify-between items-center">
+                {/* <div className="flex justify-between items-center">
                   <div>
                     <span className="text-gray-700">Insurance</span>
                     <p className="text-xs text-gray-500">2% of item value</p>
                   </div>
                   <span className="font-semibold text-gray-900">{formatCurrency(getInsuranceCost())}</span>
-                </div>
+                </div> */}
 
                 {/* Platform Fee */}
                 <div className="flex justify-between items-center">

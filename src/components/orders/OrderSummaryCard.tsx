@@ -21,7 +21,6 @@ const OrderSummaryCard: React.FC<OrderSummaryProps> = ({
   orderDate,
   totalItems,
   totalAmount,
-  status,
   destination,
   carrier,
   trackingNumber,

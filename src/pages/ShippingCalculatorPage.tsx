@@ -52,7 +52,6 @@ const ShippingCalculatorPage: React.FC = () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const weight = parseFloat(formData.weight);
-    const value = parseFloat(formData.value) || 100;
 
     // Mock calculation logic
     const baseRates = {

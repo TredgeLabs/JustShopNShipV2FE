@@ -239,15 +239,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  const getMembershipColor = (tier: string) => {
-    switch (tier.toLowerCase()) {
-      case 'platinum': return 'bg-purple-100 text-purple-800';
-      case 'gold': return 'bg-yellow-100 text-yellow-800';
-      case 'silver': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-blue-100 text-blue-800';
-    }
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',

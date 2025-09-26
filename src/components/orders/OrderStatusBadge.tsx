@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle, Archive, Package, Ban, AlertCircle, Clock, Truck, AlertTriangle, XCircle, RotateCcw } from 'lucide-react';
+import { ORDER_STATUSES } from '../../api/services/orderService';
 
 interface OrderStatusBadgeProps {
   status: string;
@@ -20,35 +21,34 @@ const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({ status, type = 'loc
 };
 
 export const getStatusConfig = (status: string, type: string) => {
-  //'created', 'under_review', 'accepted', 'denied', 'cancelled', 'delivered'
   if (type === 'local') {
     switch (status) {
-      case 'created':
-      case 'under_review':
+      case ORDER_STATUSES.created:
+      case ORDER_STATUSES.under_review:
         return {
           icon: Clock,
           text: 'Order Placed',
           color: 'bg-yellow-100 text-yellow-800',
         };
-      case 'accepted':
+      case ORDER_STATUSES.accepted:
         return {
           icon: CheckCircle,
           text: 'Accepted',
           color: 'bg-green-100 text-green-800',
         };
-      case 'denied':
+      case ORDER_STATUSES.denied:
         return {
           icon: XCircle,
           text: 'Denied',
           color: 'bg-red-100 text-red-800',
         };
-      case 'cancelled':
+      case ORDER_STATUSES.cancelled:
         return {
           icon: Ban,
           text: 'Cancelled',
           color: 'bg-red-200 text-red-900',
         };
-      case 'delivered':
+      case ORDER_STATUSES.delivered:
         return {
           icon: CheckCircle,
           text: 'Delivered',
@@ -62,33 +62,32 @@ export const getStatusConfig = (status: string, type: string) => {
         };
     }
   } else if (type === 'local_item') {
-    //ENUM('pending', 'accepted', 'denied', 'in_transit', 'in_vault')
     switch (status) {
-      case 'pending':
+      case ORDER_STATUSES.pending:
         return {
           icon: Clock,
           text: 'Pending',
           color: 'bg-yellow-100 text-yellow-800',
         };
-      case 'accepted':
+      case ORDER_STATUSES.accepted:
         return {
           icon: Truck,
           text: 'In Transit',
           color: 'bg-blue-100 text-blue-800',
         };
-      case 'denied':
+      case ORDER_STATUSES.denied:
         return {
           icon: XCircle,
           text: 'Denied',
           color: 'bg-red-100 text-red-800',
         };
-      case 'in_transit':
+      case ORDER_STATUSES.in_transit:
         return {
           icon: Truck,
           text: 'In Transit',
           color: 'bg-blue-100 text-blue-800',
         };
-      case 'in_vault':
+      case ORDER_STATUSES.in_vault:
         return {
           icon: Archive,
           text: 'In Vault',
@@ -102,33 +101,32 @@ export const getStatusConfig = (status: string, type: string) => {
         };
     }
   } else if (type === 'vault_item') {
-    //ENUM('received', 'damaged', 'returned', 'in_transit', 'ready_to_ship')
     switch (status) {
-      case 'received':
+      case ORDER_STATUSES.received:
         return {
           icon: Package,
           text: 'Received',
           color: 'bg-green-100 text-green-800',
         };
-      case 'damaged':
+      case ORDER_STATUSES.damaged:
         return {
           icon: AlertTriangle,
           text: 'Damaged',
           color: 'bg-red-100 text-red-800',
         };
-      case 'returned':
+      case ORDER_STATUSES.returned:
         return {
           icon: RotateCcw,
           text: 'Returned',
           color: 'bg-orange-100 text-orange-800',
         };
-      case 'in_transit':
+      case ORDER_STATUSES.in_transit:
         return {
           icon: Truck,
           text: 'In Transit',
           color: 'bg-blue-100 text-blue-800',
         };
-      case 'ready_to_ship':
+      case ORDER_STATUSES.ready_to_ship:
         return {
           icon: Package,
           text: 'Ready To Ship',
@@ -142,33 +140,26 @@ export const getStatusConfig = (status: string, type: string) => {
         };
     }
   } else {
-    // International order statuses ('pending', 'shipped', 'delivered', 'cancelled')
     switch (status) {
-      case 'shipped':
+      case ORDER_STATUSES.shipped:
         return {
           icon: Truck,
           text: 'Shipped',
           color: 'bg-blue-100 text-blue-800',
         };
-      case 'at_customs':
-        return {
-          icon: AlertTriangle,
-          text: 'At Customs',
-          color: 'bg-orange-100 text-orange-800',
-        };
-      case 'delivered':
+      case ORDER_STATUSES.delivered:
         return {
           icon: CheckCircle,
           text: 'Delivered',
           color: 'bg-green-100 text-green-800',
         };
-      case 'pending':
+      case ORDER_STATUSES.pending:
         return {
           icon: Clock,
-          text: 'Pending',
+          text: 'Packing',
           color: 'bg-yellow-100 text-yellow-800',
         };
-      case 'cancelled':
+      case ORDER_STATUSES.cancelled:
         return {
           icon: XCircle,
           text: 'Cancelled',

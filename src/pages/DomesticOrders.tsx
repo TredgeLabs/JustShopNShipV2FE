@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { orderService, LocalOrder } from '../api/services/orderService';
+import { orderService, LocalOrder, ORDER_STATUSES } from '../api/services/orderService';
 import { getStatusConfig } from '../components/orders/OrderStatusBadge';
 import {
   ShoppingCart,
@@ -76,7 +76,7 @@ const DomesticOrders: React.FC = () => {
   };
 
   const getDeliveredItemsCount = (order: LocalOrder) => {
-    return order.local_order_items?.filter(item => item.status !== 'denied' && item.status !== 'pending').length || 0;
+    return order.local_order_items?.filter(item => item.status !== ORDER_STATUSES.denied && item.status !== ORDER_STATUSES.pending).length || 0;
   };
 
   const getTotalItemsCount = (order: LocalOrder) => {
@@ -154,7 +154,7 @@ const DomesticOrders: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Pending</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {orders.filter(order => order.order_status === 'created' || order.order_status === 'pending').length}
+                  {orders.filter(order => order.order_status === ORDER_STATUSES.created || order.order_status === ORDER_STATUSES.pending).length}
                 </p>
               </div>
             </div>
@@ -166,7 +166,7 @@ const DomesticOrders: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Denied Items</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {orders.filter(order => order.order_status === 'denied').length}
+                  {orders.filter(order => order.order_status === ORDER_STATUSES.denied).length}
                 </p>
               </div>
             </div>
@@ -219,7 +219,7 @@ const DomesticOrders: React.FC = () => {
                 <div className="p-6">
                   <div className="mb-4 flex items-center justify-between">
                     <h4 className="text-lg font-medium text-gray-900">Order Items</h4>
-                    {(order.order_status === 'denied') && <button
+                    {(order.order_status === ORDER_STATUSES.denied) && <button
                       onClick={() => handleCorrectOrder(order.id.toString())}
                       className="flex items-center space-x-2 px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-colors"
                     >

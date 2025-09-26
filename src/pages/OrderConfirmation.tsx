@@ -8,7 +8,6 @@ import {
   AlertCircle,
   FileText,
   CreditCard,
-  RotateCcw
 } from 'lucide-react';
 
 interface CartItem {
@@ -274,13 +273,13 @@ const OrderConfirmation: React.FC = () => {
                 <ArrowRight className="h-4 w-4" />
               </button>
 
-              <button
+              {/* <button
                 onClick={handleProceedToRefund}
                 className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium rounded-lg transition-colors"
               >
                 <RotateCcw className="h-4 w-4" />
                 <span>Request Refund Instead</span>
-              </button>
+              </button> */}
             </div>
 
             {/* Important Notes */}

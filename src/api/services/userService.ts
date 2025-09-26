@@ -131,6 +131,7 @@ export interface UserSummary {
   city: string;
   country: string;
   mobileNumber: string;
+  vaultCount: number;
 }
 
 export interface UserSummaryResponse {

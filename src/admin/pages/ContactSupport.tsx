@@ -6,8 +6,7 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  Mail,
-  Phone
+  Mail
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import StatusBadge from '../components/StatusBadge';
