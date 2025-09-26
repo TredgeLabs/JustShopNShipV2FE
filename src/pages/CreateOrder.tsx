@@ -166,6 +166,12 @@ const CreateOrder: React.FC = () => {
 
   const removeFromCart = (id: string) => {
     setCart(prev => prev.filter(item => item.id !== id));
+
+    const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
+    if (orderData.items) {
+      orderData.items = (orderData.items as Product[]).filter((item: Product) => item.id !== id);
+    }
+    localStorage.setItem('orderData', JSON.stringify(orderData));
   };
 
   const toggleEdit = (id: string) => {

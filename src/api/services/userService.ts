@@ -1,4 +1,5 @@
 // Vault items API response type
+import { LocalOrderItem } from './orderService';
 export interface VaultItemApi {
   id: number;
   vault_id: number;
@@ -17,6 +18,7 @@ export interface VaultItemApi {
   is_ready_to_ship: boolean;
   createdAt: string;
   updatedAt: string;
+  order_item?: LocalOrderItem | null;
 }
 
 export interface VaultItemsApiResponse {

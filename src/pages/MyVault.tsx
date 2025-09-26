@@ -62,8 +62,8 @@ const MyVault: React.FC = () => {
               id: `VI-${item.id}`,
               name: item.name,
               images: item.image_urls.map((url: string) => url.startsWith('http') ? url : `http://localhost:4000${url}`),
-              productLink: '#', // No product link in API, set to # or use item.description if needed
-              price: 0, // No price in API, set to 0 or use item.description if needed
+              productLink: item.order_item?.product_link ?? "#",
+              price: item.order_item?.price ?? 0,
               weight: item.weight_gm ? item.weight_gm / 1000 : 0,
               status: (item.status) as VaultItem['status'],
               receivedDate: item.received_date,
@@ -71,9 +71,9 @@ const MyVault: React.FC = () => {
               storageCost: 0, // No storage cost in API, set to 0 or calculate if needed
               isReturnable: item.is_returnable,
               isSelected: false,
-              color: '',
-              size: '',
-              quantity: 1
+              color: item.order_item?.color || '',
+              size: item.order_item?.size || '',
+              quantity: item.order_item?.quantity || 1
             };
           });
           setVaultCode(response.vaultCode);

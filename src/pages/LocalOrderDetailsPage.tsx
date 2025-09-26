@@ -4,6 +4,7 @@ import { ArrowLeft, Edit3, ExternalLink, Loader2, AlertCircle, RefreshCw, User, 
 import { orderService, LocalOrder, ORDER_STATUSES } from '../api/services/orderService';
 import OrderStatusBadge from '../components/orders/OrderStatusBadge';
 import OrderItemCard from '../components/orders/OrderItemCard';
+import { getStatusConfig } from '../components/orders/OrderStatusBadge';
 
 
 const LocalOrderDetailsPage: React.FC = () => {
@@ -271,23 +272,23 @@ const LocalOrderDetailsPage: React.FC = () => {
             {/* Order Information */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Information</h3>
-              
+
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-gray-600">Order Status</p>
-                  <p className="font-medium capitalize">{order.order_status}</p>
+                  <p className="font-medium capitalize">{getStatusConfig(order.order_status, 'local').text}</p>
                 </div>
-                
+
                 <div>
                   <p className="text-sm text-gray-600">Payment Status</p>
                   <p className="font-medium capitalize">{order.payment_status}</p>
                 </div>
-                
+
                 <div>
                   <p className="text-sm text-gray-600">Last Updated</p>
                   <p className="font-medium">{new Date(order.updatedAt).toLocaleDateString()}</p>
                 </div>
-                
+
                 {order.admin_notes && (
                   <div>
                     <p className="text-sm text-gray-600">Admin Notes</p>

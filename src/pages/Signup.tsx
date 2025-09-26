@@ -156,7 +156,6 @@ const Signup: React.FC = () => {
         setSuccess('Registration successful! Please verify your mobile number.');
         setCurrentStep('otp');
         setOtpTimer(30);
-        setCanResendOtp(false);
       } else {
         setError(response.message || 'Registration failed. Please try again.');
       }
