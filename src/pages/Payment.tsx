@@ -11,6 +11,7 @@ import {
 
 import { orderService, CreateLocalOrderRequest, ORDER_STATUSES } from '../api/services/orderService';
 import { ShipmentData } from './ShipmentConfirmation';
+import { inventoryService } from '../api/services/inventoryService';
 
 interface OrderData {
   items: any[];
@@ -114,7 +115,8 @@ const Payment: React.FC = () => {
             final_price: item.price,
             status: item.status === 'denied' ? ORDER_STATUSES.pending : item.status,
             deny_reasons: [],
-            image_link: item.image
+            image_link: item.image,
+            inventory_item_id: item.inventory_item_id ? item.inventory_item_id : null
           }))
         };
         if (flowType === 'correction' && orderId) {

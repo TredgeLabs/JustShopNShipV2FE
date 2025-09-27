@@ -17,7 +17,7 @@ import { inventoryService } from '../api/services/inventoryService';
 import { productService, ProductDetailsResponse } from '../api/services/userService';
 
 interface Product {
-  id: string;
+  id?: string;
   name: string;
   color: string;
   size: string;
@@ -26,6 +26,7 @@ interface Product {
   url: string;
   image?: string;
   isEditing?: boolean;
+  inventory_item_id?: string; // For inventory items
 }
 
 interface InventoryItem {
@@ -143,14 +144,15 @@ const CreateOrder: React.FC = () => {
 
   const addInventoryToCart = (item: InventoryItem, selectedSize: string, selectedColor: string, quantity: number) => {
     const newProduct: Product = {
-      id: `inv-${item.id}-${Date.now()}`,
+      // id: item.id,
       name: item.name,
       color: selectedColor,
       size: selectedSize,
       quantity,
       price: item.price,
       url: `/inventory/${item.id}`,
-      image: item.images[0]
+      image: item.images[0],
+      inventory_item_id: item.id
     };
 
     setCart(prev => [...prev, newProduct]);

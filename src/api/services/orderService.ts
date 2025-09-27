@@ -117,6 +117,7 @@ export interface CreateLocalOrderRequest {
     status: string;
     deny_reasons?: number[];
     image_link?: string;
+    inventory_item_id?: string | null;
   }>;
 }
 
