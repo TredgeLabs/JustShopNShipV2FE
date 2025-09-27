@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   CheckCircle,
   Package,
@@ -24,6 +24,9 @@ interface CartItem {
 
 const OrderConfirmation: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { flowType?: string; orderId?: string };
+  const { flowType, orderId } = state || {};
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,16 +76,15 @@ const OrderConfirmation: React.FC = () => {
       return;
     }
 
-    navigate('/payment', { state: { type: 'local' } });
-  };
-
-  const handleProceedToRefund = () => {
-    // TODO: Implement refund process
-    alert('Refund process will be implemented. This is a placeholder for the refund flow.');
+    navigate('/payment', { state: { flowType, type: 'local', orderId } });
   };
 
   const handleBackToCart = () => {
-    navigate('/create-order');
+    if (flowType === 'correction') {
+      navigate(`/order-correction/${orderId}`);
+    } else {
+      navigate('/create-order');
+    }
   };
 
   if (isLoading) {

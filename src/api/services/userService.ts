@@ -101,6 +101,12 @@ export interface AddressApiResponse {
   addresses: AddressApi[];
 }
 
+export interface RegisterResponse {
+  success: boolean;
+  user_id: string;
+  vault_code: string
+}
+
 export interface AddressApi {
   id: number;
   user_id: number;
@@ -353,7 +359,7 @@ class UserService {
   /**
    * User registration
    */
-  async register(userData: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
+  async register(userData: RegisterRequest): Promise<RegisterResponse> {
     try {
       const requestBody = {
         email: userData.email,
@@ -364,16 +370,16 @@ class UserService {
         phone_number: userData.phone,
         phone_country_code: userData.selectedCountry
       };
-      const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.REGISTER, requestBody);
-      
-      // Store tokens in localStorage
-      if (response.success && response.data) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
+      const response = await apiClient.post<RegisterResponse>(ENDPOINTS.AUTH.REGISTER, requestBody);
 
-      return response;
+      // Store tokens in localStorage
+      // if (response.success && response.data) {
+      //   localStorage.setItem('authToken', response.data.token);
+      //   localStorage.setItem('refreshToken', response.data.refreshToken);
+      //   localStorage.setItem('user', JSON.stringify(response.data.user));
+      // }
+
+      return response.data;
     } catch (error) {
       console.error('Error during registration:', error);
       throw error;

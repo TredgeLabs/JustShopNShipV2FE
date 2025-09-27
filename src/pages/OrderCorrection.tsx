@@ -7,7 +7,7 @@ import {
   DollarSign,
   Loader2,
 } from 'lucide-react';
-import { orderService, LocalOrder, LocalOrderItem } from '../api/services/orderService';
+import { orderService, LocalOrder, LocalOrderItem, Product } from '../api/services/orderService';
 import { DENY_REASONS } from '../admin/constants/adminConstants';
 
 const OrderCorrection: React.FC = () => {
@@ -132,28 +132,37 @@ const OrderCorrection: React.FC = () => {
     return currentTotal - orderData!.total_price;
   };
 
+  function convertLocalOrderItemsToProducts(
+    orderItems: LocalOrderItem[]
+  ): Product[] {
+    return orderItems.map(item => ({
+      id: String(item.id),
+      name: item.product_name,
+      color: item.color ?? '',
+      size: item.size ?? '',
+      quantity: item.quantity,
+      price: item.price,
+      url: item.product_link,
+      image: item.image_link ?? '',
+      status: item.status
+    }));
+  }
+
   /** -----------------------------
    * Confirm Correction
    * ----------------------------- */
   const handleConfirmCorrection = async () => {
     if (!orderData) return;
+    const products = convertLocalOrderItemsToProducts(orderData.local_order_items ?? []);
+    const orderData1 = {
+      items: products,
+      totalPrice: priceDifference,
+      totalItems: products.length,
+      orderDate: new Date().toISOString()
+    };
 
-    try {
-      setIsSaving(true);
-      setError('');
-
-      // Replace with actual service call:
-      // await orderService.submitOrderCorrection(orderId, orderData);
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      setSuccess('Order correction submitted successfully!');
-      setTimeout(() => navigate('/domestic-orders'), 2000);
-    } catch (err) {
-      setError('Failed to submit order correction. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
+    localStorage.setItem('orderData', JSON.stringify(orderData1));
+    navigate('/order-confirmation', { state: { flowType: 'correction', orderId: orderId } });
   };
 
   /** -----------------------------
@@ -239,7 +248,7 @@ const OrderCorrection: React.FC = () => {
                         <img
                           src={item.image_link}
                           alt={item.product_name}
-                          className="w-24 h-24 rounded-lg border"
+                          className="w-24 h-24 rounded-lg border object-cover"
                         />
                       )}
                       <div className="flex-1 space-y-4">
@@ -253,36 +262,52 @@ const OrderCorrection: React.FC = () => {
                             ))}
                           </div>
                         )}
-                        <h3 className="font-semibold">{item.product_name}</h3>
+
+                        {/* Product Name with Link */}
+                        <div className="space-y-1">
+                          <h3 className="font-semibold text-lg">{item.product_name}</h3>
+                          <a
+                            href={item.product_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                          >
+                            <span>View Original Product</span>
+                            <svg className="h-3 w-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="text-xs text-gray-500">Color</label>
+                            <label className="text-xs text-gray-500 font-medium">Color</label>
                             {item.isEditing ? (
                               <input
                                 type="text"
                                 value={item.color || ''}
                                 onChange={e => handleItemEdit(item.id, 'color', e.target.value)}
-                                className="w-full px-2 py-1 border rounded"
+                                className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             ) : (
-                              <p>{item.color}</p>
+                              <p className="text-gray-900">{item.color || '-'}</p>
                             )}
                           </div>
                           <div>
-                            <label className="text-xs text-gray-500">Size</label>
+                            <label className="text-xs text-gray-500 font-medium">Size</label>
                             {item.isEditing ? (
                               <input
                                 type="text"
                                 value={item.size || ''}
                                 onChange={e => handleItemEdit(item.id, 'size', e.target.value)}
-                                className="w-full px-2 py-1 border rounded"
+                                className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             ) : (
-                              <p>{item.size}</p>
+                              <p className="text-gray-900">{item.size || '-'}</p>
                             )}
                           </div>
                           <div>
-                            <label className="text-xs text-gray-500">Quantity</label>
+                            <label className="text-xs text-gray-500 font-medium">Quantity</label>
                             {item.isEditing ? (
                               <input
                                 type="number"
@@ -291,59 +316,61 @@ const OrderCorrection: React.FC = () => {
                                 onChange={e =>
                                   handleItemEdit(item.id, 'quantity', parseInt(e.target.value))
                                 }
-                                className="w-full px-2 py-1 border rounded"
+                                className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             ) : (
-                              <p>{item.quantity}</p>
+                              <p className="text-gray-900 font-medium">{item.quantity}</p>
                             )}
                           </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-500">Paid:</span>
-                            <p>₹{(item.price * item.quantity).toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Current:</span>
-                            <p>₹{(item.final_price * item.quantity).toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Difference:</span>
-                            <p
-                              className={
-                                (item.final_price * item.quantity) - (item.price * item.quantity) >
-                                  0
+
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500 block text-xs">Paid Amount</span>
+                              <p className="font-semibold text-gray-900">₹{(item.price * item.quantity).toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 block text-xs">Current Price</span>
+                              <p className="font-semibold text-gray-900">₹{(item.final_price * item.quantity).toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 block text-xs">Difference</span>
+                              <p
+                                className={`font-semibold ${(item.final_price * item.quantity) - (item.price * item.quantity) > 0
                                   ? 'text-red-600'
                                   : 'text-green-600'
-                              }
-                            >
-                              {(item.final_price * item.quantity) -
-                                (item.price * item.quantity) >
-                                0
-                                ? '+'
-                                : ''}
-                              ₹
-                              {(
-                                (item.final_price * item.quantity) -
-                                (item.price * item.quantity)
-                              ).toLocaleString()}
-                            </p>
+                                  }`}
+                              >
+                                {(item.final_price * item.quantity) -
+                                  (item.price * item.quantity) >
+                                  0
+                                  ? '+'
+                                  : ''}
+                                ₹
+                                {Math.abs(
+                                  (item.final_price * item.quantity) -
+                                  (item.price * item.quantity)
+                                ).toLocaleString()}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex space-x-3">
+
+                        {item.status === 'denied' && <div className="flex space-x-3 pt-2">
                           <button
                             onClick={() => toggleItemEdit(item.id)}
-                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
+                            className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm"
                           >
-                            {item.isEditing ? 'Save' : 'Edit'}
+                            {item.isEditing ? 'Save Changes' : 'Edit Item'}
                           </button>
                           <button
                             onClick={() => deleteItem(item.id)}
-                            className="px-3 py-1 bg-red-100 text-red-700 rounded"
+                            className="px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium text-sm"
                           >
-                            Remove
+                            Remove Item
                           </button>
-                        </div>
+                        </div>}
                       </div>
                     </div>
                   </div>
@@ -436,8 +463,7 @@ const OrderCorrection: React.FC = () => {
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="flex items-center font-semibold mb-4">
-                <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-                Price Summary
+                Price Summary (₹)
               </h2>
               <div className="flex justify-between">
                 <span>Amount Paid:</span>

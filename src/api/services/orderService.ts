@@ -27,6 +27,19 @@ export interface LocalOrderItem {
   errorMessage?: string; // For frontend use
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  price: number;
+  url: string;
+  image?: string;
+  status?: string;
+  isEditing?: boolean;
+}
+
 // Local Order interface (matching backend structure)
 export interface LocalOrder {
   id: number;
@@ -47,6 +60,8 @@ export interface InternationalOrderItem {
   id: number;
   international_order_id: number;
   name: string;
+  description: string;
+  weight: number;
   imageUrls?: string[];
   color?: string;
   size?: string;
@@ -69,6 +84,8 @@ export interface InternationalOrder {
   shipment_weight_gm: number;
   shipping_cost: string;
   storage_cost: string;
+  actualDelivery?: string;
+  estimatedDelivery: string;
   platform_fee: string;
   total_cost: string;
   tracking_id?: string;
@@ -240,7 +257,7 @@ class OrderService {
   /**
    * Update order information
    */
-  async updateOrder(orderId: string, updateData: Partial<LocalOrder>): Promise<ApiResponse<LocalOrder>> {
+  async updateOrder(orderId: string, updateData: CreateLocalOrderRequest): Promise<ApiResponse<LocalOrder>> {
     try {
       const response = await apiClient.put<LocalOrder>(`local-orders/${orderId}`, updateData);
       return response;

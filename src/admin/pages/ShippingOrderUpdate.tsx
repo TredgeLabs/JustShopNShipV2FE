@@ -83,23 +83,27 @@ const ShippingOrderUpdate: React.FC = () => {
 
   const handleMarkDelivered = async () => {
     if (!orderDetails) return;
+
     try {
-      setIsSaving(true);
-      setError('');
+      const confirmed = window.confirm('Are you sure you want to mark this order as completed?');
+      if (confirmed) {
+        setIsSaving(true);
+        setError('');
 
-      const updateData: ShipInternationalRequest = {
-        shipping_status: 'delivered',
-      };
+        const updateData: ShipInternationalRequest = {
+          shipping_status: 'delivered',
+        };
 
-      const response = await adminApiService.shipInternationalOrder(orderDetails.id, updateData);
+        const response = await adminApiService.shipInternationalOrder(orderDetails.id, updateData);
 
-      if (response.success) {
-        setSuccess('Shipping order delivered successfully!');
-        setTimeout(() => {
-          navigate('/admin/orders');
-        }, 2000);
-      } else {
-        setError('Failed to update delivery status');
+        if (response.success) {
+          setSuccess('Shipping order delivered successfully!');
+          setTimeout(() => {
+            navigate('/admin/orders');
+          }, 2000);
+        } else {
+          setError('Failed to update delivery status');
+        }
       }
     } catch (err) {
       setError(`Error updating delivery status: ${err instanceof Error ? err.message : 'Unknown error'}`);

@@ -377,6 +377,11 @@ const MyVault: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Quantity:</span>
+                  <span className="font-medium text-gray-900">{item.quantity} pcs</span>
+                </div>
+
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Validity:</span>
                   <span className={`font-medium ${item.validityDays < 0 ? 'text-red-600' : item.validityDays < 30 ? 'text-orange-600' : 'text-green-600'}`}>
                     {item.validityDays < 0 ? `${Math.abs(item.validityDays)} days overdue` : `${item.validityDays} days left`}

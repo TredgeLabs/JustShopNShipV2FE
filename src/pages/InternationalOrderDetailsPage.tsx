@@ -9,9 +9,12 @@ import {
   RefreshCw,
   Truck,
   Package,
+  Calendar,
+  Weight,
+  Tag,
+  Image as ImageIcon,
 } from 'lucide-react';
-import OrderStatusBadge from '../components/orders/OrderStatusBadge';
-import OrderItemCard from '../components/orders/OrderItemCard';
+import OrderStatusBadge, { getStatusConfig } from '../components/orders/OrderStatusBadge';
 
 
 const InternationalOrderDetailsPage: React.FC = () => {
@@ -20,6 +23,8 @@ const InternationalOrderDetailsPage: React.FC = () => {
   const [order, setOrder] = useState<InternationalOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
 
   useEffect(() => {
     const loadOrderDetails = async () => {
@@ -32,6 +37,11 @@ const InternationalOrderDetailsPage: React.FC = () => {
         const response = await orderService.getInternationalOrderDetails(orderId);
 
         if (response.success && response.data) {
+          response.data.international_order_items?.map(item => {
+            if (item.imageUrls) {
+              item.imageUrls = item.imageUrls.map(url => url.startsWith('http') ? url : `http://localhost:4000${url}`);
+            }
+          });
           setOrder(response.data);
         } else {
           setError('International order not found');
@@ -186,45 +196,99 @@ const InternationalOrderDetailsPage: React.FC = () => {
                 </span>
               </div>
 
+
               {order.international_order_items && order.international_order_items.length > 0 ? (
                 <div className="space-y-4">
-                  {order.international_order_items.map((item) => (
-                    // <OrderItemCard
-                    //   key={item.id}
-                    //   item={{
-                    //     id: item.id.toString(),
-                    //     name: item.name,
-                    //     image: item.imageUrls?.[0] || '',
-                    //     color: item.color || 'N/A',
-                    //     size: item.size || 'N/A',
-                    //     quantity: item.quantity || 0,
-                    //     price: parseFloat(item?.price?.toLocaleString()),
-                    //     status: item.status || '',
-                    //     url: item.product_link || ''
-                    //   }}
-                    //   showStatus={true}
-                    // />
-                    <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h5 className="font-medium text-gray-900">Vault Item #{item.id}</h5>
-                          <p className="text-sm text-gray-600">{item.name}</p>
-                          <p className="text-sm text-gray-600">Added on {new Date(item.createdAt).toLocaleDateString()}</p>
+                  {order.international_order_items.map((item, index) => (
+                    <div key={item.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
+                      <div className="p-5">
+                        <div className="flex items-start space-x-4">
+                          {/* Image Gallery Section */}
+                          <div className="flex-shrink-0">
+                            {item.imageUrls && item.imageUrls.length > 0 ? (
+                              <div className="relative">
+                                <img
+                                  src={item.imageUrls[0]}
+                                  alt={item.name}
+                                  className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                                />
+                                {item.imageUrls.length > 1 && (
+                                  <button
+                                    onClick={() => {
+                                      // Add your modal/gallery logic here
+                                      console.log('Show all images:', item.imageUrls);
+                                    }}
+                                    className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded-md text-xs font-medium hover:bg-opacity-80 transition-all"
+                                  >
+                                    +{item.imageUrls.length - 1} more
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                                <ImageIcon className="h-12 w-12 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Item Details */}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h5 className="font-bold text-gray-900 text-lg leading-tight">
+                                  {item.name}
+                                </h5>
+
+                                {item.description && (
+                                  <p className="text-sm text-gray-600 mt-2">{item.description}</p>
+                                )}
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                                  <div className="bg-gray-50 rounded-lg p-2">
+                                    <p className="text-xs text-gray-500 flex items-center">
+                                      <Weight className="h-3 w-3 mr-1" />
+                                      Weight
+                                    </p>
+                                    <p className="text-sm font-bold text-gray-900">
+                                      {(item.weight / 1000).toFixed(2)} kg
+                                    </p>
+                                  </div>
+
+                                  <div className="bg-gray-50 rounded-lg p-2">
+                                    <p className="text-xs text-gray-500 flex items-center">
+                                      <Calendar className="h-3 w-3 mr-1" />
+                                      Added
+                                    </p>
+                                    <p className="text-sm font-bold text-gray-900">
+                                      {new Date(item.createdAt).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric'
+                                      })}
+                                    </p>
+                                  </div>
+
+                                  <div className="bg-gray-50 rounded-lg p-2">
+                                    <p className="text-xs text-gray-500 flex items-center">
+                                      <Calendar className="h-3 w-3 mr-1" />
+                                      Status
+                                    </p>
+                                    <p className="text-sm font-bold text-gray-900">
+                                      {getStatusConfig(item.status, 'vault_item').text}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <button
-                          onClick={() => navigate(`/vault-item/${item.id}`)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                        >
-                          View Details →
-                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
+                <div className="text-center py-12 bg-gray-50 rounded-lg">
                   <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No items found in this shipment</p>
+                  <p className="text-gray-500 text-lg">No items found in this shipment</p>
                 </div>
               )}
             </div>

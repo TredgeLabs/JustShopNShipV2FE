@@ -27,7 +27,8 @@ const Payment: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'razorpay' | 'paypal' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
-  const type = location.state?.type ?? 'local';
+  const state = location.state as { flowType?: string; type?: string; orderId?: string };
+  const { flowType, type, orderId } = state || {};
   const selectedAddressId = location.state?.selectedAddressId ?? '';
   const [totalPrice, setTotalPrice] = useState(0);
   const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
@@ -50,7 +51,6 @@ const Payment: React.FC = () => {
       if (savedOrderData) {
         setTotalPrice(JSON.parse(savedOrderData).totalPrice);
         setOrderData(JSON.parse(savedOrderData));
-        console.log('Loaded order data:', orderData?.items.length);
       } else {
         // No order data, redirect back to create order
         navigate('/create-order');
@@ -89,6 +89,11 @@ const Payment: React.FC = () => {
         response = await orderService.createInternationalOrder(shipmentData.orderRequest);
       } else {
         const platformFee = Math.round(totalPrice * 0.05);
+        if (!orderData) {
+          setError('Order data not found');
+          setIsProcessing(false);
+          return;
+        }
         const orderRequest: CreateLocalOrderRequest = {
           orderData: {
             order_status: ORDER_STATUSES.created,
@@ -98,6 +103,7 @@ const Payment: React.FC = () => {
             admin_notes: `Order created on ${new Date().toLocaleDateString()} with ${orderData.items.length} items`
           },
           items: orderData.items.map(item => ({
+            ...(item.id && { id: item.id }),
             source_type: 'manual_link',
             product_name: item.name,
             product_link: item.url,
@@ -106,12 +112,16 @@ const Payment: React.FC = () => {
             quantity: item.quantity,
             price: item.price,
             final_price: item.price,
-            status: ORDER_STATUSES.pending,
+            status: item.status === 'denied' ? ORDER_STATUSES.pending : item.status,
             deny_reasons: [],
             image_link: item.image
           }))
         };
-        response = await orderService.createLocalOrder(orderRequest);
+        if (flowType === 'correction' && orderId) {
+          response = await orderService.updateOrder(orderId, orderRequest);
+        } else {
+          response = await orderService.createLocalOrder(orderRequest);
+        }
       }
 
       if (response.success) {
@@ -162,7 +172,7 @@ const Payment: React.FC = () => {
     if (type === 'international') {
       navigate('/shipment-confirmation', { state: { type, selectedAddressId } });
     } else {
-      navigate('/order-confirmation', { state: { type } });
+      navigate('/order-confirmation', { state: { type, flowType, orderId } });
     }
   };
 
