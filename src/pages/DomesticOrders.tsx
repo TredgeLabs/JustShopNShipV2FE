@@ -260,6 +260,20 @@ const DomesticOrders: React.FC = () => {
                               </span>
                             </div>
 
+                            {/* Shipment Date */}
+                            {item.shipment_date && (
+                              <div className="flex items-center space-x-1 mb-2">
+                                <span className="text-xs text-gray-600">Arriving:</span>
+                                <span className="text-xs font-medium text-blue-600">
+                                  {new Date(item.shipment_date).toLocaleDateString('en-IN', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                            )}
+
                             <p className="text-sm font-semibold text-gray-900 mb-3">
                               ₹{parseFloat(item.price.toLocaleString())}
                             </p>

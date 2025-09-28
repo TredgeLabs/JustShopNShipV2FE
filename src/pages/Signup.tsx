@@ -68,7 +68,6 @@ const Signup: React.FC = () => {
       interval = setInterval(() => {
         setOtpTimer(prev => {
           if (prev <= 1) {
-            setCanResendOtp(true);
             return 0;
           }
           return prev - 1;
@@ -239,7 +238,6 @@ const Signup: React.FC = () => {
       if (response.success) {
         setSuccess('OTP resent successfully to your mobile number');
         setOtpTimer(30);
-        setCanResendOtp(false);
         setOtp(['', '', '', '', '', '']);
       } else {
         setError('Failed to resend OTP. Please try again.');
@@ -274,7 +272,10 @@ const Signup: React.FC = () => {
               <input
                 type="text"
                 value={formData.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                  handleInputChange('firstName', value);
+                }}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter first name"
                 required
@@ -290,7 +291,10 @@ const Signup: React.FC = () => {
               <input
                 type="text"
                 value={formData.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                  handleInputChange('lastName', value);
+                }}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter last name"
                 required

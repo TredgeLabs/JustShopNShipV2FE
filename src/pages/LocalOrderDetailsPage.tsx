@@ -203,7 +203,8 @@ const LocalOrderDetailsPage: React.FC = () => {
                         quantity: item.quantity,
                         price: parseFloat(item.price.toLocaleString()),
                         status: item.status,
-                        url: item.product_link
+                        url: item.product_link,
+                        shipment_date: item.shipment_date
                       }}
                       showStatus={true}
                     />

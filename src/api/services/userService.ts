@@ -104,6 +104,7 @@ export interface AddressApiResponse {
 export interface RegisterResponse {
   success: boolean;
   user_id: string;
+  message: string;
   vault_code: string
 }
 

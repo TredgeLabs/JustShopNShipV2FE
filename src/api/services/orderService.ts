@@ -25,6 +25,7 @@ export interface LocalOrderItem {
   isEditing: boolean;
   hasError?: boolean; // For frontend use
   errorMessage?: string; // For frontend use
+  shipment_date?: string; // For frontend use
 }
 
 export interface Product {
@@ -119,6 +120,24 @@ export interface CreateLocalOrderRequest {
     image_link?: string;
     inventory_item_id?: string | null;
   }>;
+}
+
+interface VaultItem {
+  id: string;
+  name: string;
+  images: string[];
+  color: string;
+  size: string;
+  quantity: number;
+  weight: number;
+  price: number;
+}
+
+export interface ShipmentData {
+  items: VaultItem[];
+  destination: string;
+  shippingService: string;
+  orderRequest?: CreateInternationalOrderRequest;
 }
 
 // Create international order request interface

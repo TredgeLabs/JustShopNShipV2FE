@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CreateInternationalOrderRequest } from '../api/services/orderService';
+import { ShipmentData } from '../api/services/orderService';
 import {
   Package,
   ArrowLeft,
@@ -14,24 +14,6 @@ import {
   Clock,
   Loader2
 } from 'lucide-react';
-
-interface VaultItem {
-  id: string;
-  name: string;
-  images: string[];
-  color: string;
-  size: string;
-  quantity: number;
-  weight: number;
-  price: number;
-}
-
-export interface ShipmentData {
-  items: VaultItem[];
-  destination: string;
-  shippingService: string;
-  orderRequest?: CreateInternationalOrderRequest;
-}
 
 const ShipmentConfirmation: React.FC = () => {
   const navigate = useNavigate();
