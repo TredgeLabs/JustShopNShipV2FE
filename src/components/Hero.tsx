@@ -7,6 +7,14 @@ const Hero: React.FC = () => {
   const navigate = useNavigate();
   const isLoggedIn = userService.isAuthenticated();
 
+  const handleCreateOrder = () => {
+    if (isLoggedIn) {
+      navigate('/create-order');
+    } else {
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white overflow-hidden min-h-screen flex items-center">
       {/* Background Pattern */}
@@ -25,7 +33,7 @@ const Hero: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <button
               className="inline-flex items-center px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-              onClick={() => navigate('/create-order')}
+              onClick={() => handleCreateOrder()}
             >
               <Package className="h-5 w-5 mr-2" />
               Create Order

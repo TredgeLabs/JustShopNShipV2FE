@@ -14,12 +14,12 @@ const benefits = [
     description: "Partnerships with leading logistics providers ensure your packages arrive safely and on time.",
     color: "text-blue-600"
   },
-  {
-    icon: Shield,
-    title: "Secure & Insured",
-    description: "Every package is fully insured and tracked from pickup to delivery for complete peace of mind.",
-    color: "text-purple-600"
-  },
+  // {
+  //   icon: Shield,
+  //   title: "Secure & Insured",
+  //   description: "Every package is fully insured and tracked from pickup to delivery for complete peace of mind.",
+  //   color: "text-purple-600"
+  // },
   {
     icon: Users,
     title: "Personal Shopper",

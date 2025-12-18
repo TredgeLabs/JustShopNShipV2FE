@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   CheckCircle,
   Package,
@@ -257,7 +257,13 @@ const OrderConfirmation: React.FC = () => {
                   className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <span className="text-sm text-gray-700">
-                  I have read and agree to the terms and conditions, privacy policy, and shipping guidelines.
+                  I have read and agree to the 
+                  <Link to="/terms-of-service" className="text-blue-600">
+                    <span> terms and conditions</span>
+                  </Link>,
+                  <Link to="/privacy-policy" className="text-blue-600">
+                    <span> privacy policy</span>
+                  </Link>, and shipping guidelines.
                 </span>
               </label>
             </div>
@@ -274,13 +280,13 @@ const OrderConfirmation: React.FC = () => {
                 <ArrowRight className="h-4 w-4" />
               </button>
 
-              <button
+              {/* <button
                 onClick={handleProceedToRefund}
                 className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium rounded-lg transition-colors"
               >
                 <RotateCcw className="h-4 w-4" />
                 <span>Request Refund Instead</span>
-              </button>
+              </button> */}
             </div>
 
             {/* Important Notes */}

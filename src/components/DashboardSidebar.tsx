@@ -37,7 +37,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     },
     {
       icon: ShoppingCart,
-      title: "Create Order / Shop Now",
+      title: "Create Order",
       description: "Start a new order",
       color: "text-green-600 hover:text-green-700",
       bgColor: "hover:bg-green-50",
@@ -59,14 +59,14 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       bgColor: "hover:bg-purple-50",
       href: "/international-orders"
     },
-    {
-      icon: ShoppingBag,
-      title: "Order Offline",
-      description: "Items not available online",
-      color: "text-indigo-600 hover:text-indigo-700",
-      bgColor: "hover:bg-indigo-50",
-      href: "/order-offline"
-    },
+    // {
+    //   icon: ShoppingBag,
+    //   title: "Order Offline",
+    //   description: "Items not available online",
+    //   color: "text-indigo-600 hover:text-indigo-700",
+    //   bgColor: "hover:bg-indigo-50",
+    //   href: "/order-offline"
+    // },
     {
       icon: Search,
       title: "Check Our Inventory",

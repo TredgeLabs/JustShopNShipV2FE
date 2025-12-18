@@ -52,20 +52,36 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
+              {/* Email: Opens default mail client (Outlook, Gmail, Apple Mail) */}
+              <a
+                href="mailto:support@justshopandship.com"
+                className="flex items-center space-x-3 group hover:text-blue-400 transition-colors"
+              >
                 <Mail className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300">support@justshopandship.com</span>
-              </div>
-              <div className="flex items-center space-x-3">
+                <span className="text-gray-300 group-hover:text-blue-400">support@justshopandship.com</span>
+              </a>
+
+              {/* Phone: Opens dialer on mobile; some desktop browsers can link to FaceTime or Skype */}
+              <a
+                href="tel:+919876543210"
+                className="flex items-center space-x-3 group hover:text-blue-400 transition-colors"
+              >
                 <Phone className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300">+91 9876543210</span>
-              </div>
-              <div className="flex items-center space-x-3">
+                <span className="text-gray-300 group-hover:text-blue-400">+91 9876543210</span>
+              </a>
+
+              {/* Location: Opens Google Maps on Web/Android and Apple Maps on iOS */}
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Mumbai,India"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-3 group hover:text-blue-400 transition-colors"
+              >
                 <MapPin className="h-5 w-5 text-blue-400" />
-                <span className="text-gray-300">Mumbai, India</span>
-              </div>
+                <span className="text-gray-300 group-hover:text-blue-400">Mumbai, India</span>
+              </a>
             </div>
-            
+
             <div className="mt-6">
               <h4 className="font-semibold mb-2">Newsletter</h4>
               <div className="flex">

@@ -30,6 +30,7 @@ import InternationalOrderDetailsPage from './pages/InternationalOrderDetailsPage
 import AddressSelectionPage from './pages/AddressSelectionPage';
 import EnhancedNavigation from './components/EnhancedNavigation';
 import ProtectedRoute from '../src/components/auth/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 
 // Footer Pages
 import PersonalShopping from './pages/PersonalShopping';
@@ -48,6 +49,7 @@ import AdminRoutes from './admin/routes/AdminRoutes';
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen bg-gray-50">
         <Routes>
           {/* Admin Routes - Completely isolated */}
