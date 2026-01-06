@@ -217,6 +217,8 @@ export interface AuthResponse {
   token: string;
   refreshToken: string;
   expiresIn: number;
+  alreadyExists: boolean;
+  is_verified: boolean;
 }
 
 // Password change interface

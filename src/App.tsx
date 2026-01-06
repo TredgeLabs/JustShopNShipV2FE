@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -45,70 +45,74 @@ import Pricing from './pages/Pricing';
 
 // Admin Routes
 import AdminRoutes from './admin/routes/AdminRoutes';
+import { CartProvider } from './context/CartContext';
 
 function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          {/* Admin Routes - Completely isolated */}
-          <Route path="/admin/*" element={<AdminRoutes />} />
+    <CartProvider>
+      <Router>
+        <ScrollToTop />
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            {/* Admin Routes - Completely isolated */}
+            <Route path="/admin/*" element={<AdminRoutes />} />
 
-          {/* Public routes without navigation */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/change-password" element={<ChangePassword />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/add-address" element={<AddAddress />} />
+            {/* Public routes without navigation */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/add-address" element={<AddAddress />} />
 
-          {/* Order creation and payment flow */}
-          <Route path="/address-selection" element={<AddressSelectionPage />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          <Route path="/order-correction/:orderId" element={<OrderCorrection />} />
-          <Route path="/payment" element={<Payment />} />
-          <Route path="/payment-result" element={<PaymentResult />} />
-          <Route path="/shipment-confirmation" element={<ShipmentConfirmation />} />
-          <Route path="/local-order/:orderId" element={<LocalOrderDetailsPage />} />
-          <Route path="/international-order/:orderId" element={<InternationalOrderDetailsPage />} />
+            {/* Order creation and payment flow */}
+            <Route path="/address-selection" element={<AddressSelectionPage />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/order-correction/:orderId" element={<OrderCorrection />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/payment-result" element={<PaymentResult />} />
+            <Route path="/shipment-confirmation" element={<ShipmentConfirmation />} />
+            <Route path="/local-order/:orderId" element={<LocalOrderDetailsPage />} />
+            <Route path="/international-order/:orderId" element={<InternationalOrderDetailsPage />} />
 
-          {/* Footer Pages */}
-          <Route path="/personal-shopping" element={<PersonalShopping />} />
-          <Route path="/package-consolidation" element={<PackageConsolidation />} />
-          <Route path="/international-shipping" element={<InternationalShipping />} />
-          <Route path="/express-delivery" element={<ExpressDelivery />} />
-          <Route path="/customs-handling" element={<CustomsHandling />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="/cookie-policy" element={<CookiePolicy />} />
-          <Route path="/pricing" element={<Pricing />} />
+            {/* Footer Pages */}
+            <Route path="/personal-shopping" element={<PersonalShopping />} />
+            <Route path="/package-consolidation" element={<PackageConsolidation />} />
+            <Route path="/international-shipping" element={<InternationalShipping />} />
+            <Route path="/express-delivery" element={<ExpressDelivery />} />
+            <Route path="/customs-handling" element={<CustomsHandling />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/pricing" element={<Pricing />} />
 
-          {/* Routes with navigation */}
-          <Route path="/*" element={
-            <>
-              <EnhancedNavigation />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/create-order" element={<CreateOrder />} />
-                <Route path="/my-vault" element={<MyVault />} />
-                <Route path="/domestic-orders" element={<DomesticOrders />} />
-                <Route path="/international-orders" element={<InternationalOrders />} />
-                <Route path="/prohibited-items" element={<ProhibitedItems />} />
-                <Route path="/faq" element={<FAQ />} />
-                <Route path="/shipping-calculator" element={<ShippingCalculatorPage />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/guide" element={<Guide />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/inventory/:itemId" element={<InventoryItemDetails />} />
-                <Route path="/contact-support" element={<ContactSupport />} />
-              </Routes>
-            </>
-          } />
-        </Routes>
-      </div>
-    </Router>
+            {/* Routes with navigation */}
+            <Route path="/*" element={
+              <>
+                <EnhancedNavigation />
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/home" element={<Navigate to="/" replace />} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/create-order" element={<CreateOrder />} />
+                  <Route path="/my-vault" element={<MyVault />} />
+                  <Route path="/domestic-orders" element={<DomesticOrders />} />
+                  <Route path="/international-orders" element={<InternationalOrders />} />
+                  <Route path="/prohibited-items" element={<ProhibitedItems />} />
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route path="/shipping-calculator" element={<ShippingCalculatorPage />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/guide" element={<Guide />} />
+                  <Route path="/inventory" element={<Inventory />} />
+                  <Route path="/inventory/:itemId" element={<InventoryItemDetails />} />
+                  <Route path="/contact-support" element={<ContactSupport />} />
+                </Routes>
+              </>
+            } />
+          </Routes>
+        </div>
+      </Router>
+    </CartProvider>
   );
 }
 

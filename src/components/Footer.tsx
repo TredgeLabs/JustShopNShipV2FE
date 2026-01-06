@@ -1,8 +1,21 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Package, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import userService from '../api/services/userService';
 
 const Footer: React.FC = () => {
+  const isLoggedIn = userService.isAuthenticated();
+  const navigate = useNavigate();
+
+  const handleTrackOrder = (e: React.MouseEvent) => {
+    e.preventDefault(); // Stop the link from trying to navigate to ""
+    if (isLoggedIn) {
+      navigate('/international-orders');
+    } else {
+      navigate('/login');
+    }
+  };
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -31,7 +44,7 @@ const Footer: React.FC = () => {
               <li><Link to="/guide" className="text-gray-300 hover:text-white transition-colors">How It Works</Link></li>
               <li><Link to="/pricing" className="text-gray-300 hover:text-white transition-colors">Pricing</Link></li>
               <li><Link to="/shipping-calculator" className="text-gray-300 hover:text-white transition-colors">Shipping Calculator</Link></li>
-              <li><Link to="/international-orders" className="text-gray-300 hover:text-white transition-colors">Track Your Order</Link></li>
+              <li><Link to="#" onClick={handleTrackOrder} className="text-gray-300 hover:text-white transition-colors">Track Your Order</Link></li>
               <li><Link to="/faq" className="text-gray-300 hover:text-white transition-colors">FAQ</Link></li>
             </ul>
           </div>

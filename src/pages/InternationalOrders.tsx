@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Truck,
   Eye,
-  MapPin,
   Calendar,
   DollarSign,
   Loader2,
@@ -18,7 +17,6 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react';
-
 
 const InternationalOrders: React.FC = () => {
   const navigate = useNavigate();

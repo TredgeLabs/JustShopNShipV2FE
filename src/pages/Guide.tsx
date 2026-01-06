@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  Map, 
-  CheckCircle, 
-  ArrowRight, 
-  User, 
-  ShoppingCart, 
-  Package, 
-  Plane, 
+import {
+  Map,
+  CheckCircle,
+  ArrowRight,
+  User,
+  ShoppingCart,
+  Package,
+  Plane,
   CreditCard,
   AlertCircle,
   Info,
@@ -14,6 +14,8 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import userService from '../api/services/userService';
 
 interface GuideStep {
   id: string;
@@ -26,6 +28,8 @@ interface GuideStep {
 }
 
 const Guide: React.FC = () => {
+  const navigate = useNavigate();
+  const isLoggedIn = userService.isAuthenticated();
   const [steps, setSteps] = useState<GuideStep[]>([
     {
       id: 'step-1',
@@ -134,8 +138,8 @@ const Guide: React.FC = () => {
   ]);
 
   const toggleStep = (stepId: string) => {
-    setSteps(prev => prev.map(step => 
-      step.id === stepId 
+    setSteps(prev => prev.map(step =>
+      step.id === stepId
         ? { ...step, isExpanded: !step.isExpanded }
         : step
     ));
@@ -159,7 +163,7 @@ const Guide: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">Your Complete Guide</h1>
           </div>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Follow this step-by-step guide to master international shopping with JustShopAndShip. 
+            Follow this step-by-step guide to master international shopping with JustShopAndShip.
             From account creation to receiving your packages, we'll walk you through everything.
           </p>
         </div>
@@ -307,15 +311,21 @@ const Guide: React.FC = () => {
         <div className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-white text-center">
           <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
           <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-            Join thousands of satisfied customers who are already saving money on international shipping. 
+            Join thousands of satisfied customers who are already saving money on international shipping.
             Create your account today and get your personal vault address in minutes!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="inline-flex items-center px-8 py-3 bg-white text-blue-600 hover:bg-gray-100 font-semibold rounded-lg transition-colors">
+            <button
+              className="inline-flex items-center px-8 py-3 bg-white text-blue-600 hover:bg-gray-100 font-semibold rounded-lg transition-colors"
+              onClick={() => isLoggedIn ? navigate('/dashboard') : navigate('/signup')}
+            >
               <User className="h-5 w-5 mr-2" />
-              Create Account
+              {isLoggedIn ? 'Get Started' : 'Create Account'}
             </button>
-            <button className="inline-flex items-center px-8 py-3 bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold rounded-lg transition-colors">
+            <button
+              className="inline-flex items-center px-8 py-3 bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold rounded-lg transition-colors"
+              onClick={() => navigate('/shipping-calculator')}
+            >
               <CreditCard className="h-5 w-5 mr-2" />
               Calculate Shipping
             </button>
@@ -330,13 +340,16 @@ const Guide: React.FC = () => {
               Our support team is here to help you every step of the way. Don't hesitate to reach out!
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+              {/* <button className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
                 Live Chat Support
-              </button>
-              <button className="inline-flex items-center px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-300 transition-colors">
+              </button> */}
+              <button className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg border border-gray-300 transition-colors">
                 Email Support
               </button>
-              <button className="inline-flex items-center px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-300 transition-colors">
+              <button
+                className="inline-flex items-center px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-300 transition-colors"
+                onClick={()=> navigate('/faq')}
+              >
                 View FAQ
               </button>
             </div>

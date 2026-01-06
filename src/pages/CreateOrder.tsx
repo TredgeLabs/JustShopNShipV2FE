@@ -615,7 +615,8 @@ const InventoryQuickCard: React.FC<InventoryQuickCardProps> = ({ item, onAddToCa
       />
 
       <h3
-        className="font-medium text-gray-900 text-sm leading-tight mb-2 cursor-pointer hover:text-blue-600 transition-colors"
+        className="font-medium text-gray-900 text-sm leading-tight mb-2 cursor-pointer hover:text-blue-600 transition-colors line-clamp-2 h-8"
+        title={item.name}
         onClick={onViewDetails}
       >
         {item.name}
