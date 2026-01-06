@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Package, Menu, X, LogOut, ShoppingCart } from 'lucide-react';
 import { userService } from '../api/services/userService';
+import { useCart } from '../context/CartContext'; // Assuming the context file created in Step 1
 
 const EnhancedNavigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -9,7 +10,13 @@ const EnhancedNavigation: React.FC = () => {
   const navigate = useNavigate();
   const isLoggedIn = userService.isAuthenticated();
 
+  // Get cart count from Context
+  const { getTotalCartItems } = useCart();
+
   const isActive = (path: string) => location.pathname === path;
+
+  // If we are on the inventory or item details page
+  const isInventoryPage = location.pathname.startsWith('/inventory');
 
   const handleLogout = async () => {
     if (isLoggedIn) {
@@ -59,13 +66,14 @@ const EnhancedNavigation: React.FC = () => {
               </Link>) : (
               <Link
                 to="/signup"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/signup')
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                   }`}
               >
                 Sign Up
               </Link>)}
+
             <div className="flex items-center space-x-4">
               {isLoggedIn ? (
                 <button
@@ -84,18 +92,50 @@ const EnhancedNavigation: React.FC = () => {
                   <span>Sign In</span>
                 </Link>
               )}
-              <button
-                onClick={handleCreateOrder}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                <span>Create Order</span>
-              </button>
+
+              {/* Conditionally hide Create Order button if on Inventory page */}
+              {!isInventoryPage && (
+                <button
+                  onClick={handleCreateOrder}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>Create Order</span>
+                </button>
+              )}
+
+              {/* CART ICON: ONLY VISIBLE ON INVENTORY PAGE */}
+              {isInventoryPage && (
+                <button
+                  onClick={() => navigate('/create-order')}
+                  className="relative p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <ShoppingCart className="h-6 w-6" />
+                  {getTotalCartItems() > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {getTotalCartItems()}
+                    </span>
+                  )}
+                </button>
+              )}
+
             </div>
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-4">
+            {/* Mobile Cart Icon */}
+            <button
+              onClick={() => navigate('/cart')}
+              className="relative p-2 text-gray-600"
+            >
+              <ShoppingCart className="h-6 w-6" />
+              {getTotalCartItems() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                  {getTotalCartItems()}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 transition-colors"
@@ -111,32 +151,31 @@ const EnhancedNavigation: React.FC = () => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               <Link
                 to="/"
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                  }`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/') ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
               <Link
                 to="/dashboard"
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive('/dashboard')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                  }`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/dashboard') ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Dashboard
               </Link>
+              <Link
+                to="/inventory"
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/inventory') ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Inventory
+              </Link>
+
               <div className="pt-4 pb-3 border-t border-gray-200">
                 {isLoggedIn ? (
                   <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 transition-colors"
+                    onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-red-600"
                   >
                     Sign Out
                   </button>
@@ -144,20 +183,21 @@ const EnhancedNavigation: React.FC = () => {
                   <Link
                     to="/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700"
                   >
                     Sign In
                   </Link>
                 )}
-                <button
-                  onClick={() => {
-                    handleCreateOrder();
-                    setIsMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-3 py-2 mt-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Create Order
-                </button>
+
+                {/* Mobile Create Order - Hidden on inventory */}
+                {!isInventoryPage && (
+                  <button
+                    onClick={() => { handleCreateOrder(); setIsMenuOpen(false); }}
+                    className="block w-full text-left px-3 py-2 mt-2 bg-blue-600 text-white rounded-lg"
+                  >
+                    Create Order
+                  </button>
+                )}
               </div>
             </div>
           </div>

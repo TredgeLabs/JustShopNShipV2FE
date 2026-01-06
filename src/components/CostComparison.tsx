@@ -206,12 +206,12 @@ const CostComparison: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-12 text-center">
+        {/* <div className="mt-12 text-center">
           <button className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
             <Calculator className="h-5 w-5 mr-2" />
             Calculate Your Savings
           </button>
-        </div>
+        </div> */}
       </div>
     </section>
   );

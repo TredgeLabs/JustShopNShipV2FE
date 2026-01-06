@@ -217,6 +217,8 @@ export interface AuthResponse {
   token: string;
   refreshToken: string;
   expiresIn: number;
+  alreadyExists: boolean;
+  is_verified: boolean;
 }
 
 // Password change interface
@@ -336,8 +338,8 @@ class UserService {
       // Store tokens in localStorage
       if (response.success && response.data) {
         localStorage.setItem('authToken', response.data.data.token);
-        localStorage.setItem('refreshToken', response.data.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        // localStorage.setItem('refreshToken', response.data.data.refreshToken);
+        // localStorage.setItem('user', JSON.stringify(response.data.data.user));
       }
 
       return response;
@@ -364,11 +366,11 @@ class UserService {
       const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.REGISTER, requestBody);
       
       // Store tokens in localStorage
-      if (response.success && response.data) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
+      // if (response.success && response.data) {
+      //   localStorage.setItem('authToken', response.data.token);
+      //   localStorage.setItem('refreshToken', response.data.refreshToken);
+      //   localStorage.setItem('user', JSON.stringify(response.data.user));
+      // }
 
       return response;
     } catch (error) {
@@ -388,8 +390,8 @@ class UserService {
     } finally {
       // Clear local storage regardless of API call success
       localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
+      // localStorage.removeItem('refreshToken');
+      // localStorage.removeItem('user');
     }
   }
 

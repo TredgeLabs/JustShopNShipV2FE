@@ -91,13 +91,13 @@ const EnhancedOrderManagement: React.FC = () => {
           <Truck className="h-6 w-6 text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-900">Order Management</h2>
         </div>
-        <button
+        {/* <button
           onClick={handleCreateOrder}
           className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
           <Plus className="h-4 w-4" />
           <span>Create New Order</span>
-        </button>
+        </button> */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -170,12 +170,12 @@ const EnhancedOrderManagement: React.FC = () => {
             <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
             <p className="text-gray-600 mb-4">Create your first order to get started!</p>
-            <button
+            {/* <button
               onClick={handleCreateOrder}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
             >
               Create Order
-            </button>
+            </button> */}
           </div>
         ) : (
           recentOrders.map((order) => {

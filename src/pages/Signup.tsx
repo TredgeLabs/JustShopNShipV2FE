@@ -153,8 +153,13 @@ const Signup: React.FC = () => {
     try {
       const response = await userService.register(formData);
 
-      if (response.success) {
-        setSuccess('Registration successful! Please verify your mobile number.');
+      const { alreadyExists, is_verified } = response.data;
+
+      if (response.success || (alreadyExists && is_verified === false)) {
+        setSuccess(alreadyExists
+          ? 'Welcome back! Please verify your mobile number.'
+          : 'Registration successful! Please verify your mobile number.');
+
         setCurrentStep('otp');
         setOtpTimer(30);
         setCanResendOtp(false);

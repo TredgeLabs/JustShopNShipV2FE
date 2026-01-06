@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Package, 
-  Search, 
-  Filter, 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
+import {
+  Package,
+  Search,
+  Filter,
+  ShoppingCart,
+  Plus,
+  Minus,
   Star,
   ChevronLeft,
   ChevronRight,
@@ -15,6 +15,7 @@ import {
   List
 } from 'lucide-react';
 import { inventoryService } from '../api/services/inventoryService';
+import { useCart } from '../context/CartContext';
 
 interface InventoryItem {
   id: string;
@@ -44,7 +45,6 @@ const Inventory: React.FC = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -64,6 +64,8 @@ const Inventory: React.FC = () => {
     { value: 'rating', label: 'Highest Rated' },
     { value: 'newest', label: 'Newest First' }
   ];
+
+  const { addToCart, updateCartQuantity, getCartItemQuantity, getTotalCartItems } = useCart();
 
   // Load inventory from API
   useEffect(() => {
@@ -103,12 +105,12 @@ const Inventory: React.FC = () => {
   useEffect(() => {
     const filtered = items.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.brand.toLowerCase().includes(searchTerm.toLowerCase());
+        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.brand.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
       const matchesPrice = item.price >= priceRange.min && item.price <= priceRange.max;
       const matchesBrand = selectedBrand === 'all' || item.brand === selectedBrand;
-      
+
       return matchesSearch && matchesCategory && matchesPrice && matchesBrand;
     });
 
@@ -127,46 +129,12 @@ const Inventory: React.FC = () => {
     setCurrentPage(1);
   }, [items, searchTerm, selectedCategory, priceRange, selectedBrand, sortBy]);
 
-  const addToCart = (itemId: string, quantity: number = 1) => {
-    setCart(prev => {
-      const existingItem = prev.find(item => item.itemId === itemId);
-      if (existingItem) {
-        return prev.map(item =>
-          item.itemId === itemId
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      } else {
-        return [...prev, { itemId, quantity }];
-      }
-    });
-  };
-
-  const updateCartQuantity = (itemId: string, quantity: number) => {
-    if (quantity <= 0) {
-      setCart(prev => prev.filter(item => item.itemId !== itemId));
-    } else {
-      setCart(prev => prev.map(item =>
-        item.itemId === itemId ? { ...item, quantity } : item
-      ));
-    }
-  };
-
-  const getCartItemQuantity = (itemId: string) => {
-    const cartItem = cart.find(item => item.itemId === itemId);
-    return cartItem ? cartItem.quantity : 0;
-  };
-
-  const getTotalCartItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
-
   const handleItemClick = (itemId: string) => {
     navigate(`/inventory/${itemId}`);
   };
 
   const formatCategoryName = (category: string) => {
-    return category.split('-').map(word => 
+    return category.split('-').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
@@ -188,30 +156,16 @@ const Inventory: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Package className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
-            </div>
-            
-            {/* Cart Icon */}
-            <button
-              onClick={() => navigate('/cart')}
-              className="relative p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {getTotalCartItems() > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {getTotalCartItems()}
-                </span>
-              )}
-            </button>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Package className="h-8 w-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-gray-900">Inventory</h1>
           </div>
         </div>
+        {/* Header */}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -223,7 +177,7 @@ const Inventory: React.FC = () => {
                 <Filter className="h-5 w-5 mr-2" />
                 Filters
               </h3>
-              
+
               {/* Search */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
@@ -309,7 +263,7 @@ const Inventory: React.FC = () => {
                   <span className="text-sm text-gray-600">
                     {filteredItems.length} products found
                   </span>
-                  
+
                   {/* View Mode Toggle */}
                   <div className="flex items-center space-x-2">
                     <button
@@ -353,18 +307,17 @@ const Inventory: React.FC = () => {
                 <p className="text-gray-600">Try adjusting your filters or search terms.</p>
               </div>
             ) : (
-              <div className={viewMode === 'grid' 
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
+              <div className={viewMode === 'grid'
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
                 : 'space-y-4'
               }>
                 {paginatedItems.map((item) => (
                   <div
                     key={item.id}
-                    className={`bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow ${
-                      viewMode === 'list' ? 'flex' : ''
-                    }`}
+                    className={`bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow ${viewMode === 'list' ? 'flex' : ''
+                      }`}
                   >
-                    <div 
+                    <div
                       className={`cursor-pointer ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}
                       onClick={() => handleItemClick(item.id)}
                     >
@@ -389,21 +342,21 @@ const Inventory: React.FC = () => {
 
                     <div className={`p-4 ${viewMode === 'list' ? 'flex-1 flex flex-col justify-between' : ''}`}>
                       <div>
-                        <h3 
-                          className="font-semibold text-gray-900 mb-2 cursor-pointer hover:text-blue-600 transition-colors"
+                        <h3
+                          className={`break-normal md:break-all font-semibold text-gray-900 mb-2 cursor-pointer hover:text-blue-600 transition-colors ${viewMode === 'grid' ? 'line-clamp-1' : 'h-auto'}`}
+                          title={item.name}
                           onClick={() => handleItemClick(item.id)}
                         >
                           {item.name}
                         </h3>
-                        
+
                         <div className="flex items-center space-x-2 mb-2">
                           <div className="flex items-center">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`h-4 w-4 ${
-                                  i < Math.floor(item.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                                }`}
+                                className={`h-4 w-4 ${i < Math.floor(item.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                  }`}
                               />
                             ))}
                           </div>
@@ -418,6 +371,9 @@ const Inventory: React.FC = () => {
                             )}
                           </div>
                           <p className="text-sm text-gray-600">{item.brand}</p>
+                          {viewMode === 'grid' && <span className="text-xs text-gray-500">
+                            ({item.inStock ? `${item.stockCount} in stock` : 'Out of stock'})
+                          </span>}
                         </div>
 
                         {viewMode === 'list' && (
@@ -454,10 +410,10 @@ const Inventory: React.FC = () => {
                             <span>Add to Cart</span>
                           </button>
                         )}
-                        
-                        <span className="text-xs text-gray-500">
+
+                        {viewMode === 'list' && <span className="text-xs text-gray-500">
                           {item.inStock ? `${item.stockCount} in stock` : 'Out of stock'}
-                        </span>
+                        </span>}
                       </div>
                     </div>
                   </div>
@@ -475,21 +431,20 @@ const Inventory: React.FC = () => {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                
+
                 {[...Array(totalPages)].map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`px-3 py-2 border rounded-lg ${
-                      currentPage === i + 1
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'border-gray-300 hover:bg-gray-50'
-                    }`}
+                    className={`px-3 py-2 border rounded-lg ${currentPage === i + 1
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'border-gray-300 hover:bg-gray-50'
+                      }`}
                   >
                     {i + 1}
                   </button>
                 ))}
-                
+
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
@@ -502,7 +457,7 @@ const Inventory: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

@@ -376,10 +376,10 @@ const Pricing: React.FC = () => {
           <p className="text-xl mb-8 text-blue-100 max-w-2xl mx-auto">
             Get your personal vault address and start saving on international shipping today.
           </p>
-          <button className="inline-flex items-center px-8 py-4 bg-white text-blue-600 hover:bg-gray-100 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105">
+          {/* <button className="inline-flex items-center px-8 py-4 bg-white text-blue-600 hover:bg-gray-100 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105">
             <Calculator className="h-5 w-5 mr-2" />
             Calculate Your Savings
-          </button>
+          </button> */}
         </div>
       </section>
     </div>

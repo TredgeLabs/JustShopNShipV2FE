@@ -51,7 +51,7 @@ Phone: ${vaultAddress.phone}`;
           className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105"
         >
           {copied === 'full' ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          <span className="font-medium">{copied === 'full' ? 'Copied!' : 'Copy Full Address'}</span>
+          <span className="font-medium">{copied === 'full' ? 'Copied!' : 'Full Address'}</span>
         </button>
       </div>
 
