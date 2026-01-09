@@ -7,7 +7,7 @@ import {
   DollarSign,
   Loader2,
 } from 'lucide-react';
-import { orderService, LocalOrder, LocalOrderItem } from '../api/services/orderService';
+import { orderService, LocalOrder, LocalOrderItem, UpdateLocalOrderCorrectionRequest } from '../api/services/orderService';
 import { DENY_REASONS } from '../admin/constants/adminConstants';
 
 const OrderCorrection: React.FC = () => {
@@ -136,19 +136,54 @@ const OrderCorrection: React.FC = () => {
    * Confirm Correction
    * ----------------------------- */
   const handleConfirmCorrection = async () => {
-    if (!orderData) return;
+    if (!orderData || !orderId) return;
 
     try {
       setIsSaving(true);
       setError('');
+      setSuccess('');
 
-      // Replace with actual service call:
-      // await orderService.submitOrderCorrection(orderId, orderData);
+      const items = orderData.local_order_items ?? [];
+      if (items.length === 0) {
+        setError('Please keep at least one item in the order.');
+        return;
+      }
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const correctedTotal = calculateCurrentTotal();
+      const platformFee = Math.round(correctedTotal * 0.05);
+
+      const payload: UpdateLocalOrderCorrectionRequest = {
+        orderData: {
+          order_status: 'under_review',
+          payment_status: 'pending',
+          total_price: correctedTotal,
+          platform_fee: platformFee,
+          admin_notes: `User submitted correction on ${new Date().toLocaleDateString()} with ${items.length} items.`,
+        },
+        items: items.map((item) => ({
+          source_type: item.source_type || 'manual_link',
+          product_name: item.product_name,
+          product_link: item.product_link,
+          color: item.color || '',
+          size: item.size || '',
+          quantity: item.quantity,
+          price: Number(item.price) || 0,
+          final_price: Number(item.final_price) || 0,
+          status: 'pending',
+          deny_reasons: [], // ✅ clear old deny reasons
+          image_link: item.image_link || '',
+        })),
+      };
+
+      const res = await orderService.submitLocalOrderCorrection(orderId, payload);
+
+      if (!res.success) {
+        setError('Failed to submit order correction. Please try again.');
+        return;
+      }
 
       setSuccess('Order correction submitted successfully!');
-      setTimeout(() => navigate('/domestic-orders'), 2000);
+      setTimeout(() => navigate('/domestic-orders'), 1200);
     } catch (err) {
       setError('Failed to submit order correction. Please try again.');
     } finally {

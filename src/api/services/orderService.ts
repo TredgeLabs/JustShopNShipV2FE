@@ -103,6 +103,18 @@ export interface CreateLocalOrderRequest {
   }>;
 }
 
+export interface UpdateLocalOrderCorrectionRequest {
+  orderData: {
+    order_status: string;
+    payment_status: string;
+    total_price: number;
+    platform_fee: number;
+    admin_notes?: string;
+  };
+  items: CreateLocalOrderRequest['items'];
+}
+
+
 // Create international order request interface
 export interface CreateInternationalOrderRequest {
   orderData: {
@@ -164,20 +176,37 @@ class OrderService {
     }
   }
 
+  async submitLocalOrderCorrection(
+    orderId: string,
+    payload: UpdateLocalOrderCorrectionRequest
+  ): Promise<ApiResponse<LocalOrder>> {
+    const response = await apiClient.put<{ success: boolean; order: LocalOrder }>(
+      `local-orders/${orderId}`,
+      payload
+    );
+
+    if (response.success && response.data) {
+      return { success: true, data: response.data.order };
+    }
+
+    throw new Error('Failed to submit order correction');
+  }
+
+
   /**
    * Create a new international order
    */
   async createInternationalOrder(orderData: CreateInternationalOrderRequest): Promise<ApiResponse<InternationalOrder>> {
     try {
       const response = await apiClient.post<{ success: boolean; order: InternationalOrder }>('international-orders', orderData);
-      
+
       if (response.success && response.data) {
         return {
           success: true,
           data: response.data.order
         };
       }
-      
+
       throw new Error('Failed to create international order');
     } catch (error) {
       console.error('Error creating international order:', error);
