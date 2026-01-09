@@ -7,7 +7,12 @@ import {
   DollarSign,
   Loader2,
 } from 'lucide-react';
-import { orderService, LocalOrder, LocalOrderItem, UpdateLocalOrderCorrectionRequest } from '../api/services/orderService';
+import {
+  orderService,
+  LocalOrder,
+  LocalOrderItem,
+  UpdateLocalOrderCorrectionRequest
+} from '../api/services/orderService';
 import { DENY_REASONS } from '../admin/constants/adminConstants';
 
 const OrderCorrection: React.FC = () => {
@@ -28,7 +33,22 @@ const OrderCorrection: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Load order details
+  const isUserAddedItem = (item: LocalOrderItem) =>
+    item.source_type === 'user_added' || item.status === 'new';
+
+  const isAcceptedItem = (item: LocalOrderItem) => {
+    const deny = item.deny_reasons ?? [];
+    return !isUserAddedItem(item) && deny.length === 0;
+  };
+
+  const hasPriceMismatch = (item: LocalOrderItem) => {
+    const deny = item.deny_reasons ?? [];
+    return deny.some((reasonIndex) => {
+      const text = (DENY_REASONS[reasonIndex - 1] || '').toLowerCase();
+      return text.includes('price');
+    });
+  };
+
   useEffect(() => {
     const loadOrderCorrectionData = async () => {
       if (!orderId) return;
@@ -58,6 +78,14 @@ const OrderCorrection: React.FC = () => {
   const toggleItemEdit = (itemId: number) => {
     if (!orderData) return;
 
+    const item = (orderData.local_order_items ?? []).find(i => i.id === itemId);
+    if (!item) return;
+
+    if (isAcceptedItem(item)) {
+      setError('Accepted items cannot be edited.');
+      return;
+    }
+
     setOrderData(prev => ({
       ...prev!,
       local_order_items: (prev!.local_order_items ?? []).map(item =>
@@ -68,6 +96,14 @@ const OrderCorrection: React.FC = () => {
 
   const deleteItem = (itemId: number) => {
     if (!orderData) return;
+
+    const item = (orderData.local_order_items ?? []).find(i => i.id === itemId);
+    if (!item) return;
+
+    if (isAcceptedItem(item)) {
+      setError('Accepted items cannot be removed.');
+      return;
+    }
 
     const confirmed = window.confirm('Are you sure you want to remove this item from your order?');
     if (confirmed) {
@@ -122,7 +158,7 @@ const OrderCorrection: React.FC = () => {
   const calculateCurrentTotal = () => {
     if (!orderData) return 0;
     return (orderData.local_order_items ?? []).reduce(
-      (total, item) => total + item.final_price * item.quantity,
+      (total, item) => total + (Number(item.final_price) || 0) * item.quantity,
       0
     );
   };
@@ -170,10 +206,28 @@ const OrderCorrection: React.FC = () => {
           price: Number(item.price) || 0,
           final_price: Number(item.final_price) || 0,
           status: 'pending',
-          deny_reasons: [], // ✅ clear old deny reasons
+          deny_reasons: [],
           image_link: item.image_link || '',
         })),
       };
+
+      const additionalAmount = Math.max(0, correctedTotal - orderData.total_price);
+
+      if (additionalAmount > 0) {
+        localStorage.setItem(
+          'correctionPayment',
+          JSON.stringify({ orderId, amount: additionalAmount, currency: 'INR' })
+        );
+        localStorage.setItem(
+          'pendingOrderCorrection',
+          JSON.stringify({ orderId, payload })
+        );
+
+        navigate('/payment', {
+          state: { type: 'correction', orderId, amount: additionalAmount, currency: 'INR' }
+        });
+        return;
+      }
 
       const res = await orderService.submitLocalOrderCorrection(orderId, payload);
 
@@ -184,6 +238,7 @@ const OrderCorrection: React.FC = () => {
 
       setSuccess('Order correction submitted successfully!');
       setTimeout(() => navigate('/domestic-orders'), 1200);
+
     } catch (err) {
       setError('Failed to submit order correction. Please try again.');
     } finally {
@@ -221,6 +276,7 @@ const OrderCorrection: React.FC = () => {
   }
 
   const priceDifference = calculatePriceDifference();
+  const needsAdditionalPayment = priceDifference > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -262,7 +318,10 @@ const OrderCorrection: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow p-6 space-y-6">
               {(orderData.local_order_items ?? []).map(item => {
-                const hasErrors = item.deny_reasons && item.deny_reasons.length > 0;
+                const hasErrors = !!(item.deny_reasons && item.deny_reasons.length > 0);
+                const accepted = isAcceptedItem(item);
+                const priceMismatch = hasPriceMismatch(item);
+
                 return (
                   <div
                     key={item.id}
@@ -277,7 +336,18 @@ const OrderCorrection: React.FC = () => {
                           className="w-24 h-24 rounded-lg border"
                         />
                       )}
+
                       <div className="flex-1 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold">{item.product_name}</h3>
+
+                          {accepted && (
+                            <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">
+                              Accepted
+                            </span>
+                          )}
+                        </div>
+
                         {hasErrors && (
                           <div className="p-3 bg-red-100 border border-red-200 rounded text-sm text-red-800 space-y-1">
                             {item.deny_reasons?.map((reasonIndex, idx) => (
@@ -288,7 +358,7 @@ const OrderCorrection: React.FC = () => {
                             ))}
                           </div>
                         )}
-                        <h3 className="font-semibold">{item.product_name}</h3>
+
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           <div>
                             <label className="text-xs text-gray-500">Color</label>
@@ -303,6 +373,7 @@ const OrderCorrection: React.FC = () => {
                               <p>{item.color}</p>
                             )}
                           </div>
+
                           <div>
                             <label className="text-xs text-gray-500">Size</label>
                             {item.isEditing ? (
@@ -316,6 +387,7 @@ const OrderCorrection: React.FC = () => {
                               <p>{item.size}</p>
                             )}
                           </div>
+
                           <div>
                             <label className="text-xs text-gray-500">Quantity</label>
                             {item.isEditing ? (
@@ -324,7 +396,7 @@ const OrderCorrection: React.FC = () => {
                                 min={1}
                                 value={item.quantity}
                                 onChange={e =>
-                                  handleItemEdit(item.id, 'quantity', parseInt(e.target.value))
+                                  handleItemEdit(item.id, 'quantity', parseInt(e.target.value || '1', 10))
                                 }
                                 className="w-full px-2 py-1 border rounded"
                               />
@@ -332,7 +404,28 @@ const OrderCorrection: React.FC = () => {
                               <p>{item.quantity}</p>
                             )}
                           </div>
+
+                          {/* ✅ FIX 1: price mismatch allows editing price (final_price) */}
+                          {item.isEditing && priceMismatch && (
+                            <div className="md:col-span-3">
+                              <label className="text-xs text-gray-500">Current Unit Price (₹)</label>
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={Number(item.final_price) || 0}
+                                onChange={e =>
+                                  handleItemEdit(item.id, 'final_price', parseFloat(e.target.value || '0'))
+                                }
+                                className="w-full px-2 py-1 border rounded"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Edit only if admin marked a price mismatch.
+                              </p>
+                            </div>
+                          )}
                         </div>
+
                         <div className="grid grid-cols-3 gap-4 text-sm">
                           <div>
                             <span className="text-gray-500">Paid:</span>
@@ -346,39 +439,34 @@ const OrderCorrection: React.FC = () => {
                             <span className="text-gray-500">Difference:</span>
                             <p
                               className={
-                                (item.final_price * item.quantity) - (item.price * item.quantity) >
-                                  0
+                                (item.final_price * item.quantity) - (item.price * item.quantity) > 0
                                   ? 'text-red-600'
                                   : 'text-green-600'
                               }
                             >
-                              {(item.final_price * item.quantity) -
-                                (item.price * item.quantity) >
-                                0
-                                ? '+'
-                                : ''}
-                              ₹
-                              {(
-                                (item.final_price * item.quantity) -
-                                (item.price * item.quantity)
-                              ).toLocaleString()}
+                              {(item.final_price * item.quantity) - (item.price * item.quantity) > 0 ? '+' : ''}
+                              ₹{((item.final_price * item.quantity) - (item.price * item.quantity)).toLocaleString()}
                             </p>
                           </div>
                         </div>
-                        <div className="flex space-x-3">
-                          <button
-                            onClick={() => toggleItemEdit(item.id)}
-                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
-                          >
-                            {item.isEditing ? 'Save' : 'Edit'}
-                          </button>
-                          <button
-                            onClick={() => deleteItem(item.id)}
-                            className="px-3 py-1 bg-red-100 text-red-700 rounded"
-                          >
-                            Remove
-                          </button>
-                        </div>
+
+                        {/* ✅ FIX 2: disable edit/remove for accepted items */}
+                        {!accepted && (
+                          <div className="flex space-x-3">
+                            <button
+                              onClick={() => toggleItemEdit(item.id)}
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
+                            >
+                              {item.isEditing ? 'Save' : 'Edit'}
+                            </button>
+                            <button
+                              onClick={() => deleteItem(item.id)}
+                              className="px-3 py-1 bg-red-100 text-red-700 rounded"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -433,7 +521,7 @@ const OrderCorrection: React.FC = () => {
                       placeholder="Quantity"
                       value={newItem.quantity}
                       onChange={e =>
-                        setNewItem(p => ({ ...p, quantity: parseInt(e.target.value) }))
+                        setNewItem(p => ({ ...p, quantity: parseInt(e.target.value || '1', 10) }))
                       }
                       className="border rounded px-2 py-1"
                     />
@@ -443,7 +531,7 @@ const OrderCorrection: React.FC = () => {
                       placeholder="Price (₹) *"
                       value={newItem.price}
                       onChange={e =>
-                        setNewItem(p => ({ ...p, price: parseFloat(e.target.value) }))
+                        setNewItem(p => ({ ...p, price: parseFloat(e.target.value || '0') }))
                       }
                       className="border rounded px-2 py-1"
                     />
@@ -507,7 +595,11 @@ const OrderCorrection: React.FC = () => {
               disabled={isSaving}
               className="w-full py-3 bg-blue-600 text-white rounded disabled:bg-gray-400"
             >
-              {isSaving ? 'Submitting...' : 'Confirm Order Correction'}
+              {isSaving
+                ? 'Submitting...'
+                : needsAdditionalPayment
+                  ? 'Confirm & Proceed to Payment'
+                  : 'Confirm Order Correction'}
             </button>
           </div>
         </div>

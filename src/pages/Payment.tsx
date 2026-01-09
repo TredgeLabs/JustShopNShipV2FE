@@ -23,29 +23,41 @@ interface OrderData {
 const Payment: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'razorpay' | 'paypal' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
+
+  // ✅ now supports: local | international | correction
   const type = location.state?.type ?? 'local';
+
   const selectedAddressId = location.state?.selectedAddressId ?? '';
   const amountFromState = Number(location.state?.amount ?? 0);
   const currencyFromState = (location.state?.currency ?? 'INR') as string;
+
+  // ✅ correction order id (passed from OrderCorrection)
+  const correctionOrderId = String(location.state?.orderId ?? '');
+
   const [totalPrice, setTotalPrice] = useState(0);
   const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
-  const totalItems = type === 'international' ? shipmentData?.items.length : orderData?.totalItems || 0;
+  const [correctionItemsCount, setCorrectionItemsCount] = useState<number>(0);
 
-
+  const totalItems =
+    type === 'international'
+      ? shipmentData?.items.length
+      : type === 'correction'
+        ? correctionItemsCount
+        : orderData?.totalItems || 0;
 
   useEffect(() => {
+    // ---- INTERNATIONAL ----
     if (type === 'international') {
       const savedShipmentData = localStorage.getItem('shipmentData');
       if (savedShipmentData) {
         const parsed: ShipmentData = JSON.parse(savedShipmentData);
         setShipmentData(parsed);
 
-        // ✅ Use amount passed from ShipmentConfirmation first
-        // Fallbacks for safety
         const fallbackTotal =
           (parsed as any)?.pricing?.totalCost ??
           (parsed as any)?.orderRequest?.orderData?.total_cost ??
@@ -56,19 +68,44 @@ const Payment: React.FC = () => {
         navigate('/my-vault');
         return;
       }
-    } else {
-      const savedOrderData = localStorage.getItem('orderData');
-      if (savedOrderData) {
-        const parsed: OrderData = JSON.parse(savedOrderData);
-        setTotalPrice(parsed.totalPrice);
-        setOrderData(parsed);
-        // console.log('Loaded order data:', parsed.items?.length);
-      } else {
-        navigate('/create-order');
-      }
+      return;
     }
-  }, [navigate, type, amountFromState]);
 
+    // ---- CORRECTION ----
+    if (type === 'correction') {
+      let fallbackAmount = 0;
+      try {
+        const raw = localStorage.getItem('correctionPayment');
+        if (raw) fallbackAmount = Number(JSON.parse(raw)?.amount ?? 0);
+      } catch { }
+
+      const finalAmount = amountFromState > 0 ? amountFromState : fallbackAmount;
+      setTotalPrice(finalAmount);
+
+      if (correctionOrderId) {
+        orderService
+          .getLocalOrderDetails(correctionOrderId)
+          .then((res: any) => {
+            const count = res?.order?.local_order_items?.length ?? 0;
+            setCorrectionItemsCount(count);
+          })
+          .catch(() => {
+          });
+      }
+
+      return;
+    }
+
+    // ---- LOCAL ----
+    const savedOrderData = localStorage.getItem('orderData');
+    if (savedOrderData) {
+      const parsed: OrderData = JSON.parse(savedOrderData);
+      setTotalPrice(parsed.totalPrice);
+      setOrderData(parsed);
+    } else {
+      navigate('/create-order');
+    }
+  }, [navigate, type, amountFromState, correctionOrderId]);
 
   const handlePaymentMethodSelect = (method: 'razorpay' | 'paypal') => {
     setSelectedPaymentMethod(method);
@@ -81,8 +118,17 @@ const Payment: React.FC = () => {
       return;
     }
 
-    if (!orderData && type === 'local' || !shipmentData && type === 'international') {
+    // ✅ validation per flow
+    if (type === 'local' && !orderData) {
       setError('Order data not found');
+      return;
+    }
+    if (type === 'international' && !shipmentData) {
+      setError('Shipment data not found');
+      return;
+    }
+    if (type === 'correction' && totalPrice <= 0) {
+      setError('Payment amount not found');
       return;
     }
 
@@ -90,7 +136,8 @@ const Payment: React.FC = () => {
     setError('');
 
     try {
-      let response;
+      let response: any;
+
       if (type === 'international') {
         if (!shipmentData || !shipmentData.orderRequest) {
           setError('Shipment data not found');
@@ -99,6 +146,33 @@ const Payment: React.FC = () => {
         }
         shipmentData.orderRequest.orderData.shipping_address_id = selectedAddressId;
         response = await orderService.createInternationalOrder(shipmentData.orderRequest);
+      } else if (type === 'correction') {
+        // ✅ Payment success mocked (same style as your current code)
+        response = { success: true };
+
+        if (!response.success) {
+          setError('Payment failed. Please try again.');
+          return;
+        }
+
+        const raw = localStorage.getItem('pendingOrderCorrection');
+        const parsed = raw ? JSON.parse(raw) : null;
+
+        const payload = parsed?.payload;
+        const storedOrderId = String(parsed?.orderId ?? '');
+        const finalOrderId = correctionOrderId || storedOrderId;
+
+        if (!finalOrderId || !payload) {
+          setError('Correction details not found. Please go back and try again.');
+          return;
+        }
+
+        const updateRes = await orderService.submitLocalOrderCorrection(finalOrderId, payload);
+
+        if (!updateRes?.success) {
+          setError('Payment succeeded, but failed to update the order. Please contact support.');
+          return;
+        }
       } else {
         const platformFee = Math.round(totalPrice * 0.05);
         const orderRequest: CreateLocalOrderRequest = {
@@ -107,9 +181,9 @@ const Payment: React.FC = () => {
             payment_status: 'pending',
             total_price: totalPrice,
             platform_fee: platformFee,
-            admin_notes: `Order created on ${new Date().toLocaleDateString()} with ${orderData.items.length} items`
+            admin_notes: `Order created on ${new Date().toLocaleDateString()} with ${orderData!.items.length} items`
           },
-          items: orderData.items.map(item => ({
+          items: orderData!.items.map(item => ({
             source_type: 'manual_link',
             product_name: item.name,
             product_link: item.url,
@@ -126,15 +200,16 @@ const Payment: React.FC = () => {
         response = await orderService.createLocalOrder(orderRequest);
       }
 
+      const gatewayFee = Math.round(totalPrice * 0.02);
+      const payableAmount = totalPrice + gatewayFee;
+
       if (response.success) {
-        // Generate mock transaction ID
         const transactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
-        // Store payment result
         const paymentResult = {
           success: true,
           transactionId,
-          orderId: `ORD${Date.now()}`,
+          orderId: type === 'correction' && correctionOrderId ? correctionOrderId : `ORD${Date.now()}`,
           amount: payableAmount,
           currency: currencyFromState,
           paymentMethod: selectedPaymentMethod,
@@ -143,17 +218,18 @@ const Payment: React.FC = () => {
 
         localStorage.setItem('paymentResult', JSON.stringify(paymentResult));
 
-        // Clear order data
+        // Clear stored data per flow
         if (type === 'international') {
           localStorage.removeItem('shipmentData');
+        } else if (type === 'correction') {
+          localStorage.removeItem('correctionPayment');
+          localStorage.removeItem('pendingOrderCorrection');
         } else {
           localStorage.removeItem('orderData');
         }
 
-        // Redirect to success page
         navigate('/payment-result?status=success');
       } else {
-        // Payment failed
         const paymentResult = {
           success: false,
           error: 'Payment was declined by your bank. Please try again or use a different payment method.',
@@ -174,13 +250,22 @@ const Payment: React.FC = () => {
   const handleBackToConfirmation = () => {
     if (type === 'international') {
       navigate('/shipment-confirmation', { state: { selectedAddressId } });
-    } else {
-      navigate('/order-confirmation');
+      return;
     }
+    if (type === 'correction') {
+      navigate(`/order-correction/${correctionOrderId || ''}`);
+      return;
+    }
+    navigate('/order-confirmation');
   };
 
+  // ✅ loading rules per flow
+  const isLoadingState =
+    (type === 'local' && !orderData) ||
+    (type === 'international' && !shipmentData) ||
+    (type === 'correction' && totalPrice <= 0);
 
-  if (!orderData && type === 'local' || !shipmentData && type === 'international') {
+  if (isLoadingState) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -190,6 +275,7 @@ const Payment: React.FC = () => {
       </div>
     );
   }
+
   const gatewayFee = Math.round(totalPrice * 0.02);
   const payableAmount = totalPrice + gatewayFee;
 
@@ -230,8 +316,10 @@ const Payment: React.FC = () => {
 
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Items ({totalItems}):</span>
-                <span className="font-medium">₹{totalPrice}</span>
+                <span className="text-gray-600">
+                  {type === 'correction' ? `Additional Payment` : `Items (${totalItems})`}:
+                </span>
+                <span className="font-medium">₹{totalPrice.toLocaleString()}</span>
               </div>
 
               <div className="flex justify-between">
@@ -361,7 +449,6 @@ const Payment: React.FC = () => {
             )}
           </button>
 
-          {/* Payment Info */}
           <div className="text-center text-sm text-gray-500">
             <p>By clicking "Pay", you agree to our terms of service and privacy policy.</p>
             <p className="mt-1">You will be redirected to the selected payment gateway to complete your transaction.</p>
