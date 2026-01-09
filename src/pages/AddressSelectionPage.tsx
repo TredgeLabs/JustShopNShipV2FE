@@ -13,14 +13,6 @@ import {
 import { userService, AddressApi } from '../api/services/userService';
 import { ShipmentData } from './ShipmentConfirmation';
 
-interface OrderData {
-  items: any[];
-  totalPrice: number;
-  totalWeight: number;
-  totalItems: number;
-  orderDate: string;
-}
-
 const AddressSelectionPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -228,46 +220,52 @@ const AddressSelectionPage: React.FC = () => {
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Items:</span>
-                    <span className="font-medium">{shipmentData.items.length}</span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Weight:</span>
-                    <span className="font-medium">{(shipmentData.items.reduce((sum, item) => sum + item.weight * 1000, 0)) / 1000} kg</span>
-                  </div>
-
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span>Total Amount:</span>
-                      <span className="text-blue-600">₹{shipmentData.destination.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Selected Address Preview */}
-            {selectedAddressId && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Selected Address</h3>
-
                 {(() => {
-                  const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
-                  if (!selectedAddress) return null;
+                  const totalItems = shipmentData.items.length;
+                  const totalWeightKg = shipmentData.items.reduce((sum: number, item: any) => sum + (item.weight || 0), 0);
+
+                  const shippingCost = shipmentData.pricing?.shippingCost ?? 0;
+                  const storageCost = shipmentData.pricing?.storageCost ?? 0;
+                  const platformFee = shipmentData.pricing?.platformFee ?? 0;
+                  const totalCost = shipmentData.pricing?.totalCost ?? (shippingCost + storageCost + platformFee);
 
                   return (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        {getAddressIcon(selectedAddress.title)}
-                        <span className="font-medium text-green-900">{selectedAddress.title}</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Destination:</span>
+                        <span className="font-medium">{shipmentData.destination}</span>
                       </div>
-                      <div className="text-sm text-green-800 space-y-1">
-                        <p className="font-medium">{selectedAddress.recipient_first_name} {selectedAddress.recipient_last_name}</p>
-                        <p>{formatFullAddress(selectedAddress)}</p>
-                        <p>{selectedAddress.phone_country_code} {selectedAddress.phone_number}</p>
+
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Items:</span>
+                        <span className="font-medium">{totalItems}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Weight:</span>
+                        <span className="font-medium">{totalWeightKg.toFixed(2)} kg</span>
+                      </div>
+
+                      <div className="border-t pt-3 space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Shipping:</span>
+                          <span className="font-medium">₹{shippingCost.toLocaleString("en-IN")}</span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Storage:</span>
+                          <span className="font-medium">₹{storageCost.toLocaleString("en-IN")}</span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Platform Fee:</span>
+                          <span className="font-medium">₹{platformFee.toLocaleString("en-IN")}</span>
+                        </div>
+
+                        <div className="flex justify-between text-lg font-semibold pt-2">
+                          <span>Total Amount:</span>
+                          <span className="text-blue-600">₹{totalCost.toLocaleString("en-IN")}</span>
+                        </div>
                       </div>
                     </div>
                   );

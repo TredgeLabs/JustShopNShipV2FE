@@ -29,34 +29,46 @@ const Payment: React.FC = () => {
   const [error, setError] = useState('');
   const type = location.state?.type ?? 'local';
   const selectedAddressId = location.state?.selectedAddressId ?? '';
+  const amountFromState = Number(location.state?.amount ?? 0);
+  const currencyFromState = (location.state?.currency ?? 'INR') as string;
   const [totalPrice, setTotalPrice] = useState(0);
   const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
   const totalItems = type === 'international' ? shipmentData?.items.length : orderData?.totalItems || 0;
 
+
+
   useEffect(() => {
     if (type === 'international') {
-      // Load internation data from localStorage
       const savedShipmentData = localStorage.getItem('shipmentData');
       if (savedShipmentData) {
-        setShipmentData(JSON.parse(savedShipmentData));
+        const parsed: ShipmentData = JSON.parse(savedShipmentData);
+        setShipmentData(parsed);
+
+        // ✅ Use amount passed from ShipmentConfirmation first
+        // Fallbacks for safety
+        const fallbackTotal =
+          (parsed as any)?.pricing?.totalCost ??
+          (parsed as any)?.orderRequest?.orderData?.total_cost ??
+          0;
+
+        setTotalPrice(amountFromState > 0 ? amountFromState : Number(fallbackTotal) || 0);
       } else {
-        // No shipment data, redirect back to vault
         navigate('/my-vault');
         return;
       }
     } else {
-      // Load order data from localStorage
       const savedOrderData = localStorage.getItem('orderData');
       if (savedOrderData) {
-        setTotalPrice(JSON.parse(savedOrderData).totalPrice);
-        setOrderData(JSON.parse(savedOrderData));
-        console.log('Loaded order data:', orderData?.items.length);
+        const parsed: OrderData = JSON.parse(savedOrderData);
+        setTotalPrice(parsed.totalPrice);
+        setOrderData(parsed);
+        // console.log('Loaded order data:', parsed.items?.length);
       } else {
-        // No order data, redirect back to create order
         navigate('/create-order');
       }
     }
-  }, [navigate]);
+  }, [navigate, type, amountFromState]);
+
 
   const handlePaymentMethodSelect = (method: 'razorpay' | 'paypal') => {
     setSelectedPaymentMethod(method);
@@ -123,7 +135,8 @@ const Payment: React.FC = () => {
           success: true,
           transactionId,
           orderId: `ORD${Date.now()}`,
-          amount: totalPrice,
+          amount: payableAmount,
+          currency: currencyFromState,
           paymentMethod: selectedPaymentMethod,
           timestamp: new Date().toISOString()
         };
@@ -159,8 +172,13 @@ const Payment: React.FC = () => {
   };
 
   const handleBackToConfirmation = () => {
-    navigate('/order-confirmation');
+    if (type === 'international') {
+      navigate('/shipment-confirmation', { state: { selectedAddressId } });
+    } else {
+      navigate('/order-confirmation');
+    }
   };
+
 
   if (!orderData && type === 'local' || !shipmentData && type === 'international') {
     return (
@@ -172,6 +190,8 @@ const Payment: React.FC = () => {
       </div>
     );
   }
+  const gatewayFee = Math.round(totalPrice * 0.02);
+  const payableAmount = totalPrice + gatewayFee;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -221,13 +241,13 @@ const Payment: React.FC = () => {
 
               <div className="flex justify-between">
                 <span className="text-gray-600">Payment Gateway Fee:</span>
-                <span className="font-medium">₹{Math.round(totalPrice * 0.02).toLocaleString()}</span>
+                <span className="font-medium">₹{gatewayFee.toLocaleString()}</span>
               </div>
 
               <div className="border-t pt-3">
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total Amount:</span>
-                  <span className="text-blue-600">₹{(totalPrice + Math.round(totalPrice * 0.02)).toLocaleString()}</span>
+                  <span className="text-blue-600">₹{payableAmount.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -336,7 +356,7 @@ const Payment: React.FC = () => {
             ) : (
               <>
                 <Lock className="h-5 w-5" />
-                <span>Pay ₹{(totalPrice + Math.round(totalPrice * 0.02)).toLocaleString()}</span>
+                <span>Pay ₹{payableAmount.toLocaleString()}</span>
               </>
             )}
           </button>
