@@ -21,26 +21,20 @@ const OrderCorrection: React.FC = () => {
   const [orderData, setOrderData] = useState<LocalOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [newItem, setNewItem] = useState({
-    name: '',
-    color: '',
-    size: '',
-    quantity: 1,
-    price: 0,
-    url: '',
-  });
-  const [showAddItem, setShowAddItem] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // ---------- Helpers ----------
   const isUserAddedItem = (item: LocalOrderItem) =>
     item.source_type === 'user_added' || item.status === 'new';
 
+  // "Accepted" = no deny reasons AND not user added
   const isAcceptedItem = (item: LocalOrderItem) => {
     const deny = item.deny_reasons ?? [];
     return !isUserAddedItem(item) && deny.length === 0;
   };
 
+  // price mismatch = deny reason text contains "price"
   const hasPriceMismatch = (item: LocalOrderItem) => {
     const deny = item.deny_reasons ?? [];
     return deny.some((reasonIndex) => {
@@ -49,6 +43,7 @@ const OrderCorrection: React.FC = () => {
     });
   };
 
+  // Load order details
   useEffect(() => {
     const loadOrderCorrectionData = async () => {
       if (!orderId) return;
@@ -115,44 +110,6 @@ const OrderCorrection: React.FC = () => {
   };
 
   /** -----------------------------
-   * Add New Item
-   * ----------------------------- */
-  const handleAddNewItem = () => {
-    if (!newItem.name || !newItem.url || newItem.price <= 0) {
-      setError('Please fill in all required fields for the new item');
-      return;
-    }
-
-    const newItemData: LocalOrderItem = {
-      id: Date.now(), // temporary ID
-      local_order_id: orderData?.id ?? 0,
-      source_type: 'user_added',
-      product_name: newItem.name,
-      product_link: newItem.url,
-      color: newItem.color,
-      size: newItem.size,
-      quantity: newItem.quantity,
-      price: newItem.price,
-      final_price: newItem.price,
-      status: 'new',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deny_reasons: [],
-      image_link: '',
-      isEditing: false,
-    };
-
-    setOrderData(prev => ({
-      ...prev!,
-      local_order_items: [...(prev!.local_order_items ?? []), newItemData],
-    }));
-
-    setNewItem({ name: '', color: '', size: '', quantity: 1, price: 0, url: '' });
-    setShowAddItem(false);
-    setError('');
-  };
-
-  /** -----------------------------
    * Price Calculations
    * ----------------------------- */
   const calculateCurrentTotal = () => {
@@ -206,18 +163,20 @@ const OrderCorrection: React.FC = () => {
           price: Number(item.price) || 0,
           final_price: Number(item.final_price) || 0,
           status: 'pending',
-          deny_reasons: [],
+          deny_reasons: [], // clear deny reasons
           image_link: item.image_link || '',
         })),
       };
 
+      // ✅ IMPORTANT: if additional payment required -> go to payment first, DO NOT call update API here
       const additionalAmount = Math.max(0, correctedTotal - orderData.total_price);
-
       if (additionalAmount > 0) {
         localStorage.setItem(
           'correctionPayment',
           JSON.stringify({ orderId, amount: additionalAmount, currency: 'INR' })
         );
+
+        // Save correction payload to be submitted after payment
         localStorage.setItem(
           'pendingOrderCorrection',
           JSON.stringify({ orderId, payload })
@@ -229,6 +188,7 @@ const OrderCorrection: React.FC = () => {
         return;
       }
 
+      // ✅ No additional payment -> update immediately
       const res = await orderService.submitLocalOrderCorrection(orderId, payload);
 
       if (!res.success) {
@@ -238,7 +198,6 @@ const OrderCorrection: React.FC = () => {
 
       setSuccess('Order correction submitted successfully!');
       setTimeout(() => navigate('/domestic-orders'), 1200);
-
     } catch (err) {
       setError('Failed to submit order correction. Please try again.');
     } finally {
@@ -405,7 +364,7 @@ const OrderCorrection: React.FC = () => {
                             )}
                           </div>
 
-                          {/* ✅ FIX 1: price mismatch allows editing price (final_price) */}
+                          {/* ✅ price mismatch allows editing unit price */}
                           {item.isEditing && priceMismatch && (
                             <div className="md:col-span-3">
                               <label className="text-xs text-gray-500">Current Unit Price (₹)</label>
@@ -450,7 +409,7 @@ const OrderCorrection: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* ✅ FIX 2: disable edit/remove for accepted items */}
+                        {/* Disable edit/remove for accepted items */}
                         {!accepted && (
                           <div className="flex space-x-3">
                             <button
@@ -472,86 +431,6 @@ const OrderCorrection: React.FC = () => {
                   </div>
                 );
               })}
-            </div>
-
-            {/* Add new item */}
-            <div className="mt-6">
-              {!showAddItem ? (
-                <button
-                  onClick={() => setShowAddItem(true)}
-                  className="px-4 py-2 bg-green-100 text-green-700 rounded"
-                >
-                  + Add New Item
-                </button>
-              ) : (
-                <div className="bg-white border rounded-lg p-4 space-y-4">
-                  <h3 className="font-medium">Add New Item</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      placeholder="Product Name *"
-                      value={newItem.name}
-                      onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))}
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="url"
-                      placeholder="Product URL *"
-                      value={newItem.url}
-                      onChange={e => setNewItem(p => ({ ...p, url: e.target.value }))}
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Color"
-                      value={newItem.color}
-                      onChange={e => setNewItem(p => ({ ...p, color: e.target.value }))}
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Size"
-                      value={newItem.size}
-                      onChange={e => setNewItem(p => ({ ...p, size: e.target.value }))}
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="number"
-                      min={1}
-                      placeholder="Quantity"
-                      value={newItem.quantity}
-                      onChange={e =>
-                        setNewItem(p => ({ ...p, quantity: parseInt(e.target.value || '1', 10) }))
-                      }
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      placeholder="Price (₹) *"
-                      value={newItem.price}
-                      onChange={e =>
-                        setNewItem(p => ({ ...p, price: parseFloat(e.target.value || '0') }))
-                      }
-                      className="border rounded px-2 py-1"
-                    />
-                  </div>
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={handleAddNewItem}
-                      className="px-4 py-2 bg-green-600 text-white rounded"
-                    >
-                      Add Item
-                    </button>
-                    <button
-                      onClick={() => setShowAddItem(false)}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
