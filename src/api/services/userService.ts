@@ -25,6 +25,27 @@ export interface VaultItemsApiResponse {
   items: VaultItemApi[];
 }
 
+export interface ShippingCostResponseApi {
+  country: string;
+  shipping_rates: Record<string, number>; // keys like "0.5", "1", "2"...
+}
+
+export const shippingService = {
+  async getShippingRates(country: string): Promise<ShippingCostResponseApi> {
+    const countryKey = country.trim().toUpperCase();
+    const res = await apiClient.get<ShippingCostResponseApi>(
+      "/api/v1/shipping-cost",
+      { country: countryKey }
+    );
+    if (!res.success || !res.data) {
+      throw new Error("Failed to load shipping rates");
+    }
+
+    return res.data;
+  },
+};
+
+
 class VaultService {
   async getVaultItems(): Promise<VaultItemsApiResponse> {
     try {

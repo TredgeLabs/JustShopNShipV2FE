@@ -7,7 +7,12 @@ import {
   DollarSign,
   Loader2,
 } from 'lucide-react';
-import { orderService, LocalOrder, LocalOrderItem } from '../api/services/orderService';
+import {
+  orderService,
+  LocalOrder,
+  LocalOrderItem,
+  UpdateLocalOrderCorrectionRequest
+} from '../api/services/orderService';
 import { DENY_REASONS } from '../admin/constants/adminConstants';
 
 const OrderCorrection: React.FC = () => {
@@ -16,17 +21,27 @@ const OrderCorrection: React.FC = () => {
   const [orderData, setOrderData] = useState<LocalOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [newItem, setNewItem] = useState({
-    name: '',
-    color: '',
-    size: '',
-    quantity: 1,
-    price: 0,
-    url: '',
-  });
-  const [showAddItem, setShowAddItem] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // ---------- Helpers ----------
+  const isUserAddedItem = (item: LocalOrderItem) =>
+    item.source_type === 'user_added' || item.status === 'new';
+
+  // "Accepted" = no deny reasons AND not user added
+  const isAcceptedItem = (item: LocalOrderItem) => {
+    const deny = item.deny_reasons ?? [];
+    return !isUserAddedItem(item) && deny.length === 0;
+  };
+
+  // price mismatch = deny reason text contains "price"
+  const hasPriceMismatch = (item: LocalOrderItem) => {
+    const deny = item.deny_reasons ?? [];
+    return deny.some((reasonIndex) => {
+      const text = (DENY_REASONS[reasonIndex - 1] || '').toLowerCase();
+      return text.includes('price');
+    });
+  };
 
   // Load order details
   useEffect(() => {
@@ -58,6 +73,14 @@ const OrderCorrection: React.FC = () => {
   const toggleItemEdit = (itemId: number) => {
     if (!orderData) return;
 
+    const item = (orderData.local_order_items ?? []).find(i => i.id === itemId);
+    if (!item) return;
+
+    if (isAcceptedItem(item)) {
+      setError('Accepted items cannot be edited.');
+      return;
+    }
+
     setOrderData(prev => ({
       ...prev!,
       local_order_items: (prev!.local_order_items ?? []).map(item =>
@@ -69,6 +92,14 @@ const OrderCorrection: React.FC = () => {
   const deleteItem = (itemId: number) => {
     if (!orderData) return;
 
+    const item = (orderData.local_order_items ?? []).find(i => i.id === itemId);
+    if (!item) return;
+
+    if (isAcceptedItem(item)) {
+      setError('Accepted items cannot be removed.');
+      return;
+    }
+
     const confirmed = window.confirm('Are you sure you want to remove this item from your order?');
     if (confirmed) {
       setOrderData(prev => ({
@@ -79,50 +110,12 @@ const OrderCorrection: React.FC = () => {
   };
 
   /** -----------------------------
-   * Add New Item
-   * ----------------------------- */
-  const handleAddNewItem = () => {
-    if (!newItem.name || !newItem.url || newItem.price <= 0) {
-      setError('Please fill in all required fields for the new item');
-      return;
-    }
-
-    const newItemData: LocalOrderItem = {
-      id: Date.now(), // temporary ID
-      local_order_id: orderData?.id ?? 0,
-      source_type: 'user_added',
-      product_name: newItem.name,
-      product_link: newItem.url,
-      color: newItem.color,
-      size: newItem.size,
-      quantity: newItem.quantity,
-      price: newItem.price,
-      final_price: newItem.price,
-      status: 'new',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deny_reasons: [],
-      image_link: '',
-      isEditing: false,
-    };
-
-    setOrderData(prev => ({
-      ...prev!,
-      local_order_items: [...(prev!.local_order_items ?? []), newItemData],
-    }));
-
-    setNewItem({ name: '', color: '', size: '', quantity: 1, price: 0, url: '' });
-    setShowAddItem(false);
-    setError('');
-  };
-
-  /** -----------------------------
    * Price Calculations
    * ----------------------------- */
   const calculateCurrentTotal = () => {
     if (!orderData) return 0;
     return (orderData.local_order_items ?? []).reduce(
-      (total, item) => total + item.final_price * item.quantity,
+      (total, item) => total + (Number(item.final_price) || 0) * item.quantity,
       0
     );
   };
@@ -136,19 +129,75 @@ const OrderCorrection: React.FC = () => {
    * Confirm Correction
    * ----------------------------- */
   const handleConfirmCorrection = async () => {
-    if (!orderData) return;
+    if (!orderData || !orderId) return;
 
     try {
       setIsSaving(true);
       setError('');
+      setSuccess('');
 
-      // Replace with actual service call:
-      // await orderService.submitOrderCorrection(orderId, orderData);
+      const items = orderData.local_order_items ?? [];
+      if (items.length === 0) {
+        setError('Please keep at least one item in the order.');
+        return;
+      }
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const correctedTotal = calculateCurrentTotal();
+      const platformFee = Math.round(correctedTotal * 0.05);
+
+      const payload: UpdateLocalOrderCorrectionRequest = {
+        orderData: {
+          order_status: 'under_review',
+          payment_status: 'pending',
+          total_price: correctedTotal,
+          platform_fee: platformFee,
+          admin_notes: `User submitted correction on ${new Date().toLocaleDateString()} with ${items.length} items.`,
+        },
+        items: items.map((item) => ({
+          source_type: item.source_type || 'manual_link',
+          product_name: item.product_name,
+          product_link: item.product_link,
+          color: item.color || '',
+          size: item.size || '',
+          quantity: item.quantity,
+          price: Number(item.price) || 0,
+          final_price: Number(item.final_price) || 0,
+          status: 'pending',
+          deny_reasons: [], // clear deny reasons
+          image_link: item.image_link || '',
+        })),
+      };
+
+      // ✅ IMPORTANT: if additional payment required -> go to payment first, DO NOT call update API here
+      const additionalAmount = Math.max(0, correctedTotal - orderData.total_price);
+      if (additionalAmount > 0) {
+        localStorage.setItem(
+          'correctionPayment',
+          JSON.stringify({ orderId, amount: additionalAmount, currency: 'INR' })
+        );
+
+        // Save correction payload to be submitted after payment
+        localStorage.setItem(
+          'pendingOrderCorrection',
+          JSON.stringify({ orderId, payload })
+        );
+
+        navigate('/payment', {
+          state: { type: 'correction', orderId, amount: additionalAmount, currency: 'INR' }
+        });
+        return;
+      }
+
+      // ✅ No additional payment -> update immediately
+      const res = await orderService.submitLocalOrderCorrection(orderId, payload);
+
+      if (!res.success) {
+        setError('Failed to submit order correction. Please try again.');
+        return;
+      }
 
       setSuccess('Order correction submitted successfully!');
-      setTimeout(() => navigate('/domestic-orders'), 2000);
+      setTimeout(() => navigate('/domestic-orders'), 1200);
     } catch (err) {
       setError('Failed to submit order correction. Please try again.');
     } finally {
@@ -186,6 +235,7 @@ const OrderCorrection: React.FC = () => {
   }
 
   const priceDifference = calculatePriceDifference();
+  const needsAdditionalPayment = priceDifference > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -227,7 +277,10 @@ const OrderCorrection: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow p-6 space-y-6">
               {(orderData.local_order_items ?? []).map(item => {
-                const hasErrors = item.deny_reasons && item.deny_reasons.length > 0;
+                const hasErrors = !!(item.deny_reasons && item.deny_reasons.length > 0);
+                const accepted = isAcceptedItem(item);
+                const priceMismatch = hasPriceMismatch(item);
+
                 return (
                   <div
                     key={item.id}
@@ -242,7 +295,18 @@ const OrderCorrection: React.FC = () => {
                           className="w-24 h-24 rounded-lg border"
                         />
                       )}
+
                       <div className="flex-1 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold">{item.product_name}</h3>
+
+                          {accepted && (
+                            <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">
+                              Accepted
+                            </span>
+                          )}
+                        </div>
+
                         {hasErrors && (
                           <div className="p-3 bg-red-100 border border-red-200 rounded text-sm text-red-800 space-y-1">
                             {item.deny_reasons?.map((reasonIndex, idx) => (
@@ -253,7 +317,7 @@ const OrderCorrection: React.FC = () => {
                             ))}
                           </div>
                         )}
-                        <h3 className="font-semibold">{item.product_name}</h3>
+
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           <div>
                             <label className="text-xs text-gray-500">Color</label>
@@ -268,6 +332,7 @@ const OrderCorrection: React.FC = () => {
                               <p>{item.color}</p>
                             )}
                           </div>
+
                           <div>
                             <label className="text-xs text-gray-500">Size</label>
                             {item.isEditing ? (
@@ -281,6 +346,7 @@ const OrderCorrection: React.FC = () => {
                               <p>{item.size}</p>
                             )}
                           </div>
+
                           <div>
                             <label className="text-xs text-gray-500">Quantity</label>
                             {item.isEditing ? (
@@ -289,7 +355,7 @@ const OrderCorrection: React.FC = () => {
                                 min={1}
                                 value={item.quantity}
                                 onChange={e =>
-                                  handleItemEdit(item.id, 'quantity', parseInt(e.target.value))
+                                  handleItemEdit(item.id, 'quantity', parseInt(e.target.value || '1', 10))
                                 }
                                 className="w-full px-2 py-1 border rounded"
                               />
@@ -297,7 +363,28 @@ const OrderCorrection: React.FC = () => {
                               <p>{item.quantity}</p>
                             )}
                           </div>
+
+                          {/* ✅ price mismatch allows editing unit price */}
+                          {item.isEditing && priceMismatch && (
+                            <div className="md:col-span-3">
+                              <label className="text-xs text-gray-500">Current Unit Price (₹)</label>
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={Number(item.final_price) || 0}
+                                onChange={e =>
+                                  handleItemEdit(item.id, 'final_price', parseFloat(e.target.value || '0'))
+                                }
+                                className="w-full px-2 py-1 border rounded"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Edit only if admin marked a price mismatch.
+                              </p>
+                            </div>
+                          )}
                         </div>
+
                         <div className="grid grid-cols-3 gap-4 text-sm">
                           <div>
                             <span className="text-gray-500">Paid:</span>
@@ -311,124 +398,39 @@ const OrderCorrection: React.FC = () => {
                             <span className="text-gray-500">Difference:</span>
                             <p
                               className={
-                                (item.final_price * item.quantity) - (item.price * item.quantity) >
-                                  0
+                                (item.final_price * item.quantity) - (item.price * item.quantity) > 0
                                   ? 'text-red-600'
                                   : 'text-green-600'
                               }
                             >
-                              {(item.final_price * item.quantity) -
-                                (item.price * item.quantity) >
-                                0
-                                ? '+'
-                                : ''}
-                              ₹
-                              {(
-                                (item.final_price * item.quantity) -
-                                (item.price * item.quantity)
-                              ).toLocaleString()}
+                              {(item.final_price * item.quantity) - (item.price * item.quantity) > 0 ? '+' : ''}
+                              ₹{((item.final_price * item.quantity) - (item.price * item.quantity)).toLocaleString()}
                             </p>
                           </div>
                         </div>
-                        <div className="flex space-x-3">
-                          <button
-                            onClick={() => toggleItemEdit(item.id)}
-                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
-                          >
-                            {item.isEditing ? 'Save' : 'Edit'}
-                          </button>
-                          <button
-                            onClick={() => deleteItem(item.id)}
-                            className="px-3 py-1 bg-red-100 text-red-700 rounded"
-                          >
-                            Remove
-                          </button>
-                        </div>
+
+                        {/* Disable edit/remove for accepted items */}
+                        {!accepted && (
+                          <div className="flex space-x-3">
+                            <button
+                              onClick={() => toggleItemEdit(item.id)}
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
+                            >
+                              {item.isEditing ? 'Save' : 'Edit'}
+                            </button>
+                            <button
+                              onClick={() => deleteItem(item.id)}
+                              className="px-3 py-1 bg-red-100 text-red-700 rounded"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 );
               })}
-            </div>
-
-            {/* Add new item */}
-            <div className="mt-6">
-              {!showAddItem ? (
-                <button
-                  onClick={() => setShowAddItem(true)}
-                  className="px-4 py-2 bg-green-100 text-green-700 rounded"
-                >
-                  + Add New Item
-                </button>
-              ) : (
-                <div className="bg-white border rounded-lg p-4 space-y-4">
-                  <h3 className="font-medium">Add New Item</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      placeholder="Product Name *"
-                      value={newItem.name}
-                      onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))}
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="url"
-                      placeholder="Product URL *"
-                      value={newItem.url}
-                      onChange={e => setNewItem(p => ({ ...p, url: e.target.value }))}
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Color"
-                      value={newItem.color}
-                      onChange={e => setNewItem(p => ({ ...p, color: e.target.value }))}
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Size"
-                      value={newItem.size}
-                      onChange={e => setNewItem(p => ({ ...p, size: e.target.value }))}
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="number"
-                      min={1}
-                      placeholder="Quantity"
-                      value={newItem.quantity}
-                      onChange={e =>
-                        setNewItem(p => ({ ...p, quantity: parseInt(e.target.value) }))
-                      }
-                      className="border rounded px-2 py-1"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      placeholder="Price (₹) *"
-                      value={newItem.price}
-                      onChange={e =>
-                        setNewItem(p => ({ ...p, price: parseFloat(e.target.value) }))
-                      }
-                      className="border rounded px-2 py-1"
-                    />
-                  </div>
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={handleAddNewItem}
-                      className="px-4 py-2 bg-green-600 text-white rounded"
-                    >
-                      Add Item
-                    </button>
-                    <button
-                      onClick={() => setShowAddItem(false)}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -472,7 +474,11 @@ const OrderCorrection: React.FC = () => {
               disabled={isSaving}
               className="w-full py-3 bg-blue-600 text-white rounded disabled:bg-gray-400"
             >
-              {isSaving ? 'Submitting...' : 'Confirm Order Correction'}
+              {isSaving
+                ? 'Submitting...'
+                : needsAdditionalPayment
+                  ? 'Confirm & Proceed to Payment'
+                  : 'Confirm Order Correction'}
             </button>
           </div>
         </div>

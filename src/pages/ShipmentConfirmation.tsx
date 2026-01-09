@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { orderService, CreateInternationalOrderRequest } from '../api/services/orderService';
+import { CreateInternationalOrderRequest } from '../api/services/orderService';
 import {
   Package,
   ArrowLeft,
@@ -22,83 +22,104 @@ interface VaultItem {
   color: string;
   size: string;
   quantity: number;
-  weight: number;
+  weight: number; // kg
   price: number;
+}
+
+export interface ShipmentPricing {
+  currency: 'INR';
+  shippingCost: number;   // ✅ calculated from API slabs
+  storageCost: number;
+  platformFee: number;
+  totalCost: number;
 }
 
 export interface ShipmentData {
   items: VaultItem[];
   destination: string;
-  shippingService: string;
+  shippingService?: string;
+  chargeableWeightKg?: number | null;
+  pricing?: ShipmentPricing;
   orderRequest?: CreateInternationalOrderRequest;
 }
 
 const ShipmentConfirmation: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const location = useLocation();
+
   const selectedAddressId = location.state?.selectedAddressId ?? 0;
 
-  // Shipping calculation constants
-  const SHIPPING_RATE_PER_KG = 18; // USD per kg
-  const PLATFORM_FEE_PERCENTAGE = 0.05; // 5%
-  const INSURANCE_RATE = 0.02; // 2% of item value
-  const OVER_STORAGE_RATE_PER_DAY = 2; // USD per day per item
-
   useEffect(() => {
-    // Load shipment data from localStorage (passed from My Vault page)
     const savedShipmentData = localStorage.getItem('shipmentData');
     if (savedShipmentData) {
       setShipmentData(JSON.parse(savedShipmentData));
     } else {
-      // No shipment data, redirect back to vault
       navigate('/my-vault');
       return;
     }
     setIsLoading(false);
   }, [navigate]);
 
-  const getTotalWeight = () => {
-    if (!shipmentData) return 0;
-    return shipmentData.items.reduce((total, item) => total + (item.weight * item.quantity), 0);
-  };
+  const totals = useMemo(() => {
+    if (!shipmentData) {
+      return {
+        totalWeightKg: 0,
+        totalItemsQty: 0,
+        totalValue: 0,
+      };
+    }
 
-  const getTotalValue = () => {
-    if (!shipmentData) return 0;
-    return shipmentData.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
+    const totalWeightKg = shipmentData.items.reduce(
+      (total, item) => total + ((item.weight || 0) * (item.quantity || 1)),
+      0
+    );
 
-  const getShippingCost = () => {
-    const weight = getTotalWeight();
-    return Math.round(weight * SHIPPING_RATE_PER_KG * 100) / 100;
-  };
+    const totalItemsQty = shipmentData.items.reduce(
+      (total, item) => total + (item.quantity || 1),
+      0
+    );
 
-  const getInsuranceCost = () => {
-    const value = getTotalValue();
-    return Math.round(value * INSURANCE_RATE * 100) / 100;
-  };
+    const totalValue = shipmentData.items.reduce(
+      (total, item) => total + ((item.price || 0) * (item.quantity || 1)),
+      0
+    );
 
-  const getPlatformFee = () => {
-    const shippingCost = getShippingCost();
-    return Math.round(shippingCost * PLATFORM_FEE_PERCENTAGE * 100) / 100;
-  };
+    return { totalWeightKg, totalItemsQty, totalValue };
+  }, [shipmentData]);
 
-  const getOverStorageCost = () => {
-    if (!shipmentData) return 0;
-    // Mock calculation - some items might have over-storage costs
-    return shipmentData.items.reduce((total, item) => {
-      // Simulate some items being over storage period (random for demo)
-      const isOverStorage = Math.random() > 0.7;
-      const overDays = isOverStorage ? Math.floor(Math.random() * 10) + 1 : 0;
-      return total + (overDays * OVER_STORAGE_RATE_PER_DAY * item.quantity);
-    }, 0);
-  };
+  // ✅ Use pricing from localStorage (from MyVault createInternationalOrder)
+  const pricing = useMemo(() => {
+    if (!shipmentData) return null;
 
-  const getTotalCost = () => {
-    return getShippingCost() + getInsuranceCost() + getPlatformFee() + getOverStorageCost();
+    // Prefer shipmentData.pricing
+    if (shipmentData.pricing) return shipmentData.pricing;
+
+    // Fallback if someone stored only orderRequest
+    const fallbackShipping = (shipmentData as any)?.orderRequest?.orderData?.shipping_cost ?? 0;
+    const fallbackStorage = (shipmentData as any)?.orderRequest?.orderData?.storage_cost ?? 0;
+    const fallbackPlatform = (shipmentData as any)?.orderRequest?.orderData?.platform_fee ?? 0;
+    const fallbackTotal = (shipmentData as any)?.orderRequest?.orderData?.total_cost ?? (fallbackShipping + fallbackStorage + fallbackPlatform);
+
+    return {
+      currency: 'INR' as const,
+      shippingCost: Number(fallbackShipping) || 0,
+      storageCost: Number(fallbackStorage) || 0,
+      platformFee: Number(fallbackPlatform) || 0,
+      totalCost: Number(fallbackTotal) || 0,
+    };
+  }, [shipmentData]);
+
+  const formatCurrency = (amount: number, currency: string = 'INR') => {
+    return new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0
+    }).format(amount);
   };
 
   const handleProceedToPay = () => {
@@ -106,21 +127,21 @@ const ShipmentConfirmation: React.FC = () => {
       alert('Please accept the terms and conditions to proceed');
       return;
     }
+    if (!shipmentData || !pricing) return;
 
-    if (!shipmentData) return;
-    navigate('/payment', { state: { type: 'international', selectedAddressId } });
+    // ✅ Pass the real total amount to payment page
+    navigate('/payment', {
+      state: {
+        type: 'international',
+        selectedAddressId,
+        amount: pricing.totalCost,      // ✅ actual
+        currency: pricing.currency,     // ✅ INR
+      }
+    });
   };
 
   const handleBackToVault = () => {
     navigate('/my-vault');
-  };
-
-  const formatCurrency = (amount: number, currency: string = 'INR') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2
-    }).format(amount);
   };
 
   if (isLoading) {
@@ -134,7 +155,7 @@ const ShipmentConfirmation: React.FC = () => {
     );
   }
 
-  if (!shipmentData) {
+  if (!shipmentData || !pricing) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -184,46 +205,44 @@ const ShipmentConfirmation: React.FC = () => {
                 {shipmentData.items.map((item, index) => (
                   <div key={item.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start space-x-4">
-                      {/* Item Image */}
                       <div className="flex-shrink-0">
                         <img
-                          src={item.images[0]}
+                          src={item.images?.[0]}
                           alt={item.name}
                           className="w-20 h-20 object-cover rounded-lg"
                         />
-                        {item.images.length > 1 && (
+                        {item.images?.length > 1 && (
                           <div className="text-xs text-gray-500 text-center mt-1">
                             +{item.images.length - 1} more
                           </div>
                         )}
                       </div>
 
-                      {/* Item Details */}
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900 mb-2">{item.name}</h3>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
                             <span className="text-gray-600">Color:</span>
-                            <p className="font-medium">{item.color}</p>
+                            <p className="font-medium">{item.color || '-'}</p>
                           </div>
                           <div>
                             <span className="text-gray-600">Size:</span>
-                            <p className="font-medium">{item.size}</p>
+                            <p className="font-medium">{item.size || '-'}</p>
                           </div>
                           <div>
                             <span className="text-gray-600">Quantity:</span>
-                            <p className="font-medium">{item.quantity}</p>
+                            <p className="font-medium">{item.quantity || 1}</p>
                           </div>
                           <div>
                             <span className="text-gray-600">Weight:</span>
-                            <p className="font-medium">{(item.weight * item.quantity).toFixed(2)} kg</p>
+                            <p className="font-medium">{((item.weight || 0) * (item.quantity || 1)).toFixed(2)} kg</p>
                           </div>
                         </div>
 
                         <div className="mt-3 flex items-center justify-between">
                           <div className="text-sm text-gray-600">
-                            Original Value: ₹{(item.price * item.quantity).toLocaleString()}
+                            Original Value: ₹{((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
                           </div>
                           <div className="text-sm font-medium text-blue-600">
                             Item #{index + 1}
@@ -241,13 +260,11 @@ const ShipmentConfirmation: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <span className="text-blue-700">Total Items:</span>
-                    <p className="font-semibold text-blue-900">
-                      {shipmentData.items.reduce((total, item) => total + item.quantity, 0)}
-                    </p>
+                    <p className="font-semibold text-blue-900">{totals.totalItemsQty}</p>
                   </div>
                   <div>
                     <span className="text-blue-700">Total Weight:</span>
-                    <p className="font-semibold text-blue-900">{getTotalWeight().toFixed(2)} kg</p>
+                    <p className="font-semibold text-blue-900">{totals.totalWeightKg.toFixed(2)} kg</p>
                   </div>
                   <div>
                     <span className="text-blue-700">Destination:</span>
@@ -255,16 +272,21 @@ const ShipmentConfirmation: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-blue-700">Service:</span>
-                    <p className="font-semibold text-blue-900">{shipmentData.shippingService}</p>
+                    <p className="font-semibold text-blue-900">{shipmentData.shippingService || 'Standard International'}</p>
                   </div>
                 </div>
+
+                {shipmentData.chargeableWeightKg != null && (
+                  <div className="mt-3 text-sm text-blue-900">
+                    Chargeable Weight: <span className="font-semibold">{shipmentData.chargeableWeightKg} kg</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Cost Breakdown */}
           <div className="space-y-6">
-            {/* Shipping Costs */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
                 <DollarSign className="h-5 w-5 mr-2 text-green-600" />
@@ -272,49 +294,44 @@ const ShipmentConfirmation: React.FC = () => {
               </h2>
 
               <div className="space-y-4">
-                {/* Shipping Cost */}
                 <div className="flex justify-between items-center">
                   <div>
                     <span className="text-gray-700">Shipping Cost</span>
-                    <p className="text-xs text-gray-500">{getTotalWeight().toFixed(2)} kg × ₹{SHIPPING_RATE_PER_KG}/kg</p>
+                    <p className="text-xs text-gray-500">
+                      Based on destination slab rates
+                    </p>
                   </div>
-                  <span className="font-semibold text-gray-900">{formatCurrency(getShippingCost(),)}</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatCurrency(pricing.shippingCost, pricing.currency)}
+                  </span>
                 </div>
 
-                {/* Insurance */}
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="text-gray-700">Insurance</span>
-                    <p className="text-xs text-gray-500">2% of item value</p>
+                    <span className="text-gray-700">Storage Cost</span>
+                    <p className="text-xs text-gray-500">If applicable</p>
                   </div>
-                  <span className="font-semibold text-gray-900">{formatCurrency(getInsuranceCost())}</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatCurrency(pricing.storageCost, pricing.currency)}
+                  </span>
                 </div>
 
-                {/* Platform Fee */}
                 <div className="flex justify-between items-center">
                   <div>
                     <span className="text-gray-700">Platform Fee</span>
-                    <p className="text-xs text-gray-500">5% of shipping cost</p>
+                    <p className="text-xs text-gray-500">Service fee</p>
                   </div>
-                  <span className="font-semibold text-gray-900">{formatCurrency(getPlatformFee())}</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatCurrency(pricing.platformFee, pricing.currency)}
+                  </span>
                 </div>
 
-                {/* Over Storage Cost */}
-                {getOverStorageCost() > 0 && (
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="text-orange-700">Over-Storage Cost</span>
-                      <p className="text-xs text-orange-600">Extended storage fees</p>
-                    </div>
-                    <span className="font-semibold text-orange-700">{formatCurrency(getOverStorageCost())}</span>
-                  </div>
-                )}
-
-                {/* Total */}
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center text-lg font-bold">
                     <span className="text-gray-900">Total Cost:</span>
-                    <span className="text-blue-600">{formatCurrency(getTotalCost())}</span>
+                    <span className="text-blue-600">
+                      {formatCurrency(pricing.totalCost, pricing.currency)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -334,15 +351,11 @@ const ShipmentConfirmation: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Service Type:</span>
-                  <span className="font-medium">{shipmentData.shippingService}</span>
+                  <span className="font-medium">{shipmentData.shippingService || 'Standard International'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tracking:</span>
                   <span className="font-medium">Included</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Insurance:</span>
-                  <span className="font-medium">Up to {formatCurrency(getTotalValue(), 'INR')}</span>
                 </div>
               </div>
             </div>
@@ -358,11 +371,9 @@ const ShipmentConfirmation: React.FC = () => {
                 <div className="text-sm text-gray-700 space-y-2">
                   <p>1. International shipping is subject to customs regulations and may incur additional duties.</p>
                   <p>2. Delivery times are estimates and may vary due to customs processing or carrier delays.</p>
-                  <p>3. Insurance covers loss or damage during transit up to the declared value.</p>
-                  <p>4. Prohibited items will not be shipped and may be disposed of at sender's expense.</p>
-                  <p>5. Customs duties and taxes are the responsibility of the recipient.</p>
-                  <p>6. Shipment tracking will be provided once the package is dispatched.</p>
-                  <p>7. Claims for lost or damaged items must be reported within 30 days of delivery.</p>
+                  <p>3. Prohibited items will not be shipped and may be disposed of at sender's expense.</p>
+                  <p>4. Customs duties and taxes are the responsibility of the recipient.</p>
+                  <p>5. Shipment tracking will be provided once the package is dispatched.</p>
                 </div>
               </div>
 
@@ -414,6 +425,7 @@ const ShipmentConfirmation: React.FC = () => {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
