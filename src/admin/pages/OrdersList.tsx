@@ -109,7 +109,7 @@ const OrdersList: React.FC = () => {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <Package className="h-8 w-8 text-blue-600" />
@@ -136,13 +136,14 @@ const OrdersList: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Pending Evaluations</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {localOrders.filter(order => order.status === 'pending' || order.status === 'processing').length}
+                  {localOrders.filter(order => order.status === 'created' || order.status === 'under_review').length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* Commneted down below code for now later will update in phase two */}
+          {/* <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
@@ -152,7 +153,7 @@ const OrdersList: React.FC = () => {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Local Orders Section */}

@@ -11,7 +11,7 @@ const EnhancedNavigation: React.FC = () => {
   const isLoggedIn = userService.isAuthenticated();
 
   // Get cart count from Context
-  const { getTotalCartItems } = useCart();
+  const { getTotalItems } = useCart();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -111,9 +111,9 @@ const EnhancedNavigation: React.FC = () => {
                   className="relative p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <ShoppingCart className="h-6 w-6" />
-                  {getTotalCartItems() > 0 && (
+                  {getTotalItems() > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {getTotalCartItems()}
+                      {getTotalItems()}
                     </span>
                   )}
                 </button>
@@ -130,9 +130,9 @@ const EnhancedNavigation: React.FC = () => {
               className="relative p-2 text-gray-600"
             >
               <ShoppingCart className="h-6 w-6" />
-              {getTotalCartItems() > 0 && (
+              {getTotalItems() > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
-                  {getTotalCartItems()}
+                  {getTotalItems()}
                 </span>
               )}
             </button>
