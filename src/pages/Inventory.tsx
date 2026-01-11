@@ -59,6 +59,7 @@ const Inventory: React.FC = () => {
   ];
 
   const { cart, addToCart, removeFromCart, updateCartItem } = useCart();
+  const [quantity, setQuantity] = useState(1);
 
   // Load inventory from API
   useEffect(() => {
@@ -404,39 +405,45 @@ const Inventory: React.FC = () => {
                         </div>
 
                         {/* Add to Cart Controls */}
-                        <div className="flex items-center justify-between">
-                          {cartItem ? (
+                        <div className='flex flex-col space-y-3 mt-4'>
+                          <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
                               <button
-                                onClick={() => handleUpdateQuantity(item.id, cartItem.quantity - 1)}
+                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
                                 className="p-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
                               >
                                 <Minus className="h-4 w-4" />
                               </button>
-                              <span className="font-medium">{cartItem.quantity}</span>
+                              <span className="font-medium">{quantity}</span>
                               <button
-                                onClick={() => handleUpdateQuantity(item.id, cartItem.quantity + 1)}
+                                onClick={() => setQuantity(Math.max(1, quantity + 1))}
                                 className="p-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
                                 disabled={!item.inStock}
                               >
                                 <Plus className="h-4 w-4" />
                               </button>
                             </div>
-                          ) : (
+
+
+                          </div>
+
+                          <div className='flex items-center justify-between'>
                             <button
                               onClick={() => handleAddToCart(item)}
                               disabled={!item.inStock}
-                              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
+                              className="w-fit flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
                             >
                               <ShoppingCart className="h-4 w-4" />
                               <span>Add to Cart</span>
                             </button>
-                          )}
 
-                          {viewMode === 'list' && <span className="text-xs text-gray-500">
-                            {item.inStock ? `${item.stockCount} in stock` : 'Out of stock'}
-                          </span>}
+                            {viewMode === 'list' && <span className="text-xs text-gray-500">
+                              {item.inStock ? `${item.stockCount} in stock` : 'Out of stock'}
+                            </span>}
+
+                          </div>
                         </div>
+
                       </div>
                     </div>
                   )

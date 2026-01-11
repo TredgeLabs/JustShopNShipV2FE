@@ -21,7 +21,7 @@ import { useCart, CartItem as GlobalCartItem } from '../context/CartContext';
 
 interface Product {
   id: string;
-  itemId: string,
+  itemId?: string,
   name: string;
   color: string;
   size: string;

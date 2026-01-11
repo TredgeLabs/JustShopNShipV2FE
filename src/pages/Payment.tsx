@@ -11,6 +11,7 @@ import {
 
 import { orderService, CreateLocalOrderRequest } from '../api/services/orderService';
 import { ShipmentData } from './ShipmentConfirmation';
+import { useCart } from '../context/CartContext';
 
 interface OrderData {
   items: any[];
@@ -42,6 +43,8 @@ const Payment: React.FC = () => {
   const [totalPrice, setTotalPrice] = useState(0);
   const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
   const [correctionItemsCount, setCorrectionItemsCount] = useState<number>(0);
+
+  const { clearCart } = useCart();
 
   const totalItems =
     type === 'international'
@@ -226,6 +229,8 @@ const Payment: React.FC = () => {
           localStorage.removeItem('pendingOrderCorrection');
         } else {
           localStorage.removeItem('orderData');
+          localStorage.removeItem('shoppingCart');
+          clearCart();
         }
 
         navigate('/payment-result?status=success');
