@@ -17,9 +17,11 @@ import {
 import { inventoryService } from '../api/services/inventoryService';
 import { productService, ProductDetailsResponse } from '../api/services/userService';
 import { orderService, CreateLocalOrderRequest } from '../api/services/orderService';
+import { useCart, CartItem as GlobalCartItem } from '../context/CartContext';
 
 interface Product {
   id: string;
+  itemId?: string,
   name: string;
   color: string;
   size: string;
@@ -42,10 +44,20 @@ interface InventoryItem {
 
 const CreateOrder: React.FC = () => {
   const navigate = useNavigate();
+
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateCartItem,
+    getTotalPrice,
+    getTotalItems,
+    clearCart
+  } = useCart();
+
   const [productUrl, setProductUrl] = useState('');
   const [isScrapingUrl, setIsScrapingUrl] = useState(false);
   const [scrapedProduct, setScrapedProduct] = useState<Partial<Product> | null>(null);
-  const [cart, setCart] = useState<Product[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -125,7 +137,7 @@ const CreateOrder: React.FC = () => {
       image: scrapedProduct.image
     };
 
-    setCart(prev => [...prev, newProduct]);
+    addToCart(newProduct);
     setScrapedProduct(null);
     setProductUrl('');
     setSuccess('Product added to cart!');
@@ -134,7 +146,8 @@ const CreateOrder: React.FC = () => {
 
   const addInventoryToCart = (item: InventoryItem, selectedSize: string, selectedColor: string, quantity: number) => {
     const newProduct: Product = {
-      id: `inv-${item.id}-${Date.now()}`,
+      id: `inv-${item.id}`,
+      itemId: item.id,
       name: item.name,
       color: selectedColor,
       size: selectedSize,
@@ -144,36 +157,12 @@ const CreateOrder: React.FC = () => {
       image: item.images[0]
     };
 
-    setCart(prev => [...prev, newProduct]);
+    addToCart(newProduct);
     setSuccess('Product added to cart!');
     setTimeout(() => setSuccess(''), 3000);
   };
 
-  const updateCartItem = (id: string, field: keyof Product, value: string | number) => {
-    setCart(prev => prev.map(item =>
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
-  const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(item => item.id !== id));
-  };
-
-  const toggleEdit = (id: string) => {
-    setCart(prev => prev.map(item =>
-      item.id === id ? { ...item, isEditing: !item.isEditing } : item
-    ));
-  };
-
-  const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
   const getTotalWeight = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const getTotalItems = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
@@ -245,7 +234,7 @@ const CreateOrder: React.FC = () => {
         localStorage.setItem('orderData', JSON.stringify(orderData));
 
         // Clear cart
-        setCart([]);
+        clearCart();
 
         // Navigate to confirmation
         navigate('/order-confirmation');
@@ -451,7 +440,7 @@ const CreateOrder: React.FC = () => {
                     item={item}
                     onUpdate={updateCartItem}
                     onRemove={removeFromCart}
-                    onToggleEdit={toggleEdit}
+                    onToggleEdit={(id) => updateCartItem(id, 'isEditing', !item.isEditing)}
                   />
                 ))}
 

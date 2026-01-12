@@ -34,13 +34,6 @@ interface InventoryItem {
   stockCount: number;
 }
 
-interface CartItem {
-  itemId: string;
-  quantity: number;
-  selectedSize?: string;
-  selectedColor?: string;
-}
-
 const Inventory: React.FC = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -65,7 +58,8 @@ const Inventory: React.FC = () => {
     { value: 'newest', label: 'Newest First' }
   ];
 
-  const { addToCart, updateCartQuantity, getCartItemQuantity, getTotalCartItems } = useCart();
+  const { cart, addToCart, removeFromCart, updateCartItem } = useCart();
+  const [quantity, setQuantity] = useState(1);
 
   // Load inventory from API
   useEffect(() => {
@@ -128,6 +122,33 @@ const Inventory: React.FC = () => {
     setFilteredItems(filtered);
     setCurrentPage(1);
   }, [items, searchTerm, selectedCategory, priceRange, selectedBrand, sortBy]);
+
+  const getCartItem = (itemId: string) => cart.find(c => c.itemId === itemId);
+
+  const handleAddToCart = (item: InventoryItem) => {
+    addToCart({
+      id: `inv-${item.id}`,
+      itemId: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1,
+      color: item.colors[0] || 'Default',
+      size: item.size[0] || 'Standard',
+      image: item.images[0],
+      url: `/inventory/${item.id}`
+    });
+  };
+
+  const handleUpdateQuantity = (itemId: string, newQty: number) => {
+    const cartItem = getCartItem(itemId);
+    if (!cartItem) return;
+
+    if (newQty <= 0) {
+      removeFromCart(cartItem.id);
+    } else {
+      updateCartItem(cartItem.id, 'quantity', newQty);
+    }
+  };
 
   const handleItemClick = (itemId: string) => {
     navigate(`/inventory/${itemId}`);
@@ -311,113 +332,122 @@ const Inventory: React.FC = () => {
                 ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
                 : 'space-y-4'
               }>
-                {paginatedItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow ${viewMode === 'list' ? 'flex' : ''
-                      }`}
-                  >
+                {paginatedItems.map((item) => {
+                  const cartItem = getCartItem(item.id);
+                  return (
                     <div
-                      className={`cursor-pointer ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}
-                      onClick={() => handleItemClick(item.id)}
+                      key={item.id}
+                      className={`bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow ${viewMode === 'list' ? 'flex' : ''
+                        }`}
                     >
-                      <div className="relative">
-                        <img
-                          src={item.images[0]}
-                          alt={item.name}
-                          className={`object-cover ${viewMode === 'list' ? 'w-full h-32' : 'w-full h-48'}`}
-                        />
-                        {item.originalPrice && (
-                          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                            {Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}% OFF
-                          </div>
-                        )}
-                        {!item.inStock && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                            <span className="text-white font-bold">Out of Stock</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className={`p-4 ${viewMode === 'list' ? 'flex-1 flex flex-col justify-between' : ''}`}>
-                      <div>
-                        <h3
-                          className={`break-normal md:break-all font-semibold text-gray-900 mb-2 cursor-pointer hover:text-blue-600 transition-colors ${viewMode === 'grid' ? 'line-clamp-1' : 'h-auto'}`}
-                          title={item.name}
-                          onClick={() => handleItemClick(item.id)}
-                        >
-                          {item.name}
-                        </h3>
-
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${i < Math.floor(item.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                                  }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm text-gray-600">({item.reviewCount})</span>
+                      <div
+                        className={`cursor-pointer ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}
+                        onClick={() => handleItemClick(item.id)}
+                      >
+                        <div className="relative">
+                          <img
+                            src={item.images[0]}
+                            alt={item.name}
+                            className={`object-cover ${viewMode === 'list' ? 'w-full h-32' : 'w-full h-48'}`}
+                          />
+                          {item.originalPrice && (
+                            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                              {Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}% OFF
+                            </div>
+                          )}
+                          {!item.inStock && (
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                              <span className="text-white font-bold">Out of Stock</span>
+                            </div>
+                          )}
                         </div>
-
-                        <div className="mb-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-lg font-bold text-gray-900">₹{item.price.toLocaleString()}</span>
-                            {item.originalPrice && (
-                              <span className="text-sm text-gray-500 line-through">₹{item.originalPrice.toLocaleString()}</span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600">{item.brand}</p>
-                          {viewMode === 'grid' && <span className="text-xs text-gray-500">
-                            ({item.inStock ? `${item.stockCount} in stock` : 'Out of stock'})
-                          </span>}
-                        </div>
-
-                        {viewMode === 'list' && (
-                          <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                        )}
                       </div>
 
-                      {/* Add to Cart Controls */}
-                      <div className="flex items-center justify-between">
-                        {getCartItemQuantity(item.id) > 0 ? (
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => updateCartQuantity(item.id, getCartItemQuantity(item.id) - 1)}
-                              className="p-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="font-medium">{getCartItemQuantity(item.id)}</span>
-                            <button
-                              onClick={() => updateCartQuantity(item.id, getCartItemQuantity(item.id) + 1)}
-                              className="p-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
-                              disabled={!item.inStock}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => addToCart(item.id)}
-                            disabled={!item.inStock}
-                            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
+                      <div className={`p-4 ${viewMode === 'list' ? 'flex-1 flex flex-col justify-between' : ''}`}>
+                        <div>
+                          <h3
+                            className={`break-normal md:break-all font-semibold text-gray-900 mb-2 cursor-pointer hover:text-blue-600 transition-colors ${viewMode === 'grid' ? 'line-clamp-1' : 'h-auto'}`}
+                            title={item.name}
+                            onClick={() => handleItemClick(item.id)}
                           >
-                            <ShoppingCart className="h-4 w-4" />
-                            <span>Add to Cart</span>
-                          </button>
-                        )}
+                            {item.name}
+                          </h3>
 
-                        {viewMode === 'list' && <span className="text-xs text-gray-500">
-                          {item.inStock ? `${item.stockCount} in stock` : 'Out of stock'}
-                        </span>}
+                          <div className="flex items-center space-x-2 mb-2">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${i < Math.floor(item.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                    }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm text-gray-600">({item.reviewCount})</span>
+                          </div>
+
+                          <div className="mb-3">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-lg font-bold text-gray-900">₹{item.price.toLocaleString()}</span>
+                              {item.originalPrice && (
+                                <span className="text-sm text-gray-500 line-through">₹{item.originalPrice.toLocaleString()}</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600">{item.brand}</p>
+                            {viewMode === 'grid' && <span className="text-xs text-gray-500">
+                              ({item.inStock ? `${item.stockCount} in stock` : 'Out of stock'})
+                            </span>}
+                          </div>
+
+                          {viewMode === 'list' && (
+                            <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+                          )}
+                        </div>
+
+                        {/* Add to Cart Controls */}
+                        <div className='flex flex-col space-y-3 mt-4'>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="font-medium">{quantity}</span>
+                              <button
+                                onClick={() => setQuantity(Math.max(1, quantity + 1))}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+                                disabled={!item.inStock}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+
+
+                          </div>
+
+                          <div className='flex items-center justify-between'>
+                            <button
+                              onClick={() => handleAddToCart(item)}
+                              disabled={!item.inStock}
+                              className="w-fit flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                              <span>Add to Cart</span>
+                            </button>
+
+                            {viewMode === 'list' && <span className="text-xs text-gray-500">
+                              {item.inStock ? `${item.stockCount} in stock` : 'Out of stock'}
+                            </span>}
+
+                          </div>
+                        </div>
+
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 

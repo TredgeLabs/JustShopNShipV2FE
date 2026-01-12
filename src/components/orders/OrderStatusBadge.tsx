@@ -24,10 +24,15 @@ export const getStatusConfig = (status: string, type: string) => {
   if (type === 'local') {
     switch (status) {
       case 'created':
-      case 'under_review':
         return {
           icon: Clock,
           text: 'Order Placed',
+          color: 'bg-yellow-100 text-yellow-800',
+        };
+      case 'under_review':
+        return {
+          icon: Clock,
+          text: 'Under Review',
           color: 'bg-yellow-100 text-yellow-800',
         };
       case 'accepted':
