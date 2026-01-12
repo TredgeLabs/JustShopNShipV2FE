@@ -162,6 +162,19 @@ const VaultEntry: React.FC = () => {
       if (response.success) {
         setSuccess('Item entered in vault successfully!');
 
+        // ✅ Remove entered transit item from UI
+        const enteredTransitItemId = selectedTransitItem?.id;
+        if (enteredTransitItemId) {
+          setUserDetails(prev =>
+            prev
+              ? {
+                ...prev,
+                transitItems: (prev.transitItems || []).filter(t => t.id !== enteredTransitItemId),
+              }
+              : prev
+          );
+        }
+
         // Reset form
         setVaultItemDetails({
           name: '',

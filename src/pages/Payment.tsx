@@ -227,8 +227,9 @@ const Payment: React.FC = () => {
         } else {
           localStorage.removeItem('orderData');
         }
-
-        navigate('/payment-result?status=success');
+        navigate('/payment-result?status=success', {
+          state: { type },
+        });
       } else {
         const paymentResult = {
           success: false,
@@ -238,7 +239,9 @@ const Payment: React.FC = () => {
         };
 
         localStorage.setItem('paymentResult', JSON.stringify(paymentResult));
-        navigate('/payment-result?status=failure');
+        navigate('/payment-result?status=failure', {
+          state: { type },
+        });
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

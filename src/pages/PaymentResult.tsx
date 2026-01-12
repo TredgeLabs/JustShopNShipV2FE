@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { 
-  CheckCircle, 
-  XCircle, 
-  ArrowRight, 
-  RotateCcw, 
-  MessageCircle, 
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import {
+  CheckCircle,
+  XCircle,
+  ArrowRight,
+  RotateCcw,
+  MessageCircle,
   Download,
   Home,
   Package,
@@ -24,11 +24,13 @@ interface PaymentResult {
 
 const PaymentResult: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
   const status = searchParams.get('status');
+  const type = location.state?.type ?? 'local';
+
 
   useEffect(() => {
     // Load payment result from localStorage
@@ -60,8 +62,13 @@ const PaymentResult: React.FC = () => {
   };
 
   const handleViewOrders = () => {
-    // Clear payment result
     localStorage.removeItem('paymentResult');
+
+    if (type === 'international') {
+      navigate('/international-orders');
+      return;
+    }
+
     navigate('/domestic-orders');
   };
 
@@ -189,7 +196,7 @@ const PaymentResult: React.FC = () => {
                       <Package className="h-4 w-4" />
                       <span>View My Orders</span>
                     </button>
-                    
+
                     <button
                       onClick={handleDownloadReceipt}
                       className="flex items-center justify-center space-x-2 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
@@ -273,7 +280,7 @@ const PaymentResult: React.FC = () => {
                       <MessageCircle className="h-4 w-4" />
                       <span>Contact Support</span>
                     </button>
-                    
+
                     <button
                       onClick={handleGoToDashboard}
                       className="flex items-center justify-center space-x-2 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"

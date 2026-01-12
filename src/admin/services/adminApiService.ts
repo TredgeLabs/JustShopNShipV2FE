@@ -294,6 +294,25 @@ class AdminApiService {
     }
   }
 
+  async searchAcceptedItems(
+    type: 'email' | 'user_name',
+    q: string
+  ): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/accepted-items/search?type=${encodeURIComponent(type)}&q=${encodeURIComponent(q)}`,
+        {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+        }
+      );
+      return await this.handleResponse<any>(response);
+    } catch (error) {
+      console.error('Error searching accepted items:', error);
+      throw error;
+    }
+  }
+
   async enterVaultItem(vaultId: string, itemData: any): Promise<ApiResponse<void>> {
     // This would use the addVaultItem method above
     return new Promise((resolve) => {
