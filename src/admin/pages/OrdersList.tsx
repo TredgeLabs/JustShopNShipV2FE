@@ -69,19 +69,6 @@ const OrdersList: React.FC = () => {
     }
   };
 
-  const handleCompleteOrder = async (orderId: string) => {
-    const confirmed = window.confirm('Are you sure you want to mark this order as completed?');
-    if (confirmed) {
-      try {
-        // TODO: Implement order completion API call when endpoint is available
-        alert(`Order ${orderId} marked as completed`);
-        loadInternationalOrders(); // Refresh the list
-      } catch (err) {
-        setError(`Error completing order: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      }
-    }
-  };
-
   const handleUpdateShippingOrder = (orderId: string) => {
     navigate(`/admin/shipping-order-update/${orderId}`);
   };
@@ -319,13 +306,12 @@ const OrdersList: React.FC = () => {
                               <Eye className="h-4 w-4" />
                               <span>Update</span>
                             </button>
-                            <button
-                              onClick={() => handleCompleteOrder(order.id.toString())}
-                              className="flex items-center space-x-1 text-green-600 hover:text-green-900 transition-colors"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                              <span>Complete</span>
-                            </button>
+                            {order?.status === 'delivered' && (
+                              <span className="flex items-center space-x-1 text-green-600 opacity-70 cursor-not-allowed select-none">
+                                <CheckCircle className="h-4 w-4" />
+                                <span>Completed</span>
+                              </span>
+                            )}
                           </div>
                         </td>
                       </tr>

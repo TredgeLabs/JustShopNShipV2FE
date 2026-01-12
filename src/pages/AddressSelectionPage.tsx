@@ -88,8 +88,8 @@ const AddressSelectionPage: React.FC = () => {
     navigate('/shipment-confirmation', { state: { selectedAddressId } });//
   };
 
-  const handleBackToCart = () => {
-    navigate('/create-order');
+  const handleBackToVault = () => {
+    navigate('/my-vault');
   };
 
   const getAddressIcon = (title: string) => {
@@ -128,11 +128,11 @@ const AddressSelectionPage: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={handleBackToCart}
+            onClick={handleBackToVault}
             className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Cart</span>
+            <span>Back to Vault</span>
           </button>
 
           <div className="flex items-center space-x-3 mb-4">

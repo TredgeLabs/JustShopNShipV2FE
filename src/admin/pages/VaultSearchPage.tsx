@@ -58,9 +58,15 @@ const VaultSearchPage: React.FC = () => {
       setVaultUser(null);
       setVaultItems([]);
 
-      // For now, use the existing validateVaultId endpoint
-      // In production, you would have separate endpoints for different search types
-      const response = await adminApiService.validateVaultId(searchTerm.trim());
+      const term = searchTerm.trim();
+
+      let response: any;
+
+      if (searchType === 'vault_id') {
+        response = await adminApiService.validateVaultId(term);
+      } else {
+        response = await adminApiService.searchAcceptedItems(searchType, term);
+      }
 
       if (response.success) {
         // Mock vault user data based on response

@@ -79,14 +79,46 @@ const LocalOrderEvaluation: React.FC = () => {
     }
   };
 
+  // ✅ Helper: treat any deny reason containing "price" as price mismatch
+  const isPriceMismatchReason = (reason: string) =>
+    String(reason).toLowerCase().includes('price');
+
+  const isPriceMismatchSelected = (itemId: number) => {
+    const reasons = evaluationData[itemId]?.denyReasons ?? [];
+    return reasons.some(isPriceMismatchReason);
+  };
+
+
   const handleItemEvaluationChange = (itemId: number, field: string, value: string) => {
-    setEvaluationData(prev => ({
-      ...prev,
-      [itemId]: {
-        ...prev[itemId],
-        [field]: value
+    setEvaluationData(prev => {
+      const current = prev[itemId];
+
+      // ✅ parse actualPrice to number
+      const nextValue =
+        field === 'actualPrice'
+          ? Number(value || 0)
+          : value;
+
+      // ✅ if decision becomes deny -> shipment_date must be cleared (not editable)
+      if (field === 'decision' && value === 'deny') {
+        return {
+          ...prev,
+          [itemId]: {
+            ...current,
+            decision: 'deny',
+            shipment_date: null, // ✅ clear it
+          }
+        };
       }
-    }));
+
+      return {
+        ...prev,
+        [itemId]: {
+          ...current,
+          [field]: nextValue
+        }
+      };
+    });
   };
 
   const handleDenyReasonToggle = (itemId: number, reason: string) => {
@@ -96,11 +128,16 @@ const LocalOrderEvaluation: React.FC = () => {
         ? currentReasons.filter(r => r !== reason)
         : [...currentReasons, reason];
 
+      const priceMismatchNow = newReasons.some(isPriceMismatchReason);
+
+      const originalPrice = Number(orderDetails?.items?.find(i => i.id === itemId)?.price ?? 0);
+
       return {
         ...prev,
         [itemId]: {
           ...prev[itemId],
-          denyReasons: newReasons
+          denyReasons: newReasons,
+          actualPrice: priceMismatchNow ? prev[itemId].actualPrice : originalPrice
         }
       };
     });
@@ -147,34 +184,57 @@ Phone: +91 9876543210`;
   const handleSubmitEvaluation = async () => {
     if (!orderDetails) return;
 
-    // Validate evaluation data
-    const hasInvalidData = Object.values(evaluationData).some(itemEvaluation => {
-      return itemEvaluation.decision === 'deny' && itemEvaluation.denyReasons.length === 0;
+    // 1) Deny items must have at least 1 deny reason
+    const hasInvalidDeny = Object.values(evaluationData).some(itemEvaluation => {
+      return itemEvaluation.decision === 'deny' && (itemEvaluation.denyReasons?.length || 0) === 0;
     });
 
-    if (hasInvalidData) {
+    if (hasInvalidDeny) {
       setError('Please provide deny reasons for all denied items');
       return;
     }
+
+    // 2) ✅ Accept items must have shipment date
+    const acceptedMissingShipmentDate = orderDetails.items.filter((item) => {
+      const ev = evaluationData[item.id];
+      return ev?.decision === 'approve' && !ev?.shipment_date;
+    });
+
+    if (acceptedMissingShipmentDate.length > 0) {
+      setError(
+        `Shipment Date is required for accepted items: ${acceptedMissingShipmentDate
+          .map((i) => `#${i.id}`)
+          .join(', ')}`
+      );
+      return;
+    }
+
 
     try {
       setIsSaving(true);
       setError('');
 
-      // Convert evaluation data to API format
-      const items = Object.entries(evaluationData).map(([itemId, evaluation]) => ({
-        item_id: parseInt(itemId),
-        action: evaluation.decision,
-        final_price: evaluation.actualPrice,
-        shipment_date: evaluation.shipment_date || null,
-        ...(evaluation.decision === 'deny' && {
-          deny_reasons: evaluation.denyReasons.map((reason: string) => {
-            // Map reason text to reason ID (you may need to adjust this mapping)
-            const reasonIndex = DENY_REASONS.indexOf(reason as any);
-            return reasonIndex >= 0 ? reasonIndex + 1 : 8; // Default to "Other"
+      const items = orderDetails.items.map((item) => {
+        const evaluation = evaluationData[item.id];
+        const decision = evaluation?.decision ?? 'approve';
+        const denyReasons = evaluation?.denyReasons ?? [];
+        const priceMismatch = decision === 'deny' && denyReasons.some(isPriceMismatchReason);
+
+        return {
+          item_id: item.id,
+          action: decision,
+          // ✅ only send edited price when deny + price mismatch
+          final_price: priceMismatch ? Number(evaluation?.actualPrice ?? item.price) : Number(item.price),
+          // ✅ shipment date only when approved
+          shipment_date: decision === 'approve' ? (evaluation?.shipment_date || null) : null,
+          ...(decision === 'deny' && {
+            deny_reasons: denyReasons.map((reason: string) => {
+              const reasonIndex = DENY_REASONS.indexOf(reason as any);
+              return reasonIndex >= 0 ? reasonIndex + 1 : 8;
+            })
           })
-        })
-      }));
+        };
+      });
 
       const submissionData: BulkProcessRequest = {
         items,
@@ -386,11 +446,21 @@ Phone: +91 9876543210`;
                         </label>
                         <input
                           type="number"
-                          value={evaluationData[item.id]?.actualPrice || item.price}
+                          value={evaluationData[item.id]?.actualPrice ?? Number(item.price)}
                           onChange={(e) => handleItemEvaluationChange(item.id, 'actualPrice', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter actual price"
+                          disabled={
+                            !(evaluationData[item.id]?.decision === 'deny' && isPriceMismatchSelected(item.id))
+                          }
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${(evaluationData[item.id]?.decision === 'deny' && isPriceMismatchSelected(item.id))
+                            ? 'border-gray-300'
+                            : 'border-gray-200 bg-gray-100 cursor-not-allowed'
+                            }`}
                         />
+                        {!(evaluationData[item.id]?.decision === 'deny' && isPriceMismatchSelected(item.id)) && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Editable only when Decision is <b>Deny</b> and a <b>Price mismatch</b> reason is selected.
+                          </p>
+                        )}
                       </div>
                       {/* Shipment Date */}
                       <div>
@@ -401,7 +471,11 @@ Phone: +91 9876543210`;
                           type="date"
                           value={evaluationData[item.id]?.shipment_date || ''}
                           onChange={(e) => handleItemEvaluationChange(item.id, 'shipment_date', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          disabled={evaluationData[item.id]?.decision !== 'approve'}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${evaluationData[item.id]?.decision === 'approve'
+                            ? 'border-gray-300'
+                            : 'border-gray-200 bg-gray-100 cursor-not-allowed'
+                            }`}
                         />
                       </div>
 
