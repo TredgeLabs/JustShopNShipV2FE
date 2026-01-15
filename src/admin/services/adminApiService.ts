@@ -94,6 +94,32 @@ export interface ShipInternationalRequest {
   shipping_status?: string;
 }
 
+export interface InventoryItem {
+  id: number;
+  name: string;
+  description?: string;
+  size?: string;
+  color?: string;
+  brand?: string;
+  category?: string;
+  sub_category?: string;
+  material?: string;
+  quantity: number;
+  price: number;
+  weight_gm?: number;
+  imageUrls?: string[];         // frontend-friendly
+  image_urls?: string[] | any;  // backend sometimes uses this
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface InventoryListResponse {
+  items: InventoryItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 // Admin API Service
 class AdminApiService {
   private baseUrl = 'http://localhost:4000/api/admin';
@@ -358,7 +384,7 @@ class AdminApiService {
       }
     }
     try {
-      const response = await fetch('http://localhost:4000/api/v1/inventory', {
+      const response = await fetch(`${this.baseUrl}/inventory`, {
         method: 'POST',
         headers: {
           ...this.getMultiPartAuthHeaders(),
@@ -375,6 +401,191 @@ class AdminApiService {
       };
     } catch (error) {
       console.error('Error creating inventory item:', error);
+      throw error;
+    }
+  }
+
+  private getApiOrigin(): string {
+    try {
+      return new URL(this.baseUrl).origin;
+    } catch {
+      return '';
+    }
+  }
+
+  private toAbsoluteAssetUrl(u: string): string {
+    const s = (u || '').trim();
+    if (!s) return '';
+
+    // already absolute/special
+    if (
+      s.startsWith('http://') ||
+      s.startsWith('https://') ||
+      s.startsWith('data:') ||
+      s.startsWith('blob:') ||
+      s.startsWith('//')
+    ) {
+      return s;
+    }
+
+    const origin = this.getApiOrigin();
+    if (!origin) return s;
+
+    return s.startsWith('/') ? `${origin}${s}` : `${origin}/${s}`;
+  }
+
+  private parseImageUrls(raw: any): string[] {
+    if (!raw) return [];
+
+    const normalize = (arr: string[]) =>
+      arr
+        .filter(Boolean)
+        .map((u) => this.toAbsoluteAssetUrl(String(u)))
+        .filter(Boolean);
+
+    // Already array
+    if (Array.isArray(raw)) return normalize(raw);
+
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return normalize(parsed);
+      } catch { }
+
+      const s = raw.trim();
+      if (!s) return [];
+
+      if (s.includes(',')) return normalize(s.split(',').map((x) => x.trim()));
+      return normalize([s]);
+    }
+
+    return [];
+  }
+
+
+  private inventoryBaseUrl = 'http://localhost:4000/api/v1/inventory';
+
+  async getInventoryItems(params?: {
+    q?: string;
+    category?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<InventoryListResponse>> {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.q) qs.set('q', params.q);
+      if (params?.category) qs.set('category', params.category);
+      qs.set('page', String(params?.page ?? 1));
+      qs.set('limit', String(params?.limit ?? 20));
+
+      const response = await fetch(`${this.inventoryBaseUrl}?${qs.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      const data: any = await this.handleResponse<any>(response);
+
+      // Support both: {success, data:{items,total...}} OR {success, data:[...]}
+      const payload = data?.data ?? data;
+
+      const itemsRaw = Array.isArray(payload) ? payload : (payload?.items ?? []);
+      const items = itemsRaw.map((it: any) => {
+        const imageUrls = this.parseImageUrls(it.imageUrls ?? it.image_urls);
+        return {
+          ...it,
+          imageUrls,
+          image_urls: imageUrls, // ✅ overwrite raw so UI never uses relative
+        };
+      });
+
+      const total = Number(payload?.total ?? items.length);
+      const page = Number(payload?.page ?? (params?.page ?? 1));
+      const limit = Number(payload?.limit ?? (params?.limit ?? 20));
+
+      return { success: true, data: { items, total, page, limit } };
+    } catch (error) {
+      console.error('Error fetching inventory list:', error);
+      throw error;
+    }
+  }
+
+  async getInventoryItemById(id: string): Promise<ApiResponse<any>> {
+    const response = await fetch(`${this.inventoryBaseUrl}/${encodeURIComponent(id)}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+
+    const data: any = await this.handleResponse<any>(response);
+
+    // support {success, data:{...}} OR {success, ...}
+    const payload = data?.data ?? data;
+    const it = payload?.item ?? payload;
+
+    const imageUrls = this.parseImageUrls(it?.imageUrls ?? it?.image_urls);
+
+    return {
+      success: !!(data?.success ?? true),
+      data: {
+        ...it,
+        imageUrls,
+        image_urls: imageUrls, // important so UI never sees relative-only
+      },
+      message: data?.message,
+    };
+  }
+
+  async updateInventoryItem(id: string, itemData: any): Promise<ApiResponse<void>> {
+    // itemData can contain: fields + images(File[]) + imageUrls(string[])
+    const formData = new FormData();
+
+    // Keep backend key consistent with your createInventoryItem
+    formData.append('sub_category', itemData.subCategory || itemData.sub_category || '');
+
+    for (const key in itemData) {
+      if (key === 'images' && Array.isArray(itemData.images)) {
+        itemData.images.forEach((file: File) => formData.append('images', file));
+        continue;
+      }
+
+      if (key === 'imageUrls') {
+        // send as JSON so backend can store properly
+        formData.append('imageUrls', JSON.stringify(itemData.imageUrls || []));
+        continue;
+      }
+
+      if (itemData[key] !== undefined && itemData[key] !== null) {
+        formData.append(key, String(itemData[key]));
+      }
+    }
+
+    try {
+      const response = await fetch(`${this.inventoryBaseUrl}/${id}`, {
+        method: 'PUT',
+        headers: {
+          ...this.getMultiPartAuthHeaders(),
+        },
+        body: formData,
+      });
+
+      const data: any = await this.handleResponse<any>(response);
+      return { success: !!data?.success, data: undefined, message: data?.message };
+    } catch (error) {
+      console.error('Error updating inventory item:', error);
+      throw error;
+    }
+  }
+
+  async deleteInventoryItem(id: string): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${this.inventoryBaseUrl}/${id}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+
+      const data: any = await this.handleResponse<any>(response);
+      return { success: !!data?.success, data: undefined, message: data?.message };
+    } catch (error) {
+      console.error('Error deleting inventory item:', error);
       throw error;
     }
   }
