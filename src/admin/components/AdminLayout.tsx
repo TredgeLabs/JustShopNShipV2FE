@@ -40,7 +40,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       name: 'Inventory Management',
-      href: '/admin/inventory-entry',
+      href: '/admin/inventory',
       icon: Archive,
       description: 'Add and manage inventory items'
     },
@@ -111,8 +111,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   key={item.name}
                   to={item.href}
                   className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors ${isActive(item.href)
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                 >
                   <item.icon className={`h-5 w-5 ${isActive(item.href) ? 'text-blue-600' : 'text-gray-400'
