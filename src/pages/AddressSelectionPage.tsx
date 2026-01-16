@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -10,7 +10,7 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
-import { userService, AddressApi } from '../api/services/userService';
+import { userService, AddressApi, shippingService } from '../api/services/userService';
 import { ShipmentData } from './ShipmentConfirmation';
 
 const AddressSelectionPage: React.FC = () => {
@@ -21,6 +21,17 @@ const AddressSelectionPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [shipmentData, setShipmentData] = useState<ShipmentData | null>(null);
+  const [estimateWarning, setEstimateWarning] = useState<string>('');
+  const [isEstimateMismatch, setIsEstimateMismatch] = useState(false);
+  const normCountry = (c?: string) => String(c || '').trim().toUpperCase();
+
+  const selectedAddress = useMemo(
+    () => addresses.find(a => a.id === selectedAddressId),
+    [addresses, selectedAddressId]
+  );
+
+  const selectedAddressCountry = normCountry(selectedAddress?.country);
+
 
   useEffect(() => {
     // Load order data from localStorage
@@ -66,6 +77,33 @@ const AddressSelectionPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!shipmentData || !selectedAddressId || addresses.length === 0) return;
+
+    const estimateRaw = localStorage.getItem("shippingEstimate");
+    const estimate = estimateRaw ? JSON.parse(estimateRaw) : null;
+
+    const estimateCountry = normCountry(estimate?.country || shipmentData.destination);
+    const addressCountry = selectedAddressCountry;
+
+    if (!estimateCountry || !addressCountry) {
+      setEstimateWarning('');
+      setIsEstimateMismatch(false);
+      return;
+    }
+
+    if (estimateCountry !== addressCountry) {
+      setIsEstimateMismatch(true);
+      setEstimateWarning(
+        `Your shipping estimate is for ${estimateCountry}, but your selected address is in ${addressCountry}. Please recalculate shipping or choose an address in ${estimateCountry}.`
+      );
+    } else {
+      setIsEstimateMismatch(false);
+      setEstimateWarning('');
+    }
+  }, [shipmentData, selectedAddressId, addresses, selectedAddressCountry]);
+
 
   const handleAddressSelect = (addressId: number) => {
     setSelectedAddressId(addressId);
@@ -143,6 +181,13 @@ const AddressSelectionPage: React.FC = () => {
             Choose where you want your order to be delivered after it arrives in your vault.
           </p>
         </div>
+
+        {estimateWarning && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-2">
+            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <span className="text-yellow-800 text-sm">{estimateWarning}</span>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -276,11 +321,11 @@ const AddressSelectionPage: React.FC = () => {
             {/* Proceed Button */}
             <button
               onClick={handleProceedToConfirmation}
-              disabled={!selectedAddressId}
+              disabled={!selectedAddressId || isEstimateMismatch}
               className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
             >
               <CheckCircle className="h-4 w-4" />
-              <span>Proceed to Confirmation</span>
+              <span>{isEstimateMismatch ? 'Recalculate Shipping to Proceed' : 'Proceed to Confirmation'}</span>
             </button>
 
             {/* Important Notes */}

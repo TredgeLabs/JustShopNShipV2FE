@@ -384,13 +384,9 @@ class AdminApiService {
       }
     }
     try {
-      const response = await fetch(`${this.baseUrl}/inventory`, {
+      const response = await fetch(`${this.adminInventoryBaseUrl}`, {
         method: 'POST',
-        headers: {
-          ...this.getMultiPartAuthHeaders(),
-          // Let browser set Content-Type for FormData
-          // Remove Content-Type if present
-        },
+        headers: { ...this.getMultiPartAuthHeaders() },
         body: formData,
       });
       const data = await this.handleResponse<any>(response);
@@ -462,8 +458,7 @@ class AdminApiService {
     return [];
   }
 
-
-  private inventoryBaseUrl = 'http://localhost:4000/api/v1/inventory';
+  private adminInventoryBaseUrl = `${this.baseUrl}/inventory`;
 
   async getInventoryItems(params?: {
     q?: string;
@@ -478,7 +473,7 @@ class AdminApiService {
       qs.set('page', String(params?.page ?? 1));
       qs.set('limit', String(params?.limit ?? 20));
 
-      const response = await fetch(`${this.inventoryBaseUrl}?${qs.toString()}`, {
+      const response = await fetch(`${this.adminInventoryBaseUrl}?${qs.toString()}`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -510,14 +505,13 @@ class AdminApiService {
   }
 
   async getInventoryItemById(id: string): Promise<ApiResponse<any>> {
-    const response = await fetch(`${this.inventoryBaseUrl}/${encodeURIComponent(id)}`, {
+    const response = await fetch(`${this.adminInventoryBaseUrl}/${encodeURIComponent(id)}`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
     });
 
     const data: any = await this.handleResponse<any>(response);
 
-    // support {success, data:{...}} OR {success, ...}
     const payload = data?.data ?? data;
     const it = payload?.item ?? payload;
 
@@ -525,31 +519,26 @@ class AdminApiService {
 
     return {
       success: !!(data?.success ?? true),
-      data: {
-        ...it,
-        imageUrls,
-        image_urls: imageUrls, // important so UI never sees relative-only
-      },
+      data: { ...it, imageUrls, image_urls: imageUrls },
       message: data?.message,
     };
   }
 
+
   async updateInventoryItem(id: string, itemData: any): Promise<ApiResponse<void>> {
-    // itemData can contain: fields + images(File[]) + imageUrls(string[])
     const formData = new FormData();
 
-    // Keep backend key consistent with your createInventoryItem
-    formData.append('sub_category', itemData.subCategory || itemData.sub_category || '');
-
     for (const key in itemData) {
+      if (key === 'newImages' || key === 'existingImageUrls' || key === 'subCategory') continue;
+
       if (key === 'images' && Array.isArray(itemData.images)) {
         itemData.images.forEach((file: File) => formData.append('images', file));
         continue;
       }
 
-      if (key === 'imageUrls') {
-        // send as JSON so backend can store properly
-        formData.append('imageUrls', JSON.stringify(itemData.imageUrls || []));
+      // ✅ important: send array as JSON string
+      if (key === 'imageUrls' && Array.isArray(itemData.imageUrls)) {
+        formData.append('imageUrls', JSON.stringify(itemData.imageUrls));
         continue;
       }
 
@@ -558,26 +547,21 @@ class AdminApiService {
       }
     }
 
-    try {
-      const response = await fetch(`${this.inventoryBaseUrl}/${id}`, {
-        method: 'PUT',
-        headers: {
-          ...this.getMultiPartAuthHeaders(),
-        },
-        body: formData,
-      });
+    const response = await fetch(`${this.adminInventoryBaseUrl}/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { ...this.getMultiPartAuthHeaders() },
+      body: formData,
+    });
 
-      const data: any = await this.handleResponse<any>(response);
-      return { success: !!data?.success, data: undefined, message: data?.message };
-    } catch (error) {
-      console.error('Error updating inventory item:', error);
-      throw error;
-    }
+    const data: any = await this.handleResponse<any>(response);
+    return { success: !!data?.success, data: undefined, message: data?.message };
   }
+
+
 
   async deleteInventoryItem(id: string): Promise<ApiResponse<void>> {
     try {
-      const response = await fetch(`${this.inventoryBaseUrl}/${id}`, {
+      const response = await fetch(`${this.adminInventoryBaseUrl}/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: this.getAuthHeaders(),
       });
