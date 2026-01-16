@@ -202,20 +202,36 @@ const InventoryEditPage: React.FC = () => {
             setError('');
 
             const payload = {
-                ...itemData,
+                name: itemData.name,
+                description: itemData.description,
+                size: itemData.size,
+                color: itemData.color,
+                brand: itemData.brand,
+                category: itemData.category,
                 sub_category: itemData.subCategory,
+                material: itemData.material,
+                quantity: itemData.quantity,
+                price: itemData.price,
+                weight_gm: itemData.weight_gm,
                 images: itemData.newImages,
-                imageUrls: itemData.existingImageUrls, // ✅ keep old images on update
+                imageUrls: itemData.existingImageUrls,
             };
-
 
             const res = await adminApiService.updateInventoryItem(inventoryId, payload);
 
             if (res.success) {
                 setSuccess('Inventory item updated successfully!');
                 setTimeout(() => setSuccess(''), 4000);
-                // optionally go back:
-                // navigate('/admin/inventory');
+
+                const fresh = await adminApiService.getInventoryItemById(inventoryId);
+                if (fresh?.success) {
+                    const it = fresh.data;
+                    setItemData((prev) => ({
+                        ...prev,
+                        existingImageUrls: (it.imageUrls || it.image_urls || []).filter(Boolean),
+                        newImages: [],
+                    }));
+                }
             } else {
                 setError(res.message || 'Failed to update inventory item');
             }

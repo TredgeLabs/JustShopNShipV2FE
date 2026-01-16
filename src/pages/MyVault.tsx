@@ -87,13 +87,26 @@ const MyVault: React.FC = () => {
   const [chargeableWeight, setChargeableWeight] = useState<number | null>(null);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
   const shippingRatesCacheRef = React.useRef<Record<string, Record<string, number>>>({});
+  const saveShippingEstimate = (estimate: {
+    country: string;
+    shippingCost: number;
+    chargeableWeightKg: number;
+    totalWeightKg: number;
+    calculatedAt: string;
+  }) => {
+    localStorage.setItem("shippingEstimate", JSON.stringify(estimate));
+  };
+  const selectedItems = useMemo(() => vaultItems.filter((i) => i.isSelected), [vaultItems]);
+  const totalWeight = useMemo(() => selectedItems.reduce((sum, item) => sum + item.weight, 0), [selectedItems]);
+  const totalStorageCost = useMemo(() => vaultItems.reduce((sum, item) => sum + item.storageCost, 0), [vaultItems]);
   const [vaultCode, setVaultCode] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     setShippingCost(null);
     setChargeableWeight(null);
-  }, [selectedCountry]);
+    localStorage.removeItem("shippingEstimate");
+  }, [selectedCountry, totalWeight]);
 
 
   useEffect(() => {
@@ -141,10 +154,6 @@ const MyVault: React.FC = () => {
     loadVaultItems();
   }, []);
 
-  const selectedItems = useMemo(() => vaultItems.filter((i) => i.isSelected), [vaultItems]);
-  const totalWeight = useMemo(() => selectedItems.reduce((sum, item) => sum + item.weight, 0), [selectedItems]);
-  const totalStorageCost = useMemo(() => vaultItems.reduce((sum, item) => sum + item.storageCost, 0), [vaultItems]);
-
   const handleItemSelection = (itemId: string) => {
     setVaultItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, isSelected: !item.isSelected } : item)));
   };
@@ -191,6 +200,13 @@ const MyVault: React.FC = () => {
 
       setShippingCost(result.cost);
       setChargeableWeight(result.chargeableWeightKg);
+      saveShippingEstimate({
+        country: countryKey,
+        shippingCost: result.cost,
+        chargeableWeightKg: result.chargeableWeightKg,
+        totalWeightKg,
+        calculatedAt: new Date().toISOString(),
+      });
 
       return { cost: result.cost, chargeableWeightKg: result.chargeableWeightKg };
     } catch (e) {

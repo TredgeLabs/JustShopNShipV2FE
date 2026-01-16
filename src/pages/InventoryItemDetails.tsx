@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  Star, 
-  Package, 
-  Truck, 
+import {
+  ArrowLeft,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Star,
+  Package,
+  Truck,
   Shield,
   ChevronLeft,
   ChevronRight,
@@ -16,6 +16,16 @@ import {
   Share2
 } from 'lucide-react';
 import { inventoryService } from '../api/services/inventoryService';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Thumbs, FreeMode, Keyboard } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/thumbs";
+import "swiper/css/free-mode";
+
+import { PhotoProvider, PhotoView } from "react-photo-view";
+import "react-photo-view/dist/react-photo-view.css";
+
 
 interface InventoryItem {
   id: string;
@@ -57,6 +67,8 @@ const InventoryItemDetails: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
+
 
   // Mock data - replace with actual API call
   useEffect(() => {
@@ -102,26 +114,26 @@ const InventoryItemDetails: React.FC = () => {
 
   const addToCart = () => {
     if (!item) return;
-    
+
     const cartItem: CartItem = {
       itemId: item.id,
       quantity,
       selectedSize,
       selectedColor
     };
-    
+
     setCart(prev => {
-      const existingItem = prev.find(cartItem => 
-        cartItem.itemId === item.id && 
-        cartItem.selectedSize === selectedSize && 
+      const existingItem = prev.find(cartItem =>
+        cartItem.itemId === item.id &&
+        cartItem.selectedSize === selectedSize &&
         cartItem.selectedColor === selectedColor
       );
-      
+
       if (existingItem) {
         return prev.map(cartItem =>
-          cartItem.itemId === item.id && 
-          cartItem.selectedSize === selectedSize && 
-          cartItem.selectedColor === selectedColor
+          cartItem.itemId === item.id &&
+            cartItem.selectedSize === selectedSize &&
+            cartItem.selectedColor === selectedColor
             ? { ...cartItem, quantity: cartItem.quantity + quantity }
             : cartItem
         );
@@ -129,7 +141,7 @@ const InventoryItemDetails: React.FC = () => {
         return [...prev, cartItem];
       }
     });
-    
+
     // Show success message or redirect to cart
     alert(`Added ${quantity} item(s) to cart!`);
   };
@@ -140,13 +152,13 @@ const InventoryItemDetails: React.FC = () => {
 
   const navigateImage = (direction: 'prev' | 'next') => {
     if (!item) return;
-    
+
     if (direction === 'prev') {
-      setSelectedImageIndex(prev => 
+      setSelectedImageIndex(prev =>
         prev === 0 ? item.images.length - 1 : prev - 1
       );
     } else {
-      setSelectedImageIndex(prev => 
+      setSelectedImageIndex(prev =>
         prev === item.images.length - 1 ? 0 : prev + 1
       );
     }
@@ -208,7 +220,7 @@ const InventoryItemDetails: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
               <span>Back to Inventory</span>
             </button>
-            
+
             {/* Cart Icon */}
             <button
               onClick={() => navigate('/cart')}
@@ -227,79 +239,100 @@ const InventoryItemDetails: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image Gallery */}
+          {/* Image Gallery (Rich Slider + Zoom + Fullscreen) */}
           <div className="space-y-4">
-            {/* Main Image */}
-            <div className="relative bg-white rounded-lg shadow-lg overflow-hidden">
-              <img
-                src={item.images[selectedImageIndex]}
-                alt={item.name}
-                className="w-full h-96 object-cover"
-              />
-              
-              {/* Navigation Arrows */}
-              {item.images.length > 1 && (
-                <>
-                  <button
-                    onClick={() => navigateImage('prev')}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-all"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => navigateImage('next')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-all"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
-              )}
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <PhotoProvider>
+                <Swiper
+                  modules={[Navigation, Thumbs, Keyboard]}
+                  navigation={item.images.length > 1}
+                  keyboard={{ enabled: true }}
+                  thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+                  onSlideChange={(s) => setSelectedImageIndex(s.activeIndex)}
+                  className="w-full"
+                >
+                  {item.images.map((src, idx) => (
+                    <SwiperSlide key={`${src}-${idx}`}>
+                      <div className="relative w-full h-[26rem] sm:h-[32rem] bg-white flex items-center justify-center">
+                        {/* Zoom + fullscreen on click */}
+                        <PhotoView src={src}>
+                          <img
+                            src={src}
+                            alt={`${item.name} ${idx + 1}`}
+                            className="max-w-full max-h-full object-contain cursor-zoom-in select-none"
+                            draggable={false}
+                          />
+                        </PhotoView>
 
-              {/* Discount Badge */}
-              {item.originalPrice && (
-                <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                  {Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}% OFF
-                </div>
-              )}
+                        {/* Discount badge (kept on top of image) */}
+                        {idx === 0 && item.originalPrice && (
+                          <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            {Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}% OFF
+                          </div>
+                        )}
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </PhotoProvider>
             </div>
 
-            {/* Thumbnail Images */}
+            {/* Thumbnails */}
             {item.images.length > 1 && (
-              <div className="flex space-x-2 overflow-x-auto">
-                {item.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedImageIndex === index ? 'border-blue-500' : 'border-gray-200'
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`${item.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
+              <div className="bg-white rounded-lg shadow p-3">
+                <Swiper
+                  modules={[FreeMode, Thumbs]}
+                  onSwiper={setThumbsSwiper}
+                  freeMode
+                  watchSlidesProgress
+                  slidesPerView={Math.min(5, item.images.length)}
+                  spaceBetween={10}
+                  className="w-full"
+                  breakpoints={{
+                    0: { slidesPerView: Math.min(4, item.images.length) },
+                    640: { slidesPerView: Math.min(6, item.images.length) },
+                  }}
+                >
+                  {item.images.map((src, idx) => (
+                    <SwiperSlide key={`thumb-${src}-${idx}`}>
+                      <button
+                        type="button"
+                        className={`w-full h-16 rounded-md overflow-hidden border-2 transition ${selectedImageIndex === idx ? "border-blue-500" : "border-gray-200"
+                          }`}
+                        onClick={() => setSelectedImageIndex(idx)}
+                      >
+                        <img
+                          src={src}
+                          alt={`thumb ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          draggable={false}
+                        />
+                      </button>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+                <p className="text-xs text-gray-500 mt-2">
+                  Tip: Click image to zoom/fullscreen. Swipe on mobile.
+                </p>
               </div>
             )}
           </div>
+
 
           {/* Product Details */}
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{item.name}</h1>
               <p className="text-lg text-gray-600 mb-4">{item.description}</p>
-              
+
               {/* Rating */}
               <div className="flex items-center space-x-2 mb-4">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.floor(item.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                      }`}
+                      className={`h-5 w-5 ${i < Math.floor(item.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                        }`}
                     />
                   ))}
                 </div>
@@ -338,11 +371,10 @@ const InventoryItemDetails: React.FC = () => {
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 border rounded-lg transition-all ${
-                          selectedSize === size
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
+                        className={`px-4 py-2 border rounded-lg transition-all ${selectedSize === size
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-300 hover:border-gray-400'
+                          }`}
                       >
                         {size}
                       </button>
@@ -360,11 +392,10 @@ const InventoryItemDetails: React.FC = () => {
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
-                        className={`px-4 py-2 border rounded-lg transition-all ${
-                          selectedColor === color
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
+                        className={`px-4 py-2 border rounded-lg transition-all ${selectedColor === color
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-300 hover:border-gray-400'
+                          }`}
                       >
                         {color}
                       </button>
@@ -408,20 +439,19 @@ const InventoryItemDetails: React.FC = () => {
                 <ShoppingCart className="h-5 w-5" />
                 <span>{item.inStock ? 'Add to Cart' : 'Out of Stock'}</span>
               </button>
-              
+
               <div className="flex space-x-3">
                 <button
                   onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 border rounded-lg transition-colors ${
-                    isWishlisted 
-                      ? 'border-red-500 bg-red-50 text-red-700' 
-                      : 'border-gray-300 hover:bg-gray-50'
-                  }`}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 border rounded-lg transition-colors ${isWishlisted
+                    ? 'border-red-500 bg-red-50 text-red-700'
+                    : 'border-gray-300 hover:bg-gray-50'
+                    }`}
                 >
                   <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
                   <span>{isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}</span>
                 </button>
-                
+
                 <button
                   onClick={handleShare}
                   className="flex-1 flex items-center justify-center space-x-2 py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
