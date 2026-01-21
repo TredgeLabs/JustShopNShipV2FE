@@ -10,8 +10,34 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
-import { userService, AddressApi, shippingService } from '../api/services/userService';
+import { userService, AddressApi } from '../api/services/userService';
 import { ShipmentData } from './ShipmentConfirmation';
+import countries from "i18n-iso-countries";
+import enLocale from "i18n-iso-countries/langs/en.json";
+
+countries.registerLocale(enLocale);
+
+const norm = (v?: string) => String(v || "").trim();
+
+const toISO2 = (value?: string) => {
+  const v = norm(value);
+  if (!v) return "";
+
+  const upper = v.toUpperCase();
+
+  // already ISO2
+  if (/^[A-Z]{2}$/.test(upper)) return upper;
+
+  // try convert from full country name -> ISO2
+  const code = countries.getAlpha2Code(v, "en");
+  return (code || upper).toUpperCase();
+};
+
+const displayCountry = (value?: string) => {
+  const code = toISO2(value);
+  if (!code) return "";
+  return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code;
+};
 
 const AddressSelectionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -84,25 +110,34 @@ const AddressSelectionPage: React.FC = () => {
     const estimateRaw = localStorage.getItem("shippingEstimate");
     const estimate = estimateRaw ? JSON.parse(estimateRaw) : null;
 
-    const estimateCountry = normCountry(estimate?.country || shipmentData.destination);
-    const addressCountry = selectedAddressCountry;
+    // Prefer explicit code fields if you have them
+    const estimateCode = toISO2(
+      estimate?.countryCode || estimate?.country || shipmentData.destination
+    );
 
-    if (!estimateCountry || !addressCountry) {
-      setEstimateWarning('');
+    const addressCode = toISO2(selectedAddress?.country);
+
+    if (!estimateCode || !addressCode) {
+      setEstimateWarning("");
       setIsEstimateMismatch(false);
       return;
     }
 
-    if (estimateCountry !== addressCountry) {
+    if (estimateCode !== addressCode) {
       setIsEstimateMismatch(true);
+
+      const estimateName = displayCountry(estimateCode);
+      const addressName = displayCountry(addressCode);
+
       setEstimateWarning(
-        `Your shipping estimate is for ${estimateCountry}, but your selected address is in ${addressCountry}. Please recalculate shipping or choose an address in ${estimateCountry}.`
+        `Your shipping estimate is for ${estimateName}, but your selected address is in ${addressName}. Please recalculate shipping or choose an address in ${estimateName}.`
       );
     } else {
       setIsEstimateMismatch(false);
-      setEstimateWarning('');
+      setEstimateWarning("");
     }
-  }, [shipmentData, selectedAddressId, addresses, selectedAddressCountry]);
+  }, [shipmentData, selectedAddressId, addresses, selectedAddress]);
+
 
 
   const handleAddressSelect = (addressId: number) => {

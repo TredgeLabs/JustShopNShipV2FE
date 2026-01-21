@@ -45,6 +45,11 @@ interface VaultItemApiType {
   weight_gm: number | null;
   status: string;
   is_returnable: boolean;
+  order_item?: {
+    price?: string | number;
+    quantity?: number;
+    product_link?: string;
+  } | null;
 }
 
 const COUNTRIES: string[] = [
@@ -54,24 +59,34 @@ const COUNTRIES: string[] = [
   "AUSTRALIA",
   "UAE",
 ];
+const FRONTEND_BASE_URL = window.location.origin;
+
+const formatGm = (gm: number) => Math.round(gm).toLocaleString();
+const kgToGm = (kg: number) => Math.round(kg * 1000);
+const gmToKg = (gm: number) => Math.round(gm) / 1000;
+const formatKg = (kg: number) => {
+  const clean = Math.round(kg * 1000) / 1000;
+  return String(clean).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+};
 
 function pickChargeableSlab(weightKg: number, rates: Record<string, number>) {
+  const w = Math.round(weightKg * 1000) / 1000;
+
   const slabs = Object.keys(rates)
-    .map((k) => ({ key: k, value: Number(k) }))
+    .map((k) => ({ key: k, value: Math.round(Number(k) * 1000) / 1000 }))
     .filter((x) => !Number.isNaN(x.value))
     .sort((a, b) => a.value - b.value);
 
   if (slabs.length === 0) {
-    throw new Error('No shipping slabs found for this country.');
+    throw new Error("No shipping slabs found for this country.");
   }
 
-  // Pick first slab >= weight
-  const chosen = slabs.find((s) => s.value >= weightKg) ?? slabs[slabs.length - 1];
+  const chosen = slabs.find((s) => s.value >= w) ?? slabs[slabs.length - 1];
 
   return {
     chargeableWeightKg: chosen.value,
     cost: rates[chosen.key],
-    isCapped: chosen === slabs[slabs.length - 1] && weightKg > chosen.value,
+    isCapped: chosen === slabs[slabs.length - 1] && w > chosen.value,
   };
 }
 
@@ -97,7 +112,14 @@ const MyVault: React.FC = () => {
     localStorage.setItem("shippingEstimate", JSON.stringify(estimate));
   };
   const selectedItems = useMemo(() => vaultItems.filter((i) => i.isSelected), [vaultItems]);
-  const totalWeight = useMemo(() => selectedItems.reduce((sum, item) => sum + item.weight, 0), [selectedItems]);
+
+  const totalWeightGm = useMemo(
+    () => selectedItems.reduce((sum, item) => sum + kgToGm(item.weight), 0),
+    [selectedItems]
+  );
+
+  const totalWeightKg = useMemo(() => totalWeightGm / 1000, [totalWeightGm]);
+
   const totalStorageCost = useMemo(() => vaultItems.reduce((sum, item) => sum + item.storageCost, 0), [vaultItems]);
   const [vaultCode, setVaultCode] = useState('');
   const navigate = useNavigate();
@@ -106,7 +128,7 @@ const MyVault: React.FC = () => {
     setShippingCost(null);
     setChargeableWeight(null);
     localStorage.removeItem("shippingEstimate");
-  }, [selectedCountry, totalWeight]);
+  }, [selectedCountry, totalWeightGm]);
 
 
   useEffect(() => {
@@ -123,22 +145,38 @@ const MyVault: React.FC = () => {
             const validityDays =
               freeDays - Math.floor((now.getTime() - receivedDate.getTime()) / (1000 * 60 * 60 * 24));
 
+            const orderItem = item.order_item;
+
+            const price = orderItem?.price ? Number(orderItem.price) : 0;
+            const quantity = orderItem?.quantity ? Number(orderItem.quantity) : 1;
+
+            const rawLink = (item as any)?.order_item?.product_link || '#';
+            const productLink =
+              rawLink.startsWith('http')
+                ? rawLink
+                : rawLink.startsWith('/')
+                  ? `${FRONTEND_BASE_URL}${rawLink}`
+                  : `${FRONTEND_BASE_URL}/${rawLink}`;
+
             return {
               id: `VI-${item.id}`,
               name: item.name,
-              images: item.image_urls.map((url: string) => (url.startsWith('http') ? url : `http://localhost:4000${url}`)),
-              productLink: '#',
-              price: 0,
-              weight: item.weight_gm ? item.weight_gm / 1000 : 0, // grams -> kg
+              images: item.image_urls.map((url: string) =>
+                url.startsWith("http") ? url : `http://localhost:4000${url}`
+              ),
+              productLink,
+              price,
+              quantity,
+
+              weight: item.weight_gm ? gmToKg(item.weight_gm) : 0,
               status: item.status,
               receivedDate: item.received_date,
               validityDays,
               storageCost: 0,
               isReturnable: item.is_returnable,
               isSelected: false,
-              color: '',
-              size: '',
-              quantity: 1,
+              color: "",
+              size: "",
             };
           });
 
@@ -175,7 +213,7 @@ const MyVault: React.FC = () => {
       return null;
     }
 
-    const totalWeightKg = selectedItems.reduce((sum, item) => sum + item.weight, 0);
+    const totalWeightKg = selectedItems.reduce((sum, item) => sum + kgToGm(item.weight), 0) / 1000;
     if (totalWeightKg <= 0) {
       alert("Selected items have 0 weight. Please update item weights.");
       return null;
@@ -253,7 +291,7 @@ const MyVault: React.FC = () => {
       setIsCalculatingShipping(true);
 
       const shipmentWeightGm = selectedItems.reduce(
-        (sum, item) => sum + item.weight * 1000,
+        (sum, item) => sum + kgToGm(item.weight),
         0
       );
 
@@ -373,7 +411,7 @@ const MyVault: React.FC = () => {
               <Scale className="h-8 w-8 text-green-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Selected Weight</p>
-                <p className="text-2xl font-bold text-gray-900">{totalWeight.toFixed(2)} kg</p>
+                <p className="text-2xl font-bold text-gray-900">{formatKg(totalWeightKg)} kg</p>
               </div>
             </div>
           </div>
@@ -422,9 +460,42 @@ const MyVault: React.FC = () => {
               </div>
 
 
-              {shippingCost !== null && (
-                <div className="text-sm font-semibold text-green-700">
-                  Chargeable: {chargeableWeight} kg • Shipping: ₹{shippingCost.toLocaleString()}
+              {shippingCost !== null && chargeableWeight !== null && (
+                <div className="text-sm">
+                  {(() => {
+                    const selectedGm = totalWeightGm;                 // ✅ exact selected grams
+                    const coveredGm = kgToGm(chargeableWeight);       // ✅ slab grams
+                    const remainingGm = coveredGm - selectedGm;
+
+                    const withinLimit = remainingGm >= 0;
+
+                    return (
+                      <div className="flex flex-col sm:items-end gap-1">
+                        <div className="font-semibold text-gray-900">
+                          Shipping: ₹{shippingCost.toLocaleString()}
+                        </div>
+
+                        {withinLimit ? (
+                          <div className="text-green-700 font-medium">
+                            You&apos;re shipping <span className="font-semibold">{formatGm(selectedGm)} g</span>. This price covers up to{" "}
+                            <span className="font-semibold">{formatGm(coveredGm)} g</span>
+                            {remainingGm > 0 && (
+                              <>
+                                {" "}
+                                (you can add <span className="font-semibold">{formatGm(remainingGm)} g</span> more at the same price).
+                              </>
+                            )}
+                            .
+                          </div>
+                        ) : (
+                          <div className="text-orange-700 font-medium">
+                            Your items weigh <span className="font-semibold">{formatGm(selectedGm)} g</span>, but this price covers up to{" "}
+                            <span className="font-semibold">{formatGm(coveredGm)} g</span>. Add fewer items or recalculate.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -526,10 +597,14 @@ const MyVault: React.FC = () => {
                   <span className="text-sm text-gray-600">Price:</span>
                   <span className="font-semibold text-gray-900">₹{item.price.toLocaleString()}</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Quantity:</span>
+                  <span className="font-medium text-gray-900">{item.quantity}</span>
+                </div>
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Weight:</span>
-                  <span className="font-medium text-gray-900">{item.weight} kg</span>
+                  <span className="font-medium text-gray-900">{formatKg(item.weight)} kg</span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -551,10 +626,16 @@ const MyVault: React.FC = () => {
 
                 <div className="pt-3 space-y-2">
                   <a
-                    href={item.productLink}
+                    href={item.productLink === "#" ? undefined : item.productLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center space-x-2 w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm"
+                    className={`flex items-center justify-center space-x-2 w-full py-2 px-3 rounded-lg transition-colors text-sm ${item.productLink === "#"
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                      }`}
+                    onClick={(e) => {
+                      if (item.productLink === "#") e.preventDefault();
+                    }}
                   >
                     <ExternalLink className="h-4 w-4" />
                     <span>View Product</span>

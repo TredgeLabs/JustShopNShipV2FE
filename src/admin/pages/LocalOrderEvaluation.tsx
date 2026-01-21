@@ -40,6 +40,7 @@ const LocalOrderEvaluation: React.FC = () => {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showVaultModal, setShowVaultModal] = useState(false);
   const [selectedVaultItem, setSelectedVaultItem] = useState<LocalOrderItem | null>(null);
+  const todayISO = () => new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     if (orderId) {
@@ -469,6 +470,7 @@ Phone: +91 9876543210`;
                         </label>
                         <input
                           type="date"
+                          min={todayISO()}
                           value={evaluationData[item.id]?.shipment_date || ''}
                           onChange={(e) => handleItemEvaluationChange(item.id, 'shipment_date', e.target.value)}
                           disabled={evaluationData[item.id]?.decision !== 'approve'}

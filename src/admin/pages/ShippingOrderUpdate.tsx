@@ -14,12 +14,15 @@ import {
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { adminApiService, ShipInternationalRequest } from '../services/adminApiService';
+import { getStatusConfig } from '../../components/orders/OrderStatusBadge';
 
 interface VaultItem {
   id: string;
   name: string;
   image: string;
+  imageUrls: string[];
   vaultItemId: string;
+  status: string;
   weight: number;
 }
 
@@ -44,6 +47,7 @@ interface ShippingOrderDetails {
   currentShippingLink: string;
   currentShippingId: string;
   shipping_status: string;
+  vaultId: string;
 }
 
 const ShippingOrderUpdate: React.FC = () => {
@@ -256,6 +260,10 @@ const ShippingOrderUpdate: React.FC = () => {
                   <label className="text-sm font-medium text-gray-500">Email</label>
                   <p className="text-gray-900">{orderDetails.userEmail}</p>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Vault ID</label>
+                  <p className="text-gray-900 font-medium">{orderDetails.vaultId}</p>
+                </div>
               </div>
             </div>
 
@@ -310,30 +318,51 @@ const ShippingOrderUpdate: React.FC = () => {
               </h3>
 
               <div className="space-y-4">
-                {orderDetails.vaultItems.map((item) => (
-                  <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{item.name}</h4>
-                        <div className="grid grid-cols-2 gap-2 mt-2 text-sm text-gray-600">
-                          <div>
-                            <span className="font-medium">Vault ID:</span>
-                            <p>{item.vaultItemId}</p>
+                {orderDetails.vaultItems.map((item) => {
+                  const statusCfg = getStatusConfig(item.status, 'vault_item');
+                  const img = item.imageUrls?.[0];
+
+                  return (
+                    <div key={item.id} className="border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-start gap-4">
+                        {/* Left: Image */}
+                        {img ? (
+                          <img
+                            src={img}
+                            alt={item.name || 'Vault item'}
+                            className="w-16 h-16 object-cover rounded-lg border"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-lg bg-gray-100 border flex items-center justify-center">
+                            <Package className="h-6 w-6 text-gray-400" />
                           </div>
-                          <div>
-                            <span className="font-medium">Weight:</span>
-                            <p>{item.weight} kg</p>
+                        )}
+
+                        {/* Right: Content */}
+                        <div className="flex-1 min-w-0">
+                          {/* Top row: Name + Status */}
+                          <div className="flex items-start justify-between gap-3">
+                            <h4 className="font-semibold text-gray-900 leading-snug line-clamp-2">
+                              {item.name || '—'}
+                            </h4>
+
+                            <span
+                              className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-md border text-xs font-semibold ${statusCfg.color}`}
+                            >
+                              {statusCfg.text}
+                            </span>
+                          </div>
+
+                          {/* Bottom row: Weight */}
+                          <div className="mt-2 text-sm text-gray-600">
+                            <span className="font-medium text-gray-700">Weight:</span> {item.weight} g
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+
               </div>
             </div>
 

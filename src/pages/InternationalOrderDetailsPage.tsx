@@ -6,13 +6,11 @@ import {
   ExternalLink,
   Loader2,
   AlertCircle,
-  RefreshCw,
-  Truck,
   Package,
+  Copy,
+  Check,
 } from 'lucide-react';
 import OrderStatusBadge from '../components/orders/OrderStatusBadge';
-import OrderItemCard from '../components/orders/OrderItemCard';
-
 
 const InternationalOrderDetailsPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -20,6 +18,29 @@ const InternationalOrderDetailsPage: React.FC = () => {
   const [order, setOrder] = useState<InternationalOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyTrackingId = async () => {
+    if (!order?.tracking_id) return;
+
+    try {
+      await navigator.clipboard.writeText(order.tracking_id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // fallback
+      const textarea = document.createElement('textarea');
+      textarea.value = order.tracking_id;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
+
 
   useEffect(() => {
     const loadOrderDetails = async () => {
@@ -46,11 +67,6 @@ const InternationalOrderDetailsPage: React.FC = () => {
 
     loadOrderDetails();
   }, [orderId]);
-
-  const handleRefreshOrder = () => {
-    // Reload order data
-    window.location.reload();
-  };
 
   const getTotalWeight = () => {
     return order ? order.shipment_weight_gm : 0; // Convert grams to kg
@@ -100,13 +116,6 @@ const InternationalOrderDetailsPage: React.FC = () => {
             </button>
 
             <div className="flex items-center space-x-3">
-              <button
-                onClick={handleRefreshOrder}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span>Refresh</span>
-              </button>
 
               {order.tracking_link && (
                 <a
@@ -290,36 +299,82 @@ const InternationalOrderDetailsPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Information</h3>
 
-              <div className="space-y-4">
-                <div>
+              {/* ✅ REPLACE everything below with this */}
+              <div className="divide-y divide-gray-100">
+                {/* Vault ID */}
+                <div className="py-3 flex items-center justify-between gap-4">
                   <p className="text-sm text-gray-600">Vault ID</p>
-                  <p className="font-medium">{order.vault_id}</p>
+                  <p className="text-sm font-semibold text-gray-900 break-all text-right">
+                    {order.vaultId}
+                  </p>
                 </div>
 
-                <div>
-                  <p className="text-sm text-gray-600">Shipping Address ID</p>
-                  <p className="font-medium">{order.shipping_address_id}</p>
-                </div>
+                {/* Selected Address */}
+                <div className="py-3 flex items-start justify-between gap-4">
+                  <p className="text-sm text-gray-600 mt-0.5">Selected Address</p>
 
-                <div className="flex items-center space-x-3">
-                  <Package className="h-5 w-5 text-purple-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Total Weight</p>
-                    <p className="font-medium">{getTotalWeight().toFixed(1)} kg</p>
+                  <div className="text-right max-w-[70%]">
+                    {order.selectedAddress?.line1 && (
+                      <p className="text-sm text-gray-700 break-words">{order.selectedAddress.line1}, {order.selectedAddress.line2}</p>
+                    )}
+
+                    {order.selectedAddress?.line2 && (
+                      <p className="text-sm text-gray-700 break-words"></p>
+                    )}
+
+                    {(order.selectedAddress?.city || order.selectedAddress?.state || order.selectedAddress?.zipCode || order.selectedAddress?.country) && (
+                      <p className="text-sm text-gray-700 break-words">
+                        {order.selectedAddress?.city ? `${order.selectedAddress.city}, ` : ''}
+                        {order.selectedAddress?.state ? `${order.selectedAddress.state}, ` : ''}
+                        {order.selectedAddress?.country ? `${order.selectedAddress.country}-` : ''}
+                        {order.selectedAddress?.zipCode || ''}
+                      </p>
+                    )}
+
+                    {order.selectedAddress?.phone && (
+                      <p className="text-sm text-gray-700 break-words">Phone: {order.selectedAddress.phone}</p>
+                    )}
                   </div>
                 </div>
 
+
+                {/* Total Weight */}
+                <div className="py-3 flex items-center justify-between gap-4">
+                  <p className="text-sm text-gray-600">Total Weight</p>
+                  <p className="text-sm font-semibold text-gray-900 text-right">
+                    {getTotalWeight().toFixed(1)} kg
+                  </p>
+                </div>
+
+                {/* Tracking ID + Copy */}
                 {order.tracking_id && (
-                  <div className="flex items-center space-x-3">
-                    <Truck className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Tracking ID</p>
-                      <p className="font-medium">{order.tracking_id}</p>
+                  <div className="py-3 flex items-start justify-between gap-4">
+                    <p className="text-sm text-gray-600 mt-0.5">Tracking ID</p>
+
+                    <div className="flex items-center gap-2 max-w-[70%]">
+                      <p className="text-sm font-semibold text-gray-900 break-all text-right">
+                        {order.tracking_id}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={handleCopyTrackingId}
+                        className="p-2 rounded-md border border-gray-200 hover:bg-gray-50 transition shrink-0"
+                        aria-label="Copy tracking ID"
+                        title={copied ? 'Copied!' : 'Copy'}
+                      >
+                        {copied ? (
+                          <Check className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-gray-600" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
             </div>
+
 
             {/* Pricing Breakdown */}
             <div className="bg-white rounded-lg shadow-lg p-6">
