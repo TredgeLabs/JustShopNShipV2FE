@@ -75,7 +75,7 @@ const ShipmentConfirmation: React.FC = () => {
     }
 
     const totalWeightKg = shipmentData.items.reduce(
-      (total, item) => total + ((item.weight || 0) * (item.quantity || 1)),
+      (total, item) => total + (item.weight || 0),
       0
     );
 
@@ -236,7 +236,7 @@ const ShipmentConfirmation: React.FC = () => {
                           </div>
                           <div>
                             <span className="text-gray-600">Weight:</span>
-                            <p className="font-medium">{((item.weight || 0) * (item.quantity || 1)).toFixed(2)} kg</p>
+                            <p className="font-medium">{(item.weight || 0).toFixed(2)} kg</p>
                           </div>
                         </div>
 

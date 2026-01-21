@@ -65,6 +65,7 @@ export interface InternationalOrder {
   id: number;
   user_id: number;
   vault_id: number;
+  vaultId: number;
   shipping_address_id: number;
   shipment_weight_gm: number;
   shipping_cost: string;
@@ -76,7 +77,19 @@ export interface InternationalOrder {
   shipping_status: string;
   createdAt: string;
   updatedAt: string;
+  actualDelivery?: string;
+  estimatedDelivery?: string;
   international_order_items?: InternationalOrderItem[];
+  selectedAddress?: {
+    name?: string;
+    line1?: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+    phone?: string;
+  };
 }
 
 // Create local order request interface

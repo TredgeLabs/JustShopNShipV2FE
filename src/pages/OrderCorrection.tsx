@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -15,6 +15,62 @@ import {
 } from '../api/services/orderService';
 import { DENY_REASONS } from '../admin/constants/adminConstants';
 
+type CorrectionDraft = {
+  edits: Record<number, Partial<{ color: string; size: string; quantity: number; final_price: number }>>;
+  deletedIds: number[];
+};
+
+const readDraft = (orderId: string): CorrectionDraft | null => {
+  try {
+    const raw = localStorage.getItem(draftKey(orderId));
+    return raw ? (JSON.parse(raw) as CorrectionDraft) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeDraft = (orderId: string, draft: CorrectionDraft) => {
+  localStorage.setItem(draftKey(orderId), JSON.stringify(draft));
+};
+
+const draftKey = (orderId: string) => `orderCorrectionDraft:${orderId}`;
+const clearDraft = (orderId: string) => localStorage.removeItem(draftKey(orderId));
+
+const confirmDiscardDraft = () => {
+  return window.confirm(
+    "You have unsaved changes in this correction.\n\nIf you go back now, your draft will be cleared. Continue?"
+  );
+};
+
+
+const upsertDraftEdit = (orderId: string, itemId: number, field: string, value: any) => {
+  const d: CorrectionDraft = readDraft(orderId) ?? { edits: {}, deletedIds: [] };
+  d.edits[itemId] = { ...(d.edits[itemId] || {}), [field]: value };
+  // if user edits an item, ensure it’s not marked deleted
+  d.deletedIds = d.deletedIds.filter((id) => id !== itemId);
+  writeDraft(orderId, d);
+};
+
+const markDraftDeleted = (orderId: string, itemId: number) => {
+  const d: CorrectionDraft = readDraft(orderId) ?? { edits: {}, deletedIds: [] };
+  if (!d.deletedIds.includes(itemId)) d.deletedIds.push(itemId);
+  delete d.edits[itemId];
+  writeDraft(orderId, d);
+};
+
+const applyDraftToOrder = (order: any, draft: CorrectionDraft) => {
+  const deleted = new Set(draft.deletedIds || []);
+  const items = (order.local_order_items ?? [])
+    .filter((it: any) => !deleted.has(it.id))
+    .map((it: any) => {
+      const patch = draft.edits?.[it.id];
+      return patch ? { ...it, ...patch } : it;
+    });
+
+  return { ...order, local_order_items: items };
+};
+
+
 const OrderCorrection: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
@@ -23,7 +79,17 @@ const OrderCorrection: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const backGuardArmedRef = useRef(false);
 
+  const armBackGuard = () => {
+    if (backGuardArmedRef.current) return;
+    window.history.pushState({ __guard: true }, "", window.location.href);
+    backGuardArmedRef.current = true;
+  };
+
+  const disarmBackGuard = () => {
+    backGuardArmedRef.current = false;
+  };
   // ---------- Helpers ----------
   const isUserAddedItem = (item: LocalOrderItem) =>
     item.source_type === 'user_added' || item.status === 'new';
@@ -42,6 +108,60 @@ const OrderCorrection: React.FC = () => {
       return text.includes('price');
     });
   };
+  const handleBackToOrders = () => {
+    if (!orderId) return navigate("/domestic-orders");
+
+    if (!hasUnsavedDraft()) {
+      clearDraft(orderId); // safe cleanup
+      navigate("/domestic-orders");
+      return;
+    }
+
+    const ok = confirmDiscardDraft();
+    if (!ok) return;
+
+    clearDraft(orderId);
+    navigate("/domestic-orders");
+  };
+
+  const hasUnsavedDraft = () => {
+    if (!orderId) return false;
+    const d = readDraft(orderId);
+    if (!d) return false;
+    const editsCount = Object.keys(d.edits || {}).length;
+    const deletedCount = (d.deletedIds || []).length;
+    return editsCount > 0 || deletedCount > 0;
+  };
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    // ✅ Arm guard only if draft exists (ex: user refreshed and came back)
+    if (hasUnsavedDraft()) {
+      window.history.pushState({ __guard: true }, "", window.location.href);
+    }
+
+    const onPopState = () => {
+      // ✅ If no draft, do nothing (allow normal back)
+      if (!hasUnsavedDraft()) return;
+
+      const ok = confirmDiscardDraft();
+      if (!ok) {
+        // keep user here
+        window.history.pushState({ __guard: true }, "", window.location.href);
+        return;
+      }
+
+      clearDraft(orderId);
+
+      // ✅ go back to previous page (because first back just removed guard entry)
+      window.history.back();
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [orderId]);
+
 
   // Load order details
   useEffect(() => {
@@ -49,7 +169,11 @@ const OrderCorrection: React.FC = () => {
       if (!orderId) return;
       setIsLoading(true);
       const response = await orderService.getLocalOrderDetails(orderId);
-      setOrderData(response.order);
+      const fetchedOrder = response.order;
+      const draft = readDraft(orderId);
+      const merged = draft ? applyDraftToOrder(fetchedOrder, draft) : fetchedOrder;
+
+      setOrderData(merged);
       setIsLoading(false);
     };
 
@@ -60,15 +184,23 @@ const OrderCorrection: React.FC = () => {
    * Editing and Deleting
    * ----------------------------- */
   const handleItemEdit = (itemId: number, field: string, value: string | number) => {
-    if (!orderData) return;
+    if (!orderData || !orderId) return;
 
+    // update UI
     setOrderData(prev => ({
       ...prev!,
       local_order_items: (prev!.local_order_items ?? []).map(item =>
         item.id === itemId ? { ...item, [field]: value } : item
       ),
     }));
+
+    // ✅ persist draft
+    upsertDraftEdit(orderId, itemId, field, value);
+
+    // ✅ arm browser-back guard (only once)
+    armBackGuard();
   };
+
 
   const toggleItemEdit = (itemId: number) => {
     if (!orderData) return;
@@ -102,10 +234,17 @@ const OrderCorrection: React.FC = () => {
 
     const confirmed = window.confirm('Are you sure you want to remove this item from your order?');
     if (confirmed) {
+      if (orderId) {
+        markDraftDeleted(orderId, itemId);
+        armBackGuard();
+      }
       setOrderData(prev => ({
         ...prev!,
         local_order_items: (prev!.local_order_items ?? []).filter(item => item.id !== itemId),
       }));
+      if (orderId && hasUnsavedDraft()) {
+        window.history.pushState({ __guard: true }, "", window.location.href);
+      }
     }
   };
 
@@ -181,6 +320,7 @@ const OrderCorrection: React.FC = () => {
           'pendingOrderCorrection',
           JSON.stringify({ orderId, payload })
         );
+        clearDraft(orderId);
 
         navigate('/payment', {
           state: { type: 'correction', orderId, amount: additionalAmount, currency: 'INR' }
@@ -197,6 +337,7 @@ const OrderCorrection: React.FC = () => {
       }
 
       setSuccess('Order correction submitted successfully!');
+      clearDraft(orderId);
       setTimeout(() => navigate('/domestic-orders'), 1200);
     } catch (err) {
       setError('Failed to submit order correction. Please try again.');
@@ -224,7 +365,7 @@ const OrderCorrection: React.FC = () => {
           <AlertTriangle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Order not found</h3>
           <button
-            onClick={() => navigate('/domestic-orders')}
+            onClick={handleBackToOrders}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Orders
@@ -243,7 +384,7 @@ const OrderCorrection: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/domestic-orders')}
+            onClick={handleBackToOrders}
             className="flex items-center text-gray-600 hover:text-blue-600 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

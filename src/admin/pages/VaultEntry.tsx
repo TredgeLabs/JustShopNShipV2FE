@@ -35,10 +35,10 @@ interface TransitItem {
 interface VaultItemDetails {
   name: string;
   description: string;
-  quantity: number;
+  quantity: string;
   color: string;
   size: string;
-  weight: number;
+  weight: string;
   images: File[];
 }
 
@@ -49,16 +49,30 @@ const VaultEntry: React.FC = () => {
   const [vaultItemDetails, setVaultItemDetails] = useState<VaultItemDetails>({
     name: '',
     description: '',
-    quantity: 1,
+    quantity: '',
     color: '',
     size: '',
-    weight: 0,
+    weight: '',
     images: []
   });
   const [isValidating, setIsValidating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const onlyDigits = (v: string) => v.replace(/[^\d]/g, '');
+
+  const quantityNum = Number(vaultItemDetails.quantity);
+  const weightGmNum = Number(vaultItemDetails.weight);
+
+  const isQuantityValid = vaultItemDetails.quantity.trim() !== '' && quantityNum > 0;
+  const isWeightValid = vaultItemDetails.weight.trim() !== '' && weightGmNum > 0;
+
+  const canSubmit =
+    !!vaultItemDetails.name.trim() &&
+    isQuantityValid &&
+    isWeightValid &&
+    !isSaving;
+
 
   const handleVaultIdSubmit = async () => {
     if (!vaultId.trim()) {
@@ -94,10 +108,10 @@ const VaultEntry: React.FC = () => {
     setVaultItemDetails({
       name: item.name,
       description: '',
-      quantity: item.expectedQuantity,
+      quantity: String(item.expectedQuantity ?? ''),
       color: item.color,
       size: item.size,
-      weight: 0,
+      weight: '',
       images: []
     });
   };
@@ -130,8 +144,12 @@ const VaultEntry: React.FC = () => {
       return;
     }
 
-    if (vaultItemDetails.weight <= 0) {
-      setError('Please enter a valid weight');
+    if (!isWeightValid) {
+      setError('Please enter a valid weight in grams (greater than 0)');
+      return;
+    }
+    if (!isQuantityValid) {
+      setError('Please enter a valid quantity (greater than 0)');
       return;
     }
 
@@ -146,7 +164,7 @@ const VaultEntry: React.FC = () => {
         description: vaultItemDetails.description || vaultItemDetails.name,
         source_type: 'user_sent',
         received_date: new Date().toISOString(),
-        weight_gm: Math.round(vaultItemDetails.weight * 1000), // Convert kg to grams
+        weight_gm: Number(vaultItemDetails.weight),
         status: 'received',
         is_returnable: false,
         returnable_until: null,
@@ -179,10 +197,10 @@ const VaultEntry: React.FC = () => {
         setVaultItemDetails({
           name: '',
           description: '',
-          quantity: 1,
+          quantity: '',
           color: '',
           size: '',
-          weight: 0,
+          weight: '',
           images: []
         });
         setSelectedTransitItem(null);
@@ -205,12 +223,13 @@ const VaultEntry: React.FC = () => {
     setVaultItemDetails({
       name: '',
       description: '',
-      quantity: 1,
+      quantity: '',
       color: '',
       size: '',
-      weight: 0,
+      weight: '',
       images: []
     });
+
     setError('');
     setSuccess('');
   };
@@ -382,27 +401,37 @@ const VaultEntry: React.FC = () => {
                       Quantity *
                     </label>
                     <input
-                      type="number"
-                      min="1"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={vaultItemDetails.quantity}
-                      onChange={(e) => handleItemDetailsChange('quantity', parseInt(e.target.value))}
+                      onChange={(e) => handleItemDetailsChange('quantity', onlyDigits(e.target.value))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., 1"
                     />
+                    {!isQuantityValid && vaultItemDetails.quantity !== '' && (
+                      <p className="text-xs text-red-600 mt-1">Quantity must be greater than 0</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Scale className="inline h-4 w-4 mr-1" />
-                      Weight (kg) *
+                      Weight (gm) *
                     </label>
+
                     <input
-                      type="number"
-                      step="0.1"
-                      min="0.1"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={vaultItemDetails.weight}
-                      onChange={(e) => handleItemDetailsChange('weight', parseFloat(e.target.value))}
+                      onChange={(e) => handleItemDetailsChange('weight', onlyDigits(e.target.value))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0.0"
+                      placeholder="e.g., 800"
                     />
+
+                    {!isWeightValid && vaultItemDetails.weight !== '' && (
+                      <p className="text-xs text-red-600 mt-1">Weight must be greater than 0</p>
+                    )}
                   </div>
                 </div>
 
@@ -496,7 +525,7 @@ const VaultEntry: React.FC = () => {
             <div className="mt-8 pt-6 border-t border-gray-200">
               <button
                 onClick={handleEnterItem}
-                disabled={isSaving || !vaultItemDetails.name.trim() || vaultItemDetails.weight <= 0}
+                disabled={!canSubmit}
                 className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
               >
                 {isSaving ? (
